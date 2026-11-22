@@ -1,50 +1,30 @@
-// daira-core.js - كل دايرة ليها ملف لوحده
-function getCurrentDaira() {
-  return localStorage.getItem('current_daira') || '32';
-}
+// daira-core.js - بيحول كل الصفحات للدايرة اللي اخترتها
+(function(){
+  const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+  window.CURRENT_DAIRA = daira;
+  window.DAIRA_NUM = daira;
 
-// اسم ملف الدرايف حسب الدايرة
-function getDairaFileName() {
-  const d = getCurrentDaira();
-  return `D${d}_DB_latest.json`;
-}
+  const origOpen = indexedDB.open.bind(indexedDB);
+  indexedDB.open = function(name, version){
+    if(typeof name === 'string'){
+      if(name === 'D32_DB' || name === 'D32DB' || name.indexOf('D32') === 0){
+        name = 'D' + daira + '_DB';
+      }
+      if(name === 'D32_DB_V3' || name === 'D32_V3'){
+        name = 'D' + daira + '_DB';
+      }
+    }
+    return origOpen(name, version);
+  };
 
-// ده اللي هتعدله في index.html
-// بدل ما كنت كاتب رابط ثابت لملف واحد، هتستخدم ده
-
-/* 
-مثال للاستخدام في index.html :
-
-const FOLDER_ID = 'ID_الفولدر_بتاعك_على_درايف'; // نفس الفولدر اللي فيه الـ 39 ملف
-const fileName = getDairaFileName(); // هيطلع مثلا D5_DB_latest.json لو انت د/5
-
-// بعدها تجيب الملف من الدرايف بالاسم
-const url = `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'+and+'${FOLDER_ID}'+in+parents&key=YOUR_API_KEY&fields=files(id,name)`;
-
-fetch(url).then(r=>r.json()).then(data=>{
-  if(data.files && data.files.length>0){
-    const fileId = data.files[0].id;
-    // حمل محتوى الملف
-    return fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=YOUR_API_KEY`);
-  } else {
-    console.log('مفيش ملف للدائرة دي لسه');
-    return null;
+  const origGet = Storage.prototype.getItem;
+  const origSet = Storage.prototype.setItem;
+  function mapKey(k){
+    if(typeof k !== 'string') return k;
+    if(k.indexOf('D32_') === 0) return 'D' + daira + '_' + k.slice(4);
+    if(k === 'D32_DB') return 'D' + daira + '_DB';
+    return k;
   }
-})
-
-*/
-
-// لو بتستخدم Apps Script Web App
-function getDairaDataUrl() {
-  const d = getCurrentDaira();
-  // حط هنا رابط الـ Web App بتاعك + ?daira=D5
-  const BASE_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-  return `${BASE_URL}?daira=D${d}`;
-}
-
-// عرض رقم الدائرة في الصفحة
-function showDairaNumber() {
-  const el = document.getElementById('current-daira-display');
-  if (el) el.textContent = 'دائرة ' + getCurrentDaira();
-}
-document.addEventListener('DOMContentLoaded', showDairaNumber);
+  Storage.prototype.getItem = function(k){ return origGet.call(this, mapKey(k)); };
+  Storage.prototype.setItem = function(k,v){ return origSet.call(this, mapKey(k), v); };
+})();
