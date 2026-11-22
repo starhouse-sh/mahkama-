@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
+  <script>
+if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
+  location.href = 'select-daira.html';
+}
+</script>
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
