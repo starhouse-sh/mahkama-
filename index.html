@@ -81,14 +81,16 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <iframe id="frame" src="about:blank"></iframe>
 </div>
 <script>
-// ===== 39 DAIRA - DYNAMIC =====
+// ===== 39 DAIRA - متوافق مع سكريبتك =====
+// السكريبت بيفتح ملف: D32_DB_Daira_ + رقم الدايرة + .json
+// مثال: د/32 -> D32_DB_Daira_32.json ، د/5 -> D32_DB_Daira_5.json
 const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
 const DB_NAME='D'+CURRENT_DAIRA+'_DB';
 const DB_VER=2;
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=getAll&daira=D'+CURRENT_DAIRA;
-const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?daira=D'+CURRENT_DAIRA;
-// لو دايرة 32 هيفضل DB_NAME = D32_DB زي ما هو بالظبط، ولو دايرة 5 هيبقى D5_DB
-// ==============================
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=get&daira='+CURRENT_DAIRA;
+const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?daira='+CURRENT_DAIRA;
+let CLOUD_PASSWORD = '';
+// ==========================================
 
 async function fetchWithRetry(url, options, retries=3){
   for(let attempt=1; attempt<=retries; attempt++){
@@ -109,7 +111,6 @@ async function fetchWithRetry(url, options, retries=3){
 function normalizeNum(s){if(!s&&s!==0)return'';s=String(s);const ar='٠١٢٣٤٥٦٧٨٩';const per='۰۱۲۳۴۵۶۷۸۹';let o='';for(let ch of s){let i=ar.indexOf(ch);if(i>=0){o+=i;continue;}i=per.indexOf(ch);if(i>=0){o+=i;continue;}o+=ch;}return o.trim().replace(/\s+/g,'');}
 function normalizeKey(r,s){return normalizeNum(r)+'/'+normalizeNum(s);}
 
-// FIXED V3: نفس إصدار قاعدة البيانات في كل الصفحات - 3 مع أرشيف سركي الإرسال
 function openDB(){return new Promise((res,rej)=>{
   let r=indexedDB.open(DB_NAME,2);
   r.onupgradeneeded=e=>{
@@ -225,36 +226,21 @@ async function uploadToDrive(localArray, silent, options){
   try{
     document.getElementById('health').textContent='⏳ رفع '+(isForceReplace?' (استبدال كامل) ':'')+localArray.length+'...';
     localArray.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
+    // لو فيه محذوفات، شيلها قبل الرفع لأن السكريبت بيحفظ الملف كله على بعضه
+    if(deletedIds.length>0){
+      let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});
+      localArray = localArray.filter(o=>!delMap[String(o.id)]);
+    }
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    if(isForceReplace){
-      const payload = {action:'forceReplace', v3:localArray, ahkam:ahArr, deletedIds:deletedIds};
-      await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
-      await clearDeletedIds(); await setLastSync();
-      if(!silent) document.getElementById('health').textContent='✅ تم الاستبدال الكامل - Drive الآن '+localArray.length+' (تم حذف '+deletedIds.length+')';
-      return true;
-    }
-    const CHUNK = 100;
-    if(localArray.length > CHUNK &&!silent){
-      for(let i=0;i<localArray.length;i+=CHUNK){
-        let chunk = localArray.slice(i, i+CHUNK);
-        let isLast = (i+CHUNK >= localArray.length);
-        let payload = isLast? {action:'saveAll', v3:chunk, ahkam:ahArr, deletedIds:deletedIds} : {action:'saveAll', v3:chunk, ahkam:[], deletedIds:[]};
-        document.getElementById('health').textContent='⏳ رفع دفعة '+(Math.floor(i/CHUNK)+1)+'/'+Math.ceil(localArray.length/CHUNK);
-        await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
-        await new Promise(r=>setTimeout(r, 1200));
-      }
-      if(deletedIds.length>0) await clearDeletedIds();
-      await setLastSync();
-      return true;
-    }else{
-      const payload = {action:'saveAll', v3:localArray, ahkam:ahArr, deletedIds:deletedIds};
-      await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
-      if(deletedIds.length>0) await clearDeletedIds();
-      await setLastSync();
-      if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + أحكام '+ahArr.length;
-      return true;
-    }
+    // السكريبت بتاعك doPost بيحفظ الملف كله على بعضه، ممنوع تقسيم دفعات وممنوع action
+    // ولازم نحافظ على _password عشان check_pass ميتكسرش
+    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
+    await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
+    await clearDeletedIds(); await setLastSync();
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + أحكام '+ahArr.length;
+    return true;
   }catch(e){
     if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
     return false;
@@ -287,18 +273,17 @@ async function downloadBackupJson(){
   let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
   let ahRaw = await idbGet('D32_AHKAM')||'[]'; let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
   let toSave = {v3:arr, ahkam:ahArr, _updatedAt:Date.now()};
+  if(CLOUD_PASSWORD) toSave._password = CLOUD_PASSWORD;
   let blob = new Blob([JSON.stringify(toSave)], {type:'application/json'});
   let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
 }
 async function forceUpload(silent){
+  // مهم: السكريبت بيحفظ الملف كله، فمينفعش نرفع التعديلات بس، لازم نرفع الملف كله
   let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
   if(!arr.length){ if(!silent) alert('مفيش بيانات'); return; }
-  let lastSyncNum = Number(await getLastSync()||0);
-  let modified = arr.filter(o=> Number(o._updatedAt||0) > lastSyncNum);
-  let toUpload = modified.length>0? modified : arr;
   let deletedIds = await getDeletedIds();
-  let ok = await uploadToDrive(toUpload, silent, {deletedIds:deletedIds});
-  if(ok &&!silent) alert('✅ تم رفع '+toUpload.length);
+  let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
+  if(ok &&!silent) alert('✅ تم رفع '+arr.length);
 }
 
 async function syncBidirectionalSmart(silent){
@@ -308,7 +293,16 @@ async function syncBidirectionalSmart(silent){
     let res=await fetch(CLOUD_URL,{cache:'no-store'});
     let text=await res.text();
     if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
-    let j=JSON.parse(text);
+    let j;
+    try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
+    // السكريبت ممكن يرجع [] لو الملف مش موجود، أو {error:'update_needed'} لو الأدمن وقف الدايرة
+    if(j && j.error === 'update_needed'){
+      document.getElementById('health').textContent='⛔ الدايرة دي موقوفة من الأدمن - حدث التطبيق';
+      if(!silent) alert('⛔ الدايرة دي موقوفة من الأدمن');
+      return;
+    }
+    if(Array.isArray(j)) j = {v3:j, ahkam:[]};
+    if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     let cloudAhkam=j.ahkam||[];
     let raw=await idbGet('D32_V3')||'[]';
@@ -370,12 +364,13 @@ async function syncBidirectionalSmart(silent){
       }
     }catch(e){}
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
-    if(toUpload.length>0){
-      document.getElementById('health').textContent='✅ دمج +'+added+' جاري رفع '+toUpload.length+'...';
-      let ok = await uploadToDrive(toUpload, true, {deletedIds:deletedIds});
+    if(toUpload.length>0 || deletedIds.length>0){
+      document.getElementById('health').textContent='✅ دمج +'+added+' جاري رفع '+newLocal.length+'...';
+      // مهم: بنرفع الملف كله newLocal مش التعديلات بس، لأن السكريبت بيستبدل الملف كله
+      let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
       if(ok){
         await setLastSync();
-        document.getElementById('health').textContent='✅ V3 +'+added+' جديد، '+fromCloud+' من الموبايل، رفع '+toUpload.length+' - الآن '+newLocal.length;
+        document.getElementById('health').textContent='✅ V3 +'+added+' جديد، '+fromCloud+' من الموبايل، رفع '+newLocal.length+' - الآن '+newLocal.length;
       }
     }else{
       await setLastSync();
