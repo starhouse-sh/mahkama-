@@ -86,16 +86,12 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <iframe id="frame" src="about:blank"></iframe>
 </div>
 <script>
-// ===== 39 DAIRA - متوافق مع سكريبتك =====
-// السكريبت بيفتح ملف: D32_DB_Daira_ + رقم الدايرة + .json
-// مثال: د/32 -> D32_DB_Daira_32.json ، د/5 -> D32_DB_Daira_5.json
 const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
 const DB_NAME='D'+CURRENT_DAIRA+'_DB';
 const DB_VER=2;
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=get&daira='+CURRENT_DAIRA;
 const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?daira='+CURRENT_DAIRA;
 let CLOUD_PASSWORD = '';
-// ==========================================
 
 async function fetchWithRetry(url, options, retries=3){
   for(let attempt=1; attempt<=retries; attempt++){
@@ -134,6 +130,25 @@ function openDB(){return new Promise((res,rej)=>{
 function storeForKey(k){k=String(k||'');if(k.includes('AHKAM')||k==='D32_AHKAM')return'ahkam';if(k.includes('V3')||k.includes('FINAL')||k.includes('MOT')||k.includes('MOTADAWAL')||k==='D32_V3'||k==='D32_FINAL')return'cases';return'd32store';}
 async function idbSet(k,v){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readwrite');tx.objectStore(s).put(v,k);tx.oncomplete=()=>rs();tx.onerror=e=>rj(e);});}
 async function idbGet(k){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readonly');let rq=tx.objectStore(s).get(k);rq.onsuccess=()=>rs(rq.result);rq.onerror=e=>rj(e);});}
+
+// ===== FIX: هات القضايا من V3 أو FINAL - اللي فيه بيانات =====
+async function getCasesArray(){
+  let rawV3 = await idbGet('D32_V3') || '[]';
+  let rawFinal = await idbGet('D32_FINAL') || '[]';
+  let arrV3=[]; let arrFinal=[];
+  try{ arrV3=JSON.parse(rawV3); if(Array.isArray(arrV3[1])) arrV3=arrV3[1]; }catch(e){ arrV3=[]; }
+  try{ arrFinal=JSON.parse(rawFinal); if(Array.isArray(arrFinal[1])) arrFinal=arrFinal[1]; }catch(e){ arrFinal=[]; }
+  // خد الأطول، ولو واحد فيهم أطول انقله للتاني عشان يتوحدوا
+  if(arrFinal.length > arrV3.length){
+    await idbSet('D32_V3', JSON.stringify(arrFinal));
+    return arrFinal;
+  }
+  if(arrV3.length > arrFinal.length){
+    await idbSet('D32_FINAL', JSON.stringify(arrV3));
+  }
+  return arrV3.length ? arrV3 : arrFinal;
+}
+
 async function getDeletedIds(){try{let raw=await idbGet('D32_DELETED_IDS');return raw?JSON.parse(raw):[];}catch(e){return[];}}
 async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.stringify([...new Set(arr.map(x=>String(x)))]));}catch(e){}}
 async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
@@ -167,8 +182,7 @@ window.addEventListener('message',async(e)=>{
     try{
       let arr=JSON.parse(e.data.val);
       if(Array.isArray(arr) && arr.length>0){
-        let oldRaw = await idbGet(e.data.key) || '[]';
-        let oldArr=[]; try{oldArr=JSON.parse(oldRaw); if(Array.isArray(oldArr)&&Array.isArray(oldArr[1])) oldArr=oldArr[1];}catch(ex){}
+        let oldArr = await getCasesArray();
         let maxIdx=0; let oldMapByKey={}, oldMapById={};
         oldArr.forEach(o=>{
           if(o._fileIndex!=null && o._fileIndex>maxIdx) maxIdx=o._fileIndex;
@@ -203,16 +217,26 @@ window.addEventListener('message',async(e)=>{
         e.data.val=JSON.stringify(arr);
       }
     }catch(err){console.warn(err);}
+    // FIX: احفظ في الاتنين عشان أي زرار يلاقيها
     await idbSet(e.data.key,e.data.val);
+    if(e.data.key==='D32_V3') await idbSet('D32_FINAL', e.data.val);
+    if(e.data.key==='D32_FINAL') await idbSet('D32_V3', e.data.val);
     updateCounts();
   }
   if(e.data.type==='D32_GET'){
     let val=await idbGet(e.data.key);
+    // لو طلب V3 وهو فاضي بس FINAL فيه بيانات، ابعت FINAL
+    if((!val || val==='[]') && e.data.key==='D32_V3'){
+      val = await idbGet('D32_FINAL');
+    }
+    if((!val || val==='[]') && e.data.key==='D32_FINAL'){
+      val = await idbGet('D32_V3');
+    }
     e.source.postMessage({type:'D32_VAL',key:e.data.key,val:val},'*');
   }
 });
 
-async function updateCounts(){try{let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw){let arr;try{arr=JSON.parse(raw);if(Array.isArray(arr[1]))arr=arr[1];}catch(e){arr=[];}document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';}let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){console.log('updateCounts error',e);}}
+async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){console.log('updateCounts error',e);}}
 function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
 async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store','ersal_archive'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
 async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
@@ -251,8 +275,7 @@ async function uploadToDrive(localArray, silent, options){
 
 async function forceReplaceDrive(){
   if(!confirm('⚠ سيستبدل ملف Drive بالكامل')) return;
-  let raw=await idbGet('D32_V3')||'[]';
-  let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
+  let arr = await getCasesArray();
   if(!arr.length){ alert('مفيش بيانات'); return; }
   let deletedIds=await getDeletedIds();
   let ok = await uploadToDrive(arr, false, {forceReplace:true, deletedIds:deletedIds});
@@ -260,8 +283,7 @@ async function forceReplaceDrive(){
 }
 async function cleanWrongMahgozFromLab(){
   if(!confirm('مسح المحجوز الخطأ؟')) return;
-  let raw=await idbGet('D32_V3')||'[]';
-  let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
+  let arr = await getCasesArray();
   let before=arr.length; let deletedIds=[];
   let cleaned = arr.filter(o=>{ if(o.tarikhHokm && (!o.code || String(o.code).trim()=='')){ deletedIds.push(o.id); return false; } return true; });
   if(cleaned.length==before){ alert('مفيش محجوز خطأ'); return; }
@@ -272,7 +294,7 @@ async function cleanWrongMahgozFromLab(){
   updateCounts();
 }
 async function downloadBackupJson(){
-  let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
+  let arr = await getCasesArray();
   let ahRaw = await idbGet('D32_AHKAM')||'[]'; let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
   let toSave = {v3:arr, ahkam:ahArr, _updatedAt:Date.now()};
   if(CLOUD_PASSWORD) toSave._password = CLOUD_PASSWORD;
@@ -280,11 +302,11 @@ async function downloadBackupJson(){
   let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
 }
 async function forceUpload(silent){
-  let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
-  if(!arr.length){ if(!silent) alert('مفيش بيانات'); return; }
+  let arr = await getCasesArray();
+  if(!arr.length){ if(!silent) alert('مفيش بيانات - القضية لسه متحفظتش، افتح صفحة المحاضر واعمل تحديث'); return; }
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
-  if(ok &&!silent) alert('✅ تم رفع '+arr.length);
+  if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
 
 async function syncBidirectionalSmart(silent){
@@ -305,8 +327,7 @@ async function syncBidirectionalSmart(silent){
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     let cloudAhkam=j.ahkam||[];
-    let raw=await idbGet('D32_V3')||'[]';
-    let localData; try{localData=JSON.parse(raw); if(Array.isArray(localData[1])) localData=localData[1];}catch(e){localData=[];}
+    let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
     cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
