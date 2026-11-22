@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>الخبراء - D32_DB - نهائي معدل</title>
+<style>
+*{box-sizing:border-box;font-family:Tahoma}
+body{background:#f0f2f5;padding:10px}
+.card{background:#fff;padding:12px;border-radius:10px;margin:10px auto;max-width:1500px}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{background:#6A1B9A;color:#fff;padding:7px 3px;font-size:10.5px;white-space:nowrap}
+td{padding:5px 3px;border-bottom:1px solid #eee;font-size:11px;text-align:center;vertical-align:middle}
+.khFilter{padding:6px 12px;border-radius:20px;border:1px solid #ccc;cursor:pointer;font-size:11px;background:#fff}
+.khFilter.active{background:#6A1B9A;color:#fff}
+header{background:#0f1f3a;color:#fff;padding:12px;border-radius:10px;display:flex;justify-content:space-between;max-width:1500px;margin:0 auto 10px}
+.btn-add{background:#2E7D32;color:#fff;padding:7px 16px;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:bold}
+.modal-input{width:100%;padding:8px;margin:4px 0;border:1px solid #ccc;border-radius:6px}
+</style>
+</head>
+<body>
+<header>
+<div>🔬 الخبراء - D32_DB فقط | <b id="cnt"></b> <span id="info"></span></div>
+<div><a href="index.html" style="background:#ddd;color:#000;padding:6px 12px;border-radius:20px;text-decoration:none">🏠</a> <a href="ahkam.html" style="background:#C9A227;padding:6px 12px;border-radius:20px;text-decoration:none">📜 أحكام</a></div>
+</header>
+
+<div class="card">
+<h3 style="background:#6A1B9A;color:#fff;padding:10px;border-radius:8px;text-align:center">🔬 قضايا الخبراء والطب الشرعي - D32_DB فقط (بدون تكرار) - التاريخ YYYY/MM/DD</h3>
+<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap;justify-content:space-between;align-items:center">
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button onclick="filterKhobara('all')" class="khFilter active" data-f="all">الكل (<span id="kCountAll">0</span>)</button>
+    <button onclick="filterKhobara('amanah')" class="khFilter" data-f="amanah">أمانة (<span id="kCountAmanah">0</span>)</button>
+    <button onclick="filterKhobara('ersal')" class="khFilter" data-f="ersal">إرسال (<span id="kCountErsal">0</span>)</button>
+    <button onclick="filterKhobara('entezar')" class="khFilter" data-f="entezar">انتظار (<span id="kCountEntezar">0</span>)</button>
+    <button onclick="filterKhobara('warad')" class="khFilter" data-f="warad">ورد (<span id="kCountWarad">0</span>)</button>
+  </div>
+  <button onclick="openAddModal()" class="btn-add">➕ إضافة قضية يدوياً</button>
+</div>
+<div id="khobaraList" style="border:1px solid #ddd;border-radius:8px;padding:12px;overflow-x:auto">جاري التحميل من D32_DB...</div>
+</div>
+
+<div id="tempModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center"></div>
+<div id="isti3jalModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;overflow:auto;padding:20px">
+<div style="background:#fff;width:95%;max-width:850px;border-radius:12px;padding:16px"><div id="isti3jalContent"></div><div style="text-align:center;margin-top:12px"><button onclick="printIsti3jal()" style="background:#0A2342;color:#fff;padding:10px 20px;border:none;border-radius:8px">🖨 طباعة الخطاب الرسمي</button> <button onclick="document.getElementById('isti3jalModal').style.display='none'" style="background:#ccc;padding:10px 20px;border:none;border-radius:8px">إغلاق</button></div></div></div>
+
+<script src="daira-core.js"></script>
+<script>
+const DB_NAME='D32_DB';
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[^0-9]/g,'');}
+function toAr(s){return String(s||'').replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function formatDateYYYYMMDD(s){
+  if(!s) return '-';
+  s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim();
+  var m=s.match(/\d+/g);
+  if(!m||m.length<3) return s;
+  var d,mo,ye;
+  if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}
+  else{d=m[0];mo=m[1];ye=m[2]; if(ye.length==2) ye='20'+ye;}
+  ye=ye.padStart(4,'0'); mo=String(mo).padStart(2,'0'); d=String(d).padStart(2,'0');
+  return ye+'/'+mo+'/'+d;
+}
+function parseDate(s){ var cd=formatDateYYYYMMDD(s); if(cd==='-'||cd.indexOf('/')==-1) return 0; var p=cd.split('/'); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])).getTime(); }
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+var DATA=[], DATA_MOT=[], DATA_KHOBARA=[];
+
+async function loadAll(){
+  let db=await openDB();
+  let tx=db.transaction(['cases','ahkam'],'readonly');
+  let r1=tx.objectStore('cases').get('D32_V3');
+  let r2=tx.objectStore('ahkam').get('D32_AHKAM');
+  r1.onsuccess=()=>{if(r1.result){try{let a=JSON.parse(r1.result); if(Array.isArray(a[1])) a=a[1]; DATA_MOT=a; DATA_KHOBARA=a;}catch(e){}} document.getElementById('cnt').textContent = DATA_KHOBARA.length + ' قضية'; document.getElementById('info').textContent = ' متداول:'+DATA_MOT.length+' | أحكام:'+DATA.length; renderKhobara();};
+  r2.onsuccess=()=>{if(r2.result){try{let a=JSON.parse(r2.result); if(Array.isArray(a[1])) a=a[1]; DATA=a;}catch(e){}} document.getElementById('info').textContent = ' متداول:'+DATA_MOT.length+' | أحكام:'+DATA.length;};
+}
+function saveData(){
+  openDB().then(db=>{
+    let tx=db.transaction(['cases'],'readwrite');
+    let str = JSON.stringify(DATA_KHOBARA);
+    tx.objectStore('cases').put(str,'D32_V3');
+    tx.objectStore('cases').put(str,'D32_FINAL');
+    tx.oncomplete=()=>{ DATA_MOT = JSON.parse(str); renderKhobara(); };
+  });
+}
+
+var currentKhobaraFilter='all';
+function ensureKhobaraFields(){
+  for(var i=0;i<DATA_KHOBARA.length;i++){
+    var d=DATA_KHOBARA[i];
+    if(!d.khobara) d.khobara={status:'none', no3:'خبراء', sentTo:'', amanahPaid:false, amanahDate:'', amanahValue:'', receiptNo:'', receiptImg:'', sentDate:'', saderNo:'', saderAam:'', saderKhas:'', reportReceived:false, isti3jalCount:0, nearDate:'', farDate:'', daira:'32', hokmTamhidyDate:''};
+    if(d.khobara.no3==null) d.khobara.no3 = (d.khobara.sentTo && d.khobara.sentTo.indexOf('طب')>-1) ? 'طب شرعي' : 'خبراء';
+    if(d.khobara.daira==null) d.khobara.daira='32';
+    if(d.khobara.amanahValue==null) d.khobara.amanahValue='';
+    if(d.khobara.hokmTamhidyDate==null) d.khobara.hokmTamhidyDate='';
+    if(d.khobara.saderNo==null) d.khobara.saderNo='';
+  }
+}
+function detectKhobaraFromQarar(q){ if(!q) return null; var s=String(q); if(s.indexOf('خبير')>-1 || s.indexOf('خبراء')>-1) return 'خبراء'; if(s.indexOf('طب شرعي')>-1 || s.indexOf('شرعي')>-1) return 'طب شرعي'; return null; }
+function detectNo3FromQarar(q){ var t=detectKhobaraFromQarar(q); if(t && t.indexOf('طب')>-1) return 'طب شرعي'; if(t) return 'خبراء'; return null; }
+function getKhobaraList(){
+  ensureKhobaraFields();
+  var map={};
+  for(var i=0;i<DATA_KHOBARA.length;i++){
+    var d=DATA_KHOBARA[i];
+    var is=false;
+    if(d.jalsat){ for(var j=0;j<d.jalsat.length;j++){ if(detectKhobaraFromQarar(d.jalsat[j].qarar)) is=true; } }
+    if(d.khobara && d.khobara.status!='none') is=true;
+    if(d.khobara && d.khobara.sentTo) is=true;
+    if(!is) continue;
+    var key=toEn(d.raqm)+'|'+toEn(d.sana);
+    if(!map[key]) map[key]=d;
+    else{
+      var old=map[key]; var tOld=parseDate(old.galsaAsasia||'')||0; var tNew=parseDate(d.galsaAsasia||'')||0; var updOld=old._updatedAt||0; var updNew=d._updatedAt||0;
+      if(tNew>tOld || (tNew===tOld && updNew>updOld)){
+        if(!d.khobara.sentTo && old.khobara.sentTo){ d.khobara = Object.assign({}, old.khobara, d.khobara); }
+        map[key]=d;
+      }
+    }
+  }
+  var L=[]; for(var k in map) L.push(map[k]); L.sort(function(a,b){return parseDate(a.galsaAsasia||'') - parseDate(b.galsaAsasia||'');}); return L;
+}
+function filterKhobara(f){ currentKhobaraFilter=f; var btns=document.querySelectorAll('.khFilter'); for(var i=0;i<btns.length;i++){ if(btns[i].getAttribute('data-f')==f) btns[i].classList.add('active'); else btns[i].classList.remove('active'); } renderKhobara(); }
+
+function formatSaderDisplay(k){
+  var no=k.saderNo||''; var aam=k.saderAam||''; var khas=k.saderKhas||'';
+  if(!no && !aam && !khas) return '-';
+  var txt='';
+  if(no) txt+='رقم صادر '+no+' ';
+  if(aam) txt+='عام '+aam+' ';
+  if(khas) txt+='وخاص '+khas+' ';
+  return txt.trim();
+}
+
+function renderKhobara(){
+  var list=getKhobaraList();
+  document.getElementById('kCountAll').textContent=toAr(list.length);
+  var c1=0,c2=0,c3=0,c4=0;
+  for(var i=0;i<list.length;i++){
+    if(!list[i].khobara.amanahPaid) c1++;
+    else if(list[i].khobara.amanahPaid &&!list[i].khobara.sentDate) c2++;
+    else if(list[i].khobara.sentDate &&!list[i].khobara.reportReceived) c3++;
+    else if(list[i].khobara.reportReceived) c4++;
+  }
+  document.getElementById('kCountAmanah').textContent=toAr(c1);
+  document.getElementById('kCountErsal').textContent=toAr(c2);
+  document.getElementById('kCountEntezar').textContent=toAr(c3);
+  document.getElementById('kCountWarad').textContent=toAr(c4);
+
+  var f=[];
+  if(currentKhobaraFilter=='all') f=list;
+  else if(currentKhobaraFilter=='amanah'){ for(var i=0;i<list.length;i++) if(!list[i].khobara.amanahPaid) f.push(list[i]); }
+  else if(currentKhobaraFilter=='ersal'){ for(var i=0;i<list.length;i++) if(list[i].khobara.amanahPaid &&!list[i].khobara.sentDate) f.push(list[i]); }
+  else if(currentKhobaraFilter=='entezar'){ for(var i=0;i<list.length;i++) if(list[i].khobara.sentDate &&!list[i].khobara.reportReceived) f.push(list[i]); }
+  else if(currentKhobaraFilter=='warad'){ for(var i=0;i<list.length;i++) if(list[i].khobara.reportReceived) f.push(list[i]); }
+
+  var h='<table><tr><th>رقم / سنة</th><th>المستأنف</th><th>النوع</th><th>الجهة</th><th>الحكم التمهيدي</th><th>الجلسات</th><th>قيمة الأمانة</th><th>تاريخ السداد</th><th>رقم الإيصال</th><th>تاريخ الإرسال</th><th>رقم الصادر</th><th>التقرير</th><th>إجراءات</th></tr>';
+  if(f.length==0) h+='<tr><td colspan=13 style="padding:30px">لا توجد قضايا</td></tr>';
+  for(var k=0;k<f.length;k++){
+    var d=f[k];
+    var sanaRaqm = toAr(d.raqm)+' / '+toAr(d.sana);
+    var mostanef = (d.mostanef||'').substring(0,18);
+    var no3 = d.khobara.no3|| (d.khobara.sentTo && d.khobara.sentTo.indexOf('طب')>-1 ? 'طب شرعي' : 'خبراء');
+    var jeha = d.khobara.sentTo||'-';
+    var hokmTam = formatDateYYYYMMDD(d.khobara.hokmTamhidyDate||d.khobara.nearDate||'-');
+    var nearDate = formatDateYYYYMMDD(d.khobara.nearDate||'-');
+    var nextGalsa = formatDateYYYYMMDD(d.galsaAsasia||d.galsaQadima||d.khobara.farDate||'-');
+    var amanahVal = d.khobara.amanahValue ? toAr(d.khobara.amanahValue)+' ج' : '-';
+    var amanahDate = d.khobara.amanahPaid ? formatDateYYYYMMDD(d.khobara.amanahDate||'') : 'لم يسدد';
+    var receipt = d.khobara.receiptNo||'-';
+    var ersalDate = d.khobara.sentDate ? formatDateYYYYMMDD(d.khobara.sentDate) : 'لم ترسل';
+    var saderDisp = formatSaderDisplay(d.khobara);
+    var taqrir = d.khobara.reportReceived? '✅ ورد' : (d.khobara.sentDate? '⏳ انتظار' : '-');
+
+    var safeId = d.id;
+    h+='<tr><td>'+sanaRaqm+'</td><td>'+mostanef+'</td><td>'+no3+'</td><td style="font-size:10px">'+jeha+'</td><td>'+toAr(hokmTam)+'</td><td>'+toAr(nearDate)+'<br>'+toAr(nextGalsa)+'</td><td>'+amanahVal+'</td><td>'+toAr(amanahDate)+'</td><td>'+toAr(receipt)+'</td><td>'+toAr(ersalDate)+'</td><td style="font-size:10px">'+toAr(saderDisp)+'</td><td>'+taqrir+'</td><td style="white-space:nowrap">';
+    if(!d.khobara.amanahPaid) h+='<button onclick="openAmanahModal(\''+safeId+'\')" style="background:#F57C00;color:#fff;border:none;padding:4px 5px;border-radius:4px;margin:1px">أمانة</button>';
+    if(d.khobara.amanahPaid &&!d.khobara.sentDate) h+='<button onclick="openErsalModal(\''+safeId+'\')" style="background:#1976D2;color:#fff;border:none;padding:4px 5px;border-radius:4px;margin:1px">إرسال</button>';
+    if(d.khobara.sentDate &&!d.khobara.reportReceived) h+='<button onclick="openReportModal(\''+safeId+'\')" style="background:#2E7D32;color:#fff;border:none;padding:4px 5px;border-radius:4px;margin:1px">ورود</button><button onclick="createIsti3jal(\''+safeId+'\')" style="background:#6A1B9A;color:#fff;border:none;padding:4px 5px;border-radius:4px;margin:1px">استعجال</button>';
+    h+='<button onclick="openEditModal(\''+safeId+'\')" style="background:#FF9800;color:#fff;border:none;padding:4px 6px;border-radius:4px;margin:1px">✏ تعديل</button>';
+    h+='<button onclick="deleteCase(\''+safeId+'\')" style="background:#D32F2F;color:#fff;border:none;padding:3px 5px;border-radius:4px;margin:1px">✖</button>';
+    h+='</td></tr>';
+  }
+  h+='</table>';
+  document.getElementById('khobaraList').innerHTML=h;
+}
+
+function showTempModal(inner){ var d=document.getElementById('tempModal'); d.innerHTML=inner; d.style.display='flex'; }
+function closeTempModals(){ document.getElementById('tempModal').style.display='none'; }
+
+var jehatKhobra=[
+  'مكتب خبراء وزارة العدل بالقاهرة',
+  'مكتب خبراء شمال القاهرة',
+  'مكتب خبراء جنوب القاهرة',
+  'أخرى'
+];
+var jehatTeb=[
+  'مصلحة الطب الشرعي بالقاهرة',
+  'قسم أبحاث التزييف والتزوير بمصلحة الطب الشرعي بالقاهرة'
+];
+function onNo3Change(prefix){
+  var no3=document.getElementById(prefix+'_no3').value;
+  var sel=document.getElementById(prefix+'_sentTo');
+  sel.innerHTML='';
+  var list = (no3==='خبراء') ? jehatKhobra : jehatTeb;
+  for(var i=0;i<list.length;i++){ var op=document.createElement('option'); op.value=list[i]; op.textContent=list[i]; sel.appendChild(op); }
+  onJehaChange(prefix);
+}
+function onJehaChange(prefix){
+  var jeha=document.getElementById(prefix+'_sentTo').value;
+  var customDiv=document.getElementById(prefix+'_customJehaDiv');
+  if(jeha==='أخرى'){ customDiv.style.display='block'; } else { customDiv.style.display='none'; }
+}
+
+function openAddModal(){
+  var html=`
+  <div style="background:#fff;padding:18px;border-radius:12px;max-width:700px;width:95%;max-height:90vh;overflow:auto;margin:20px auto">
+    <h3 style="text-align:center;background:#6A1B9A;color:#fff;padding:10px;border-radius:8px">➕ إضافة قضية خبراء يدوياً</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <div><label>رقم الاستئناف</label><input id="add_raqm" class="modal-input" placeholder="مثال 1423"></div>
+      <div><label>سنة الاستئناف</label><input id="add_sana" class="modal-input" placeholder="مثال 32"></div>
+      <div style="grid-column:1/3"><label>اسم المستأنف</label><input id="add_mostanef" class="modal-input" placeholder="اسم المستأنف"></div>
+      <div style="grid-column:1/3"><label>المستأنف ضده</label><input id="add_ded" class="modal-input"></div>
+      <div><label>النوع</label>
+        <select id="add_no3" class="modal-input" onchange="onNo3Change('add')">
+          <option value="خبراء">خبراء</option>
+          <option value="طب شرعي">طب شرعي</option>
+        </select>
+      </div>
+      <div><label>الجهة</label>
+        <select id="add_sentTo" class="modal-input" onchange="onJehaChange('add')"></select>
+        <div id="add_customJehaDiv" style="display:none;margin-top:4px"><input id="add_customJeha" class="modal-input" placeholder="اكتب اسم الجهة يدوياً"></div>
+      </div>
+      <div><label>تاريخ الحكم التمهيدي</label><input id="add_hokm" type="date" class="modal-input"></div>
+      <div><label>تاريخ الجلسة القادمة</label><input id="add_next" type="date" class="modal-input"></div>
+      <div><label>قيمة الأمانة</label><input id="add_amanahVal" class="modal-input" placeholder="مثال 1000"></div>
+      <div><label>تاريخ سداد الأمانة</label><input id="add_amanahDate" type="date" class="modal-input"></div>
+      <div><label>رقم الإيصال</label><input id="add_receipt" class="modal-input"></div>
+      <div><label>تاريخ الإرسال</label><input id="add_sentDate" type="date" class="modal-input"></div>
+      <div style="grid-column:1/3;background:#f9f9f9;padding:8px;border-radius:6px;border:1px solid #eee">
+        <label style="font-weight:bold">رقم الصادر (3 خانات)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <input id="add_saderNo" class="modal-input" placeholder="رقم الصادر">
+          <input id="add_saderAam" class="modal-input" placeholder="عام">
+          <input id="add_saderKhas" class="modal-input" placeholder="خاص">
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="saveAddCase()" style="flex:1;background:#2E7D32;color:#fff;padding:12px;border:none;border-radius:8px;font-weight:bold">💾 حفظ</button>
+      <button onclick="closeTempModals()" style="flex:1;background:#ccc;padding:12px;border:none;border-radius:8px">إلغاء</button>
+    </div>
+  </div>`;
+  showTempModal(html);
+  onNo3Change('add');
+}
+function saveAddCase(){
+  var raqm=document.getElementById('add_raqm').value.trim();
+  var sana=document.getElementById('add_sana').value.trim();
+  var mostanef=document.getElementById('add_mostanef').value.trim();
+  if(!raqm||!sana||!mostanef){ alert('رقم وسنة واسم المستأنف إجباري'); return; }
+  var no3=document.getElementById('add_no3').value;
+  var jehaSel=document.getElementById('add_sentTo').value;
+  var jeha = (jehaSel==='أخرى') ? document.getElementById('add_customJeha').value.trim() : jehaSel;
+  var obj={
+    id:'MANUAL_'+Date.now(),
+    raqm:raqm, sana:sana, mostanef:mostanef,
+    ded:document.getElementById('add_ded').value.trim(),
+    galsaAsasia:document.getElementById('add_next').value,
+    galsaQadima:document.getElementById('add_next').value,
+    jalsat:[{qarar:'ندب '+no3, tarikh:document.getElementById('add_hokm').value}],
+    khobara:{
+      status: document.getElementById('add_sentDate').value ? 'sent' : (document.getElementById('add_amanahDate').value ? 'amanah_paid' : 'none'),
+      no3:no3, sentTo:jeha,
+      amanahPaid: !!document.getElementById('add_amanahDate').value,
+      amanahDate:document.getElementById('add_amanahDate').value,
+      amanahValue:document.getElementById('add_amanahVal').value,
+      receiptNo:document.getElementById('add_receipt').value,
+      sentDate:document.getElementById('add_sentDate').value,
+      saderNo:document.getElementById('add_saderNo').value,
+      saderAam:document.getElementById('add_saderAam').value,
+      saderKhas:document.getElementById('add_saderKhas').value,
+      reportReceived:false, nearDate:document.getElementById('add_hokm').value,
+      hokmTamhidyDate:document.getElementById('add_hokm').value,
+      farDate:document.getElementById('add_next').value, daira:'32'
+    }, _updatedAt:Date.now(), manual:true
+  };
+  DATA_KHOBARA.push(obj); saveData(); closeTempModals();
+}
+function deleteCase(id){ if(!confirm('حذف القضية؟')) return; DATA_KHOBARA = DATA_KHOBARA.filter(x=> String(x.id)!==String(id)); saveData(); }
+
+function openEditModal(id){
+  var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i];
+  if(!d){ alert('القضية غير موجودة'); return; }
+  var k=d.khobara||{};
+  window._editId = id;
+  var div=document.createElement('div');
+  div.style.cssText='background:#fff;padding:18px;border-radius:12px;max-width:750px;width:95%;max-height:90vh;overflow:auto;margin:20px auto';
+  div.innerHTML=`
+    <h3 style="text-align:center;background:#FF9800;color:#fff;padding:10px;border-radius:8px">✏ تعديل بيانات القضية - ${toAr(d.raqm||'')} / ${toAr(d.sana||'')}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <div><label>رقم الاستئناف</label><input id="edit_raqm" class="modal-input"></div>
+      <div><label>سنة الاستئناف</label><input id="edit_sana" class="modal-input"></div>
+      <div style="grid-column:1/3"><label>اسم المستأنف</label><input id="edit_mostanef" class="modal-input"></div>
+      <div style="grid-column:1/3"><label>المستأنف ضده</label><input id="edit_ded" class="modal-input"></div>
+      <div><label>النوع</label>
+        <select id="edit_no3" class="modal-input" onchange="onNo3Change('edit')">
+          <option value="خبراء">خبراء</option>
+          <option value="طب شرعي">طب شرعي</option>
+        </select>
+      </div>
+      <div><label>الجهة</label>
+        <select id="edit_sentTo" class="modal-input" onchange="onJehaChange('edit')"></select>
+        <div id="edit_customJehaDiv" style="display:none;margin-top:4px"><input id="edit_customJeha" class="modal-input" placeholder="اكتب اسم الجهة يدوياً"></div>
+      </div>
+      <div><label>تاريخ الحكم التمهيدي</label><input id="edit_hokm" type="date" class="modal-input"></div>
+      <div><label>تاريخ الجلسة القادمة</label><input id="edit_next" type="date" class="modal-input"></div>
+      <div><label>قيمة الأمانة</label><input id="edit_amanahVal" class="modal-input"></div>
+      <div><label>تاريخ سداد الأمانة</label><input id="edit_amanahDate" type="date" class="modal-input"></div>
+      <div><label>رقم الإيصال</label><input id="edit_receipt" class="modal-input"></div>
+      <div><label>تاريخ الإرسال</label><input id="edit_sentDate" type="date" class="modal-input"></div>
+      <div style="grid-column:1/3;background:#f9f9f9;padding:8px;border-radius:6px;border:1px solid #eee">
+        <label style="font-weight:bold">رقم الصادر (3 خانات)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <input id="edit_saderNo" class="modal-input" placeholder="رقم الصادر">
+          <input id="edit_saderAam" class="modal-input" placeholder="عام">
+          <input id="edit_saderKhas" class="modal-input" placeholder="خاص">
+        </div>
+      </div>
+      <div style="grid-column:1/3"><label>حالة التقرير</label>
+        <select id="edit_report" class="modal-input"><option value="0">لم يرد</option><option value="1">ورد</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button id="btnSaveEdit" style="flex:1;background:#FF9800;color:#fff;padding:12px;border:none;border-radius:8px;font-weight:bold">💾 حفظ التعديل</button>
+      <button onclick="closeTempModals()" style="flex:1;background:#ccc;padding:12px;border:none;border-radius:8px">إلغاء</button>
+    </div>`;
+  var modal=document.getElementById('tempModal');
+  modal.innerHTML=''; modal.appendChild(div); modal.style.display='flex';
+  document.getElementById('edit_raqm').value = d.raqm||'';
+  document.getElementById('edit_sana').value = d.sana||'';
+  document.getElementById('edit_mostanef').value = d.mostanef||'';
+  document.getElementById('edit_ded').value = d.ded||'';
+  document.getElementById('edit_hokm').value = k.hokmTamhidyDate||k.nearDate||'';
+  document.getElementById('edit_next').value = k.farDate||d.galsaAsasia||'';
+  document.getElementById('edit_amanahVal').value = k.amanahValue||'';
+  document.getElementById('edit_amanahDate').value = k.amanahDate||'';
+  document.getElementById('edit_receipt').value = k.receiptNo||'';
+  document.getElementById('edit_sentDate').value = k.sentDate||'';
+  document.getElementById('edit_saderNo').value = k.saderNo||'';
+  document.getElementById('edit_saderAam').value = k.saderAam||'';
+  document.getElementById('edit_saderKhas').value = k.saderKhas||'';
+  document.getElementById('edit_no3').value = k.no3|| (k.sentTo && k.sentTo.indexOf('طب')>-1 ? 'طب شرعي' : 'خبراء');
+  onNo3Change('edit');
+  var sel=document.getElementById('edit_sentTo');
+  var found=false;
+  if(k.sentTo){
+    for(var i=0;i<sel.options.length;i++) if(sel.options[i].value===k.sentTo){ sel.selectedIndex=i; found=true; break; }
+    if(!found){ sel.value='أخرى'; onJehaChange('edit'); document.getElementById('edit_customJeha').value=k.sentTo; }
+  }
+  document.getElementById('edit_report').value = k.reportReceived ? '1' : '0';
+  document.getElementById('btnSaveEdit').onclick = function(){ saveEditCase(window._editId); };
+}
+function saveEditCase(id){
+  if(!id) id=window._editId;
+  var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i];
+  if(!d){ alert('القضية غير موجودة'); return; }
+  var no3=document.getElementById('edit_no3').value;
+  var jehaSel=document.getElementById('edit_sentTo').value;
+  var jeha = (jehaSel==='أخرى') ? document.getElementById('edit_customJeha').value.trim() : jehaSel;
+  d.raqm=document.getElementById('edit_raqm').value.trim();
+  d.sana=document.getElementById('edit_sana').value.trim();
+  d.mostanef=document.getElementById('edit_mostanef').value.trim();
+  d.ded=document.getElementById('edit_ded').value.trim();
+  d.galsaAsasia=document.getElementById('edit_next').value;
+  d.galsaQadima=document.getElementById('edit_next').value;
+  d.khobara.no3=no3;
+  d.khobara.sentTo=jeha;
+  d.khobara.hokmTamhidyDate=document.getElementById('edit_hokm').value;
+  d.khobara.nearDate=document.getElementById('edit_hokm').value;
+  d.khobara.farDate=document.getElementById('edit_next').value;
+  d.khobara.amanahValue=document.getElementById('edit_amanahVal').value;
+  d.khobara.amanahDate=document.getElementById('edit_amanahDate').value;
+  d.khobara.amanahPaid=!!document.getElementById('edit_amanahDate').value;
+  d.khobara.receiptNo=document.getElementById('edit_receipt').value;
+  d.khobara.sentDate=document.getElementById('edit_sentDate').value;
+  d.khobara.saderNo=document.getElementById('edit_saderNo').value;
+  d.khobara.saderAam=document.getElementById('edit_saderAam').value;
+  d.khobara.saderKhas=document.getElementById('edit_saderKhas').value;
+  d.khobara.reportReceived=document.getElementById('edit_report').value==='1';
+  if(d.khobara.reportReceived) d.khobara.status='report_received';
+  else if(d.khobara.sentDate) d.khobara.status='sent';
+  else if(d.khobara.amanahPaid) d.khobara.status='amanah_paid';
+  else d.khobara.status='none';
+  d._updatedAt=Date.now();
+  saveData(); closeTempModals();
+  console.log('تم حفظ التعديل', id);
+}
+
+function openAmanahModal(id){ var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i]; var sanaRaqm = toAr(d.raqm)+' / '+toAr(d.sana); var html='<div style="background:#fff;padding:16px;border-radius:10px;max-width:400px;margin:20px auto"><h4>سداد الأمانة - '+sanaRaqm+'</h4><input id="am_val" placeholder="قيمة الأمانة" value="'+(d.khobara.amanahValue||'')+'" style="width:100%;padding:8px;margin:4px 0"><input id="am_date" type="date" style="width:100%;padding:8px;margin:4px 0"><input id="am_receipt" placeholder="رقم الإيصال" style="width:100%;padding:8px"><input id="am_img" type="file" accept="image/*" style="width:100%"><div style="display:flex;gap:8px;margin-top:10px"><button onclick="saveAmanah(\''+id+'\')" style="flex:1;background:#2E7D32;color:#fff;padding:10px;border:none;border-radius:6px">تم السداد</button><button onclick="closeTempModals()" style="flex:1;background:#ccc;padding:10px;border:none;border-radius:6px">إلغاء</button></div></div>'; showTempModal(html); }
+function saveAmanah(id){ var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i]; var date=document.getElementById('am_date').value; var rec=document.getElementById('am_receipt').value; if(!date||!rec){ alert('أدخل البيانات'); return; } var val=document.getElementById('am_val').value; var file=document.getElementById('am_img').files[0]; function fin(img){ d.khobara.amanahPaid=true; d.khobara.amanahDate=date; d.khobara.amanahValue=val; d.khobara.receiptNo=rec; if(img) d.khobara.receiptImg=img; d.khobara.status='amanah_paid'; saveData(); closeTempModals(); } if(file){ var r=new FileReader(); r.onload=function(e){ fin(e.target.result); }; r.readAsDataURL(file); } else fin(''); }
+
+function openErsalModal(id){ var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i]; var sanaRaqm = toAr(d.raqm)+' / '+toAr(d.sana); var html=`
+<div style="background:#fff;padding:16px;border-radius:10px;max-width:550px;margin:20px auto">
+<h4>تسجيل الإرسال - ${sanaRaqm}</h4>
+<label>النوع</label><select id="er_no3" class="modal-input" onchange="onNo3Change('er')"><option value="خبراء">خبراء</option><option value="طب شرعي">طب شرعي</option></select>
+<label>الجهة المخاطبة</label><select id="er_sentTo" class="modal-input" onchange="onJehaChange('er')"></select>
+<div id="er_customJehaDiv" style="display:none"><input id="er_customJeha" class="modal-input" placeholder="اكتب الجهة يدوياً"></div>
+<input id="er_date" type="date" class="modal-input" style="margin-top:6px" value="${d.khobara.sentDate||''}">
+<div style="background:#f9f9f9;padding:8px;border-radius:6px;border:1px solid #eee;margin-top:6px">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+    <input id="er_saderNo" placeholder="رقم الصادر" class="modal-input" value="${d.khobara.saderNo||''}">
+    <input id="er_aam" placeholder="عام" class="modal-input" value="${d.khobara.saderAam||''}">
+    <input id="er_khas" placeholder="خاص" class="modal-input" value="${d.khobara.saderKhas||''}">
+  </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px"><button onclick="saveErsal('${id}')" style="flex:1;background:#1976D2;color:#fff;padding:10px;border:none;border-radius:6px">تم الإرسال</button><button onclick="closeTempModals()" style="flex:1;background:#ccc;padding:10px;border:none;border-radius:6px">إلغاء</button></div></div>`; showTempModal(html); 
+  document.getElementById('er_no3').value = d.khobara.no3||'خبراء';
+  onNo3Change('er');
+  if(d.khobara.sentTo){ 
+    var sel=document.getElementById('er_sentTo');
+    var found=false; for(var i=0;i<sel.options.length;i++) if(sel.options[i].value===d.khobara.sentTo){ sel.selectedIndex=i; found=true; break; }
+    if(!found && d.khobara.sentTo){ sel.value='أخرى'; onJehaChange('er'); document.getElementById('er_customJeha').value=d.khobara.sentTo; }
+  }
+}
+function saveErsal(id){
+  var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i];
+  var date=document.getElementById('er_date').value; if(!date){ alert('أدخل التاريخ'); return; }
+  var no3=document.getElementById('er_no3').value;
+  var jehaSel=document.getElementById('er_sentTo').value;
+  var jeha = (jehaSel==='أخرى') ? document.getElementById('er_customJeha').value.trim() : jehaSel;
+  d.khobara.no3=no3; d.khobara.sentDate=date;
+  d.khobara.saderNo=document.getElementById('er_saderNo').value;
+  d.khobara.saderAam=document.getElementById('er_aam').value;
+  d.khobara.saderKhas=document.getElementById('er_khas').value;
+  d.khobara.sentTo=jeha; d.khobara.status='sent'; saveData(); closeTempModals();
+}
+function openReportModal(id){ var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i]; var sanaRaqm = toAr(d.raqm)+' / '+toAr(d.sana); var html='<div style="background:#fff;padding:16px;border-radius:10px;max-width:350px;margin:20px auto;text-align:center"><h4>ورود التقرير - '+sanaRaqm+'</h4><div style="display:flex;gap:8px;margin-top:15px"><button onclick="saveReport(\''+id+'\')" style="flex:1;background:#2E7D32;color:#fff;padding:10px;border:none;border-radius:6px">ورد</button><button onclick="closeTempModals()" style="flex:1;background:#D32F2F;color:#fff;padding:10px;border:none;border-radius:6px">لم يرد</button></div></div>'; showTempModal(html); }
+function saveReport(id){ var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i]; d.khobara.reportReceived=true; d.khobara.status='report_received'; saveData(); closeTempModals(); }
+
+function getMokhatabTitle(sentTo, no3){
+  if(!sentTo) sentTo='';
+  if(sentTo.indexOf('تزييف')>-1 || sentTo.indexOf('التزييف')>-1) return 'السيد الأستاذ / رئيس قسم أبحاث التزييف والتزوير بمصلحة الطب الشرعي بالقاهرة';
+  if(sentTo.indexOf('الطب الشرعي')>-1) return 'السيد الأستاذ / رئيس مصلحة الطب الشرعي بالقاهرة';
+  if(sentTo.indexOf('شمال')>-1) return 'السيد الأستاذ / رئيس مكتب خبراء شمال القاهرة';
+  if(sentTo.indexOf('جنوب')>-1) return 'السيد الأستاذ / رئيس مكتب خبراء جنوب القاهرة';
+  if(sentTo.indexOf('خبراء')>-1) return 'السيد الأستاذ / رئيس مكتب خبراء وزارة العدل بالقاهرة';
+  return 'السيد الأستاذ / رئيس '+sentTo;
+}
+
+function createIsti3jal(id){
+  var d=null; for(var i=0;i<DATA_KHOBARA.length;i++) if(String(DATA_KHOBARA[i].id)==String(id)) d=DATA_KHOBARA[i];
+  var sentTo = d.khobara.sentTo||'خبراء';
+  var no3 = d.khobara.no3||'خبراء';
+  var jeha = getMokhatabTitle(sentTo, no3);
+  var daira = d.khobara.daira||'٣٢';
+  var mostanef = d.mostanef||'................';
+  var ded = d.ded||'................';
+  var saderNo = d.khobara.saderNo||'........';
+  var saderAam = d.khobara.saderAam||'........';
+  var saderKhas = d.khobara.saderKhas||'........';
+  var sentDate = formatDateYYYYMMDD(d.khobara.sentDate||'........');
+  var nextGalsa = formatDateYYYYMMDD(d.galsaAsasia||d.galsaQadima||d.khobara.farDate||'........');
+  var raqm = toAr(d.raqm);
+  var sana = toAr(d.sana);
+  var raqmSana = raqm+' / '+sana;
+  var saderText = 'رقم صادر '+toAr(saderNo)+' عام '+toAr(saderAam)+' وخاص '+toAr(saderKhas)+' بتاريخ '+toAr(sentDate);
+  var content = `
+  <div id="printArea" style="font-family:'Traditional Arabic',Tahoma;direction:rtl;padding:25px 30px;background:#fff;color:#000;line-height:2;font-size:14.5px;border:1px solid #000">
+    <div style="display:flex;justify-content:space-between">
+      <div style="text-align:left;line-height:1.6;font-weight:bold">
+        محكمة استئناف القاهرة<br>
+        مأمورية القاهرة الجديدة<br>
+        الدائرة ${toAr(daira)} أحوال
+      </div>
+      <div></div>
+    </div>
+    <div style="margin-top:35px">
+      <p style="text-align:center;font-weight:bold;font-size:15px">${jeha}</p>
+      <p style="text-align:center;margin-top:18px;font-weight:bold">تحية طيبة وبعد ،،،</p>
+      <p style="margin-top:22px;text-align:justify">
+        نرجو سرعة إرسال التقرير الخاص بالاستئناف رقم <b>${raqmSana} ق</b> والمرفوع من <b>${mostanef}</b> ضد <b>${ded}</b>،
+        والمرسل إليكم بــ ${saderText}،
+        وذلك قبل جلسة <b>${toAr(nextGalsa)}</b> وحتى يتسنى للمحكمة الفصل في الاستئناف.
+      </p>
+      <p style="text-align:center;margin-top:28px;font-weight:bold">وتفضلوا سيادتكم بقبول وافر الاحترام ،،،</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:80px;text-align:center;font-weight:bold">
+      <div>أمين السر<br><br><br>.........................</div>
+      <div>رئيس الجلسات<br><br><br>.........................</div>
+      <div>الأمين العام<br><br><br>.........................</div>
+    </div>
+  </div>
+  `;
+  document.getElementById('isti3jalContent').innerHTML=content;
+  document.getElementById('isti3jalModal').style.display='flex';
+}
+function printIsti3jal(){
+  var pc=document.getElementById('printArea').innerHTML;
+  var w=window.open('','','height=850,width=950');
+  w.document.write('<html dir="rtl"><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:15mm 20mm 15mm 20mm;} html,body{margin:0;padding:0} body{font-family:Tahoma;padding:20px;direction:rtl} #printArea{width:100%;max-width:100%} @media print{button{display:none} body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+pc+'<script>window.onload=function(){setTimeout(function(){window.print();},300)}<\/script></body></html>');
+  w.document.close();
+}
+loadAll();
+</script>
+</body>
+</html>

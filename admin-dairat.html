@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head><script src="daira-core.js"></script></head>
+<body style="background:#0b1e3a; color:white; font-family:sans-serif; padding:20px; text-align:center">
+  <h2 style="color:#C9A227">لوحة تحكم الدوائر - للمالك فقط</h2>
+  <input id="adminPass" type="password" placeholder="كلمة سر الأدمن" style="padding:12px; width:80%">
+  <br><br>
+  <button onclick="loginAdmin()" style="padding:12px 30px; background:#C9A227; border:0">دخول</button>
+  <div id="list" style="margin-top:20px"></div>
+<script>
+const ADMIN_PASS = 'd32admin2026'; // غيرها لباسورد خاص بيك انت بس
+function loginAdmin(){
+  if(document.getElementById('adminPass').value !== ADMIN_PASS){ alert('غلط'); return; }
+  let html = '';
+  for(let i=1;i<=39;i++){
+    let stopped = localStorage.getItem('STOP_'+i) === '1';
+    html += `<div style="background:#132a4d; margin:8px; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center">
+      <b>دائرة ${i}</b>
+      <span>${stopped ? '🔴 موقوفة' : '🟢 شغالة'}</span>
+      <button onclick="toggleDaira(${i})" style="padding:8px 16px; background:${stopped ? 'green':'red'}; color:white; border:0">${stopped ? 'تشغيل' : 'إيقاف'}</button>
+    </div>`;
+  }
+  document.getElementById('list').innerHTML = html;
+}
+async function toggleDaira(d){
+  let cur = localStorage.getItem('STOP_'+d) === '1';
+  localStorage.setItem('STOP_'+d, cur ? '0' : '1');
+  // هنبعت للسكريبت عشان يحفظها في ADMIN_CONTROL.json على الدرايف
+  await fetch(`${SCRIPT_URL}?action=admin_toggle&daira=${d}&state=${cur ? 'active' : 'stopped'}`);
+  alert(`دائرة ${d} بقت ${cur ? 'شغالة' : 'موقوفة'}`);
+  loginAdmin();
+}
+</script>
+</body>
+</html>

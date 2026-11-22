@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar"><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>ادخال إصدار 2 - إدخال جماعي جدول - إنتر للتنقل - 1492 كامل</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>*{box-sizing:border-box;font-family:Tahoma;margin:0;padding:0}body{background:#eef2f7;direction:rtl;padding:12px}header{background:#0f1f3a;color:#ffd966;padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}.card{background:#fff;padding:14px;border-radius:10px;margin-top:10px;box-shadow:0 2px 8px rgba(0,0,0,.15)}.btn{padding:10px 16px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin:4px;font-size:12px}.btn-gold{background:#C9A227;color:#000}.btn-dark{background:#333;color:#fff}.btn-green{background:#16a34a;color:#fff}.btn-blue{background:#1976D2;color:#fff}.btn-purple{background:#6a1b9a;color:#fff}.input,textarea,select{padding:9px;border:1.5px solid #999;border-radius:6px;width:100%;font-size:12px}.mainGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.rightCol{border-left:2px dashed #aaa;padding-left:12px}.rowFlex{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}.titleBar{background:#0f1f3a;color:#fff;padding:7px;border-radius:6px;text-align:center;font-size:12px;font-weight:bold;margin-bottom:10px}.elasticBox{min-height:55px;resize:none;overflow:hidden}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:10px}.modalBox{background:#fff;width:100%;max-width:1050px;border-radius:12px;padding:16px;max-height:95vh;overflow:auto}.gridMap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}label{font-size:11px;font-weight:bold;color:#0f1f3a;display:block;margin-bottom:2px}
+.progress{width:100%;height:18px;background:#eee;border-radius:10px;overflow:hidden;margin:8px 0;display:none}.progressBar{height:100%;background:#16a34a;width:0%;transition:width .2s;text-align:center;color:#fff;font-size:11px;line-height:18px}
+/* bulk modal full screen */
+#bulkModal{position:fixed;inset:0;background:#eef2f7;z-index:10000;display:none;flex-direction:column}
+#bulkHeader{background:#0f1f3a;color:#ffd966;padding:10px;display:flex;justify-content:space-between;align-items:center}
+#bulkTableWrap{flex:1;overflow:auto;background:#fff;padding:6px}
+.bulkTable{border-collapse:collapse;width:100%;font-size:11px;min-width:1200px}
+.bulkTable th{background:#0f1f3a;color:#fff;padding:6px 4px;position:sticky;top:0;z-index:2;border:1px solid #333;font-size:11px;white-space:nowrap}
+.bulkTable td{border:1px solid #ccc;padding:2px}
+.bulkTable input,.bulkTable select,.bulkTable textarea{width:100%;border:none;padding:5px;font-size:11px;outline:none;background:#fff}
+.bulkTable input:focus,.bulkTable select:focus,.bulkTable textarea:focus{background:#fffbe6;border:1px solid #C9A227}
+.bulkTable tr:nth-child(even){background:#f9fafb}
+.rowNum{background:#eee;text-align:center;font-weight:bold;color:#333;width:30px}
+</style>
+</head>
+<body>
+<header><div>ادخال - <b id="cnt">0</b> متداول | <b id="cntAhkam">0</b> احكام | إصدار 2 - إدخال جماعي + إنتر | <span id="verInfo"></span></div><div>
+<input type="file" id="fileJson" accept=".json" style="display:none" onchange="importJsonFile(event)">
+<button class="btn" style="background:#16a34a;color:#fff" onclick="openJsonCard()">📂 استيراد JSON</button>
+<button class="btn btn-purple" onclick="openBulkModal()">📋 إدخال جماعي (جدول)</button>
+<button class="btn btn-gold" onclick="openImportModal()">استيراد اكسل</button><button class="btn btn-dark" onclick="location.href='tadeil.html'">تعديل</button></div></header>
+
+<div id="jsonImportCard" class="card" style="border:2px solid #16a34a;background:#f0fff4;display:none">
+<div class="titleBar" style="background:#16a34a;display:flex;justify-content:space-between;align-items:center"><span>📂 استيراد JSON - إصدار 2 - يستورد الكل تلقائي - FIX 85%</span><button class="btn btn-dark" style="padding:4px 10px" onclick="closeJsonCard()">✕ إغلاق</button></div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+<input type="file" id="fileJson2" accept=".json" class="input" style="width:300px;display:none" onchange="importJsonFile(event)">
+<button class="btn btn-blue" onclick="document.getElementById('fileJson2').click()">📂 اختار ملف JSON - هيستورد 1492 كامل</button>
+<span id="jsonStatus" style="font-size:11px;color:#333;font-weight:bold"></span>
+</div>
+<div class="progress" id="progressWrap"><div class="progressBar" id="progressBar">0%</div></div>
+<div id="logImport" style="font-size:11px;background:#fff;padding:6px;border-radius:6px;max-height:120px;overflow:auto;margin-top:6px;white-space:pre-wrap;border:1px solid #ddd"></div>
+</div>
+
+<div class="card">
+<div class="titleBar">ادخال قضية جديدة (فردي)</div>
+<div class="mainGrid">
+<div class="rightCol">
+<div class="rowFlex"><label style="min-width:90px">رقم الاستئناف *</label><input id="inRaqm" class="input" style="width:100px"><label style="min-width:40px">سنة *</label><input id="inSana" class="input" style="width:70px"></div>
+<div class="rowFlex"><label style="min-width:90px">المستأنف</label><textarea id="inMost" class="input elasticBox" oninput="autoGrow(this)"></textarea></div>
+<div class="rowFlex"><label style="min-width:90px">ضده</label><textarea id="inDed" class="input elasticBox" oninput="autoGrow(this)"></textarea></div>
+<div class="rowFlex"><label style="min-width:90px">نوع الدعوى</label><input id="inNoa" class="input" style="width:160px"></div>
+<div class="rowFlex"><label style="min-width:90px">الجلسة القادمة *</label><input id="inQadima" type="date" class="input" style="width:180px"></div>
+<div class="rowFlex"><label style="min-width:90px">تاريخ القيد</label><input id="inQaid" type="date" class="input" style="width:130px"><label style="min-width:70px">المصدر *</label><select id="inMasdar" class="input" style="width:150px;background:#fffbe6;border:2px solid #C9A227"><option value="جديدة" selected>جديدة</option><option value="محالة من دائرة أخرى">محالة من دائرة أخرى</option><option value="محالة من محكمة أخرى">محالة من محكمة أخرى</option></select></div>
+</div>
+<div>
+<div class="rowFlex"><label style="min-width:110px">رقم المبتدأة</label><input id="inRaqmAwal" class="input" style="width:100px"><label style="min-width:50px">سنة</label><input id="inSanaAwal" class="input" style="width:70px"></div>
+<div class="rowFlex"><label style="min-width:110px">المحكمة</label><input id="inMahkama" class="input" style="width:140px" list="mahList"><datalist id="mahList"></datalist></div>
+<div class="rowFlex"><label style="min-width:110px">حكم أول درجة</label><input id="inHokmAwal" type="date" class="input" style="width:150px;background:#fffbe6;border:2px solid #16a34a"></div>
+<div class="rowFlex"><label style="min-width:110px">المفردات</label><select id="inMof" class="input" style="width:140px"><option value="لم ترد" selected>لم ترد</option><option value="وردت">وردت</option><option value="مقابل">مقابل</option><option value="فرعى">فرعى</option><option value="س ف">س ف</option></select></div>
+<div class="rowFlex"><label style="min-width:110px">الزوجي والفردي</label><select id="inZawgy" class="input" style="width:140px"><option value="1" selected>فردي</option><option value="2">زوجي</option><option value="0">مضمومة</option></select></div>
+<div class="rowFlex"><label style="min-width:110px">ملاحظات</label><textarea id="inNotes" class="input elasticBox" style="width:140px;min-height:60px;background:#fffbe6" oninput="autoGrow(this)"></textarea></div>
+</div>
+</div>
+<button class="btn btn-green" onclick="addManual()" style="width:100%;margin-top:12px;padding:13px">💾 حفظ القضية</button>
+</div>
+
+<!-- نافذة الإدخال الجماعي ملء الشاشة -->
+<div id="bulkModal">
+<div id="bulkHeader">
+<div>📋 إدخال جماعي - جدول - اضغط Enter للانتقال للخانة التالية - <span id="bulkCount">0 قضية جاهزة</span></div>
+<div>
+<button class="btn btn-green" onclick="saveBulk()">💾 حفظ الكل</button>
+<button class="btn btn-blue" onclick="addBulkRow()">➕ إضافة صف</button>
+<button class="btn btn-gold" onclick="add10Rows()">➕ 10 صفوف</button>
+<button class="btn btn-dark" onclick="closeBulkModal()">✕ إغلاق</button>
+</div>
+</div>
+<div style="background:#fffbe6;padding:6px;font-size:11px;border-bottom:1px solid #C9A227">تعليمات: رقم → سنة → مستأنف → ضده → نوع → جلسة قادمة → تاريخ القيد → رقم ابتدائي → سنة ابتدائي → المحكمة → حكم أول درجة → ملاحظات - Enter للتنقل - افتراضي: جديدة / لم ترد / فردي</div>
+<div id="bulkTableWrap">
+<table class="bulkTable" id="bulkTable">
+<thead>
+<tr>
+<th>#</th>
+<th>رقم الاستئناف *</th>
+<th>سنة *</th>
+<th>المستأنف</th>
+<th>ضده</th>
+<th>نوع الدعوى</th>
+<th>الجلسة القادمة *</th>
+<th>تاريخ القيد</th>
+<th>رقم المبتدأة</th>
+<th>سنة ابتدائي</th>
+<th>المحكمة</th>
+<th>حكم أول درجة</th>
+<th>ملاحظات</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="bulkTbody"></tbody>
+</table>
+</div>
+</div>
+
+<div id="importModal" class="modal"><div class="modalBox">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3>استيراد اكسل</h3><button class="btn btn-dark" onclick="closeImportModal()">اغلاق</button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+<div style="border:2px solid #0f1f3a;border-radius:10px;padding:12px"><h4 style="background:#0f1f3a;color:#fff;padding:6px;border-radius:6px;text-align:center">متداول</h4><input type="file" id="fileV3" accept=".xlsx,.xls" style="margin:8px 0"><div id="mapV3" style="display:none"><div class="gridMap" id="colsV3"></div><button class="btn btn-green" onclick="saveV3()" style="width:100%;margin-top:10px">حفظ المتداول</button></div><div id="logV3" style="font-size:9px;background:#f8fafc;padding:4px;margin-top:4px"></div></div>
+<div style="border:2px solid #C9A227;border-radius:10px;padding:12px"><h4 style="background:#C9A227;color:#000;padding:6px;border-radius:6px;text-align:center">احكام</h4><input type="file" id="fileAh" accept=".xlsx,.xls" style="margin:8px 0"><div id="mapAh" style="display:none"><div class="gridMap" id="colsAh"></div><button class="btn btn-green" onclick="saveAh()" style="width:100%;margin-top:10px">حفظ الاحكام</button></div><div id="logAh" style="font-size:9px;background:#f8fafc;padding:4px;margin-top:4px"></div></div>
+</div>
+</div></div>
+
+<script>
+const DB_NAME='D32_DB';
+var DATA=[]; var DATA_AHKAM=[];
+var rawV3=[],headV3=[],rawAh=[],headAh=[];
+
+// ===== إصلاح استيراد الإكسل + حماية بدون localStorage - START =====
+window._isEditing = false;
+window._hasUnsavedChanges = false;
+let _editTimeout = null;
+window._draftMemory = null;
+function markEditing(){ window._isEditing=true; window._hasUnsavedChanges=true; try{ parent.postMessage({type:'D32_EDITING'}, '*'); }catch(e){} clearTimeout(_editTimeout); _editTimeout=setTimeout(()=>{window._isEditing=false;},60000); }
+function clearEditingFlag(){ window._isEditing=false; window._hasUnsavedChanges=false; clearTimeout(_editTimeout); window._draftMemory=null; }
+function attachEditingListeners(){ document.querySelectorAll('input, textarea, select').forEach(el=>{ if(el.dataset.editingAttached) return; el.dataset.editingAttached='1'; el.addEventListener('input', markEditing); el.addEventListener('change', markEditing); el.addEventListener('focus', ()=>{ window._isEditing=true; }); }); }
+document.addEventListener('DOMContentLoaded', ()=>{ attachEditingListeners(); const obs=new MutationObserver(()=>{attachEditingListeners();}); obs.observe(document.body,{childList:true,subtree:true}); let f1=document.getElementById('fileV3'); if(f1) f1.addEventListener('change', handleExcelFileV3); let f2=document.getElementById('fileAh'); if(f2) f2.addEventListener('change', handleExcelFileAh); });
+window.addEventListener('beforeunload', (e)=>{ if(window._hasUnsavedChanges){ e.preventDefault(); e.returnValue='عندك بيانات لم تحفظ'; return e.returnValue; }});
+
+var excelHeadersV3=[]; var excelRowsV3=[]; var excelHeadersAh=[]; var excelRowsAh=[];
+
+function handleExcelFileV3(e){
+  let file=e.target.files[0]; if(!file) return;
+  document.getElementById('logV3').textContent='⏳ جاري قراءة '+file.name+'...';
+  let reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      let wb=XLSX.read(ev.target.result,{type:'binary'});
+      let ws=wb.Sheets[wb.SheetNames[0]];
+      let json=XLSX.utils.sheet_to_json(ws,{header:1, defval:''});
+      if(json.length<2){ document.getElementById('logV3').textContent='❌ الملف فارغ'; return; }
+      excelHeadersV3=json[0].map(h=>String(h||'').trim());
+      excelRowsV3=json.slice(1);
+      document.getElementById('logV3').textContent='✅ قراءة: '+excelRowsV3.length+' صف - الأعمدة: '+excelHeadersV3.join(' | ');
+      buildExcelMapping('V3', excelHeadersV3);
+      document.getElementById('mapV3').style.display='block';
+    }catch(err){ document.getElementById('logV3').textContent='❌ خطأ: '+err.message; }
+  };
+  reader.readAsBinaryString(file);
+}
+function handleExcelFileAh(e){
+  let file=e.target.files[0]; if(!file) return;
+  document.getElementById('logAh').textContent='⏳ جاري قراءة '+file.name+'...';
+  let reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      let wb=XLSX.read(ev.target.result,{type:'binary'});
+      let ws=wb.Sheets[wb.SheetNames[0]];
+      let json=XLSX.utils.sheet_to_json(ws,{header:1, defval:''});
+      if(json.length<2){ document.getElementById('logAh').textContent='❌ الملف فارغ'; return; }
+      excelHeadersAh=json[0].map(h=>String(h||'').trim());
+      excelRowsAh=json.slice(1);
+      document.getElementById('logAh').textContent='✅ قراءة: '+excelRowsAh.length+' صف - الأعمدة: '+excelHeadersAh.join(' | ');
+      buildExcelMapping('Ah', excelHeadersAh);
+      document.getElementById('mapAh').style.display='block';
+    }catch(err){ document.getElementById('logAh').textContent='❌ خطأ: '+err.message; }
+  };
+  reader.readAsBinaryString(file);
+}
+function buildExcelMapping(type, headers){
+  let containerId=type==='V3'?'colsV3':'colsAh';
+  let container=document.getElementById(containerId);
+  container.innerHTML='';
+  let fields=type==='V3' ? 
+    [{key:'raqm', label:'رقم الاستئناف *'}, {key:'sana', label:'سنة *'}, {key:'most', label:'المستأنف'}, {key:'ded', label:'ضده'}, {key:'galsa', label:'الجلسة القادمة *'}, {key:'noa', label:'نوع الدعوى'}, {key:'mahkama', label:'المحكمة'}, {key:'raqmAwal', label:'رقم ابتدائي'}, {key:'sanaAwal', label:'سنة ابتدائي'}, {key:'tarQaid', label:'تاريخ القيد'}, {key:'tarHokmAwal', label:'حكم أول درجة'}, {key:'mof', label:'المفردات'}, {key:'notes', label:'ملاحظات'}] :
+    [{key:'raqm', label:'رقم *'}, {key:'sana', label:'سنة *'}, {key:'tarHokm', label:'تاريخ الحكم'}, {key:'most', label:'المستأنف'}, {key:'ded', label:'ضده'}];
+  fields.forEach(f=>{
+    let div=document.createElement('div');
+    let selId='sel_'+type+'_'+f.key;
+    let opts='<option value="">-- تجاهل --</option>'+headers.map((h,i)=>'<option value="'+i+'">'+(i+1)+': '+h+'</option>').join('');
+    div.innerHTML='<label>'+f.label+'</label><select id="'+selId+'" class="input" style="padding:6px;font-size:11px">'+opts+'</select>';
+    container.appendChild(div);
+  });
+  setTimeout(()=>{
+    headers.forEach((h,idx)=>{
+      let nh=String(h||'').toLowerCase();
+      if(nh.includes('رقم') && !nh.includes('ابتد')){ let s=document.getElementById('sel_'+type+'_raqm'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('سنة') && !nh.includes('ابتد')){ let s=document.getElementById('sel_'+type+'_sana'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('جلسة') || nh.includes('قادم')){ let s=document.getElementById('sel_'+type+'_galsa'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('قيد')){ let s=document.getElementById('sel_'+type+'_tarQaid'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('حكم') && nh.includes('أول')){ let s=document.getElementById('sel_'+type+'_tarHokmAwal'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('مفرد')){ let s=document.getElementById('sel_'+type+'_mof'); if(s && !s.value) s.value=idx; }
+      if(nh.includes('ملاحظ') || nh.includes('ملاحظه')){ let s=document.getElementById('sel_'+type+'_notes'); if(s && !s.value) s.value=idx; }
+    });
+  },100);
+}
+
+async function saveV3(){
+  if(excelRowsV3.length===0){ alert('اختر ملف إكسل أولا'); return; }
+  let map={};
+  ['raqm','sana','most','ded','galsa','noa','mahkama','raqmAwal','sanaAwal','tarQaid','tarHokmAwal','mof','notes'].forEach(k=>{ let sel=document.getElementById('sel_V3_'+k); if(sel && sel.value!=='') map[k]=parseInt(sel.value); });
+  if(map.raqm===undefined || map.sana===undefined || map.galsa===undefined){ alert('لازم تختار: رقم + سنة + جلسة'); return; }
+  let byDate={}; DATA.forEach(a=>{ let d=cleanDate(a.galsaQadima||a.galsa||a.galsaAsasia||a.tar||''); if(!d) return; if(!byDate[d]) byDate[d]=0; let seq=a._seq||a._fileIndex||0; if(seq>byDate[d]) byDate[d]=seq; });
+  let newCases=[]; let added=0;
+  _pendingBatch=newCases;
+  let warnings=[]; let sabiqList=[];
+  for(let row of excelRowsV3){
+    if(!row || row.length===0) continue;
+    let raqm=map.raqm!==undefined?String(row[map.raqm]||'').trim():'';
+    let sana=map.sana!==undefined?String(row[map.sana]||'').trim():'';
+    let galsaRaw=map.galsa!==undefined?row[map.galsa]:'';
+    if(!raqm || !sana || !galsaRaw) continue;
+    let galsa=parseExcelDate(galsaRaw);
+    if(!galsa) continue;
+    if(!byDate[galsa]) byDate[galsa]=0; byDate[galsa]++; let seq=byDate[galsa];
+    let tarQaidVal = map.tarQaid!==undefined ? parseExcelDate(row[map.tarQaid]) : '';
+    let tarHokmVal = map.tarHokmAwal!==undefined ? parseExcelDate(row[map.tarHokmAwal]) : '';
+    let raqmAwalVal = map.raqmAwal!==undefined?String(row[map.raqmAwal]||''):'';
+    let sanaAwalVal = map.sanaAwal!==undefined?String(row[map.sanaAwal]||''):'';
+    let mahkamaVal = map.mahkama!==undefined?String(row[map.mahkama]||''):'';
+    let mofExcel = map.mof!==undefined ? String(row[map.mof]||'').trim() : '';
+    let notesVal = map.notes!==undefined ? String(row[map.notes]||'') : '';
+    // نفس منطق الفرعي / المقابل / س ف بتاع الإدخال الفردي والجماعي
+    let check=checkEsteenafType(raqm,sana,raqmAwalVal,sanaAwalVal,mahkamaVal,tarQaidVal,tarHokmVal);
+    let mofVal='لم ترد';
+    if(check.sabiq){
+      mofVal='س ف';
+      sabiqList.push({ra:raqm+'/'+sana, raA:raqmAwalVal+'/'+sanaAwalVal+' '+(mahkamaVal||''), sabiq:check.sabiq});
+    } else if(check.type==='مقابل'){
+      mofVal='مقابل';
+    } else if(check.type==='فرعي'){
+      mofVal='فرعى';
+    } else {
+      // أصلي - سيب قيمة الإكسل لو موجودة (وردت / لم ترد) وإلا لم ترد
+      if(mofExcel && mofExcel!=='مقابل' && mofExcel!=='فرعى' && mofExcel!=='س ف') mofVal=mofExcel;
+      else if(mofExcel==='وردت') mofVal='وردت';
+      else mofVal='لم ترد';
+    }
+    if(check.type!=='أصلي'){
+      warnings.push(raqm+'/'+sana+' => '+check.type+' ('+mofVal+')'+(check.diff!==null?' فرق '+check.diff+' يوم':''));
+    }
+    newCases.push({ id:Date.now()+Math.random()+seq, raqm:raqm, sana:sana, most: map.most!==undefined?String(row[map.most]||''):'', mostanef: map.most!==undefined?String(row[map.most]||''):'', ded: map.ded!==undefined?String(row[map.ded]||''):'', noa: map.noa!==undefined?String(row[map.noa]||''):'استئناف', galsaQadima:galsa, galsaAsasia:galsa, galsa:galsa, tar:galsa, galsaSabiqa:'جديدة', mahkama: mahkamaVal, raqmAwal: raqmAwalVal, sanaAwal: sanaAwalVal, tarQaid:tarQaidVal, tarHokmAwal:tarHokmVal, mofradat:mofVal, mof:mofVal, esteenafType:check.type, esteenafDiff:check.diff, zawgy:1, masdar:'جديدة', molahazat:notesVal, notes:notesVal, jalsat:[], _fileIndex:seq, _sessionOrder:seq, _manualOrder:seq, _seq:seq, _updatedAt:Date.now() });
+    added++;
+  }
+  if(added===0){ alert('لا يوجد صفوف صالحة'); return; }
+  let confirmMsg='سيتم إضافة '+added+' قضية\n';
+  if(sabiqList.length>0){
+    confirmMsg+='\n⚠ تنبيه سابقة فصل ('+sabiqList.length+'):\n'+sabiqList.map(s=> s.ra+' - '+s.raA+' - سبق فصل في '+s.sabiq.raqm+'/'+s.sabiq.sana+' - '+ (s.sabiq.qar||'')).join('\n')+'\nسيتم حفظها كـ س ف\n';
+  }
+  if(warnings.length>0){
+    confirmMsg+='\nتصنيف الاستئنافات:\n'+warnings.join('\n')+'\n';
+  }
+  confirmMsg+='\nهل تريد الحفظ؟';
+  if(sabiqList.length>0){
+    let firstSabiq=newCases.find(c=>c.mof==='س ف');
+    if(firstSabiq){
+      let check=checkEsteenafType(firstSabiq.raqm,firstSabiq.sana,firstSabiq.raqmAwal,firstSabiq.sanaAwal,firstSabiq.mahkama,firstSabiq.tarQaid,firstSabiq.tarHokmAwal);
+      let cont=await showSabiqAlert(check, firstSabiq.raqmAwal, firstSabiq.sanaAwal, firstSabiq.mahkama);
+      if(!cont){ _pendingBatch=[]; return; }
+    }
+  }
+  if(!confirm(confirmMsg)){ _pendingBatch=[]; return; }
+  DATA=DATA.concat(newCases); await saveAll(); clearEditingFlag(); alert('✅ تم حفظ '+added+' قضية - الكلي: '+DATA.length+(sabiqList.length?'\nس ف: '+sabiqList.length:'')); document.getElementById('mapV3').style.display='none'; document.getElementById('fileV3').value=''; closeImportModal();
+}
+async function saveAh(){
+  if(excelRowsAh.length===0){ alert('اختر ملف إكسل أحكام'); return; }
+  let map={}; ['raqm','sana','tarHokm','most','ded'].forEach(k=>{ let sel=document.getElementById('sel_Ah_'+k); if(sel && sel.value!=='') map[k]=parseInt(sel.value); });
+  if(map.raqm===undefined || map.sana===undefined){ alert('لازم رقم وسنة'); return; }
+  let added=0;
+  for(let row of excelRowsAh){
+    let raqm=map.raqm!==undefined?String(row[map.raqm]||'').trim():'';
+    let sana=map.sana!==undefined?String(row[map.sana]||'').trim():'';
+    if(!raqm || !sana) continue;
+    DATA_AHKAM.push({ id:Date.now()+Math.random(), raqm:raqm, sana:sana, tarHokm: map.tarHokm!==undefined?cleanDate(toYMD(row[map.tarHokm])):'', most: map.most!==undefined?String(row[map.most]||''):'', ded: map.ded!==undefined?String(row[map.ded]||''):'', _updatedAt:Date.now() });
+    added++;
+  }
+  if(added===0){ alert('لا يوجد صفوف'); return; }
+  if(!confirm('إضافة '+added+' حكم؟')) return;
+  await saveAll(); clearEditingFlag(); alert('✅ تم حفظ '+added+' حكم'); document.getElementById('mapAh').style.display='none'; document.getElementById('fileAh').value=''; closeImportModal();
+}
+// ===== إصلاح إكسل + حماية - END =====
+
+
+// ===== منطق الاستئناف أصلي / مقابل / فرعي + س ف - START =====
+function toNumAr(s){return String(s||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c)).replace(/[^0-9]/g,'');}
+function normAr(s){return String(s||'').replace(/\s+/g,'').replace(/أ|إ|آ/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim().toLowerCase();}
+function parseDateObj(s){
+  if(!s) return null;
+  s=String(s).replace(/-/g,'/').trim();
+  let m=s.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+  if(m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+  return null;
+}
+function diffDays(d1,d2){
+  let a=parseDateObj(d1); let b=parseDateObj(d2);
+  if(!a||!b) return null;
+  let diff=Math.floor((a-b)/(1000*60*60*24));
+  return diff;
+}
+function isQat3i(qar){
+  if(!qar) return false;
+  let q=normAr(qar);
+  if(q.includes('قطعي')||q.includes('قطعى')||q.includes('نهائي')||q.includes('نهائى')) return true;
+  if(q.includes('تمهيدي')||q.includes('تمهيدى')||q.includes('تحقيق')||q.includes('خبراء')||q.includes('وقف')||q.includes('شطب')||q.includes('حجز')||q.includes('استجواب')) return false;
+  if(q.includes('رفض')||q.includes('تأييد')||q.includes('الغاء')||q.includes('إلغاء')||q.includes('الزام')||q.includes('إلزام')||q.includes('قبول')||q.includes('عدم جواز')||q.includes('عدم قبول')) return true;
+  if(qar.trim().length>3 && q.length>2) return true;
+  return false;
+}
+
+var _pendingBatch=[];
+function findDa3waExisting(raqmAwal,sanaAwal,mahkama){
+  if(!raqmAwal||!sanaAwal) return [];
+  let ra=normAr(raqmAwal); let sa=normAr(sanaAwal); let mh=normAr(mahkama);
+  return DATA.concat(_pendingBatch||[]).filter(a=>{
+    if(!a.raqmAwal||!a.sanaAwal) return false;
+    let r=normAr(a.raqmAwal); let s=normAr(a.sanaAwal); let m=normAr(a.mahkama||'');
+    if(mh){ return r===ra && s===sa && m===mh; }
+    return r===ra && s===sa;
+  });
+}
+function findQat3iForDa3wa(raqmAwal,sanaAwal,mahkama){
+  let existing=findDa3waExisting(raqmAwal,sanaAwal,mahkama);
+  if(existing.length===0) return null;
+  for(let ap of existing){
+    let kRaqm=normAr(ap.raqm); let kSana=normAr(ap.sana);
+    for(let ah of DATA_AHKAM){
+      if(normAr(ah.raqm)===kRaqm && normAr(ah.sana)===kSana){
+        if(isQat3i(ah.qar||ah.mantouq||ah.qarar)){
+          return {raqm:ah.raqm||ap.raqm, sana:ah.sana||ap.sana, qar:ah.qar||ah.mantouq||ah.qarar, da3wa:ap};
+        }
+      }
+    }
+  }
+  return null;
+}
+function checkEsteenafType(raqm,sana,raqmAwal,sanaAwal,mahkama,tarQaid,tarHokmAwal){
+  let result={type:'أصلي', mof:'لم ترد', diff:null, existing:[], sabiq:null};
+  if(!raqmAwal||!sanaAwal) return result;
+  result.existing=findDa3waExisting(raqmAwal,sanaAwal,mahkama);
+  if(tarQaid&&tarHokmAwal){
+    result.diff=diffDays(tarQaid,tarHokmAwal);
+  }
+  result.sabiq=findQat3iForDa3wa(raqmAwal,sanaAwal,mahkama);
+  if(result.sabiq){
+    result.type='س ف';
+    result.mof='س ف';
+    return result;
+  }
+  if(result.existing.length===0){
+    result.type='أصلي';
+    result.mof='لم ترد';
+    return result;
+  }
+  let sortedExisting=[...result.existing].sort((a,b)=>{
+    let sa=parseInt(toNumAr(a.sana)||'0'); let sb=parseInt(toNumAr(b.sana)||'0');
+    if(sa!==sb) return sa-sb;
+    let ra=parseInt(toNumAr(a.raqm)||'0'); let rb=parseInt(toNumAr(b.raqm)||'0');
+    return ra-rb;
+  });
+  let firstExisting=sortedExisting[0];
+  let firstSana=parseInt(toNumAr(firstExisting.sana)||'0');
+  let firstRaqm=parseInt(toNumAr(firstExisting.raqm)||'0');
+  let curSana=parseInt(toNumAr(sana)||'0');
+  let curRaqm=parseInt(toNumAr(raqm)||'0');
+  let isNewSmaller=false;
+  if(curSana!==firstSana){
+    isNewSmaller = curSana < firstSana;
+  } else {
+    isNewSmaller = curRaqm < firstRaqm;
+  }
+  if(result.diff===null){
+    result.type='مقابل';
+    result.mof='مقابل';
+    if(isNewSmaller){
+      result.type='أصلي';
+      result.mof='لم ترد';
+    }
+    return result;
+  }
+  if(result.diff>40){
+    result.type='فرعي';
+    result.mof='فرعى';
+  } else {
+    if(isNewSmaller){
+      result.type='أصلي';
+      result.mof='لم ترد';
+    } else {
+      result.type='مقابل';
+      result.mof='مقابل';
+    }
+  }
+  return result;
+}
+let pendingSabiqResolve=null;
+function showSabiqAlert(info, raqmAwal, sanaAwal, mahkama){
+  return new Promise(resolve=>{
+    let modal=document.getElementById('sabiqModal');
+    let msgEl=document.getElementById('sabiqMsg');
+    let sabiq=info.sabiq;
+    let html='';
+    if(sabiq){
+      html+=`<div style="font-size:14px;font-weight:bold;color:#b00020;margin-bottom:8px">⚠ الدعوى سبق الفصل فيها</div>`;
+      html+=`<div>الدعوى الابتدائية: <b>${raqmAwal}/${sanaAwal} ${mahkama||''}</b></div>`;
+      html+=`<div>سبق الفصل في الاستئناف رقم: <b style="color:#0f1f3a">${sabiq.raqm} لسنة ${sabiq.sana}</b></div>`;
+      html+=`<div>منطوق الحكم القطعي: <span style="background:#fff;padding:2px 6px;border-radius:4px;border:1px solid #ccc">${sabiq.qar||'بدون منطوق'}</span></div>`;
+      html+=`<div style="margin-top:8px;color:#b00020;font-weight:bold">سيتم حفظ القضية الجديدة كـ <span style="background:#0f1f3a;color:#fff;padding:2px 8px;border-radius:10px">س ف</span> (سابقة فصل)</div>`;
+    }
+    if(info.type==='فرعي' || info.type==='مقابل'){
+      html+=`<div style="margin-top:10px;border-top:1px dashed #999;padding-top:8px">نوع الاستئناف المحتسب: <b style="color:#6a1b9a">${info.type}</b>`;
+      if(info.diff!==null) html+=` - الفرق ${info.diff} يوم بين الإيداع (${info.diff<=40?'خلال الميعاد 40 يوم':'بعد الميعاد'}) وحكم أول درجة`;
+      html+=`</div>`;
+    }
+    msgEl.innerHTML=html;
+    modal.style.display='flex';
+    pendingSabiqResolve=resolve;
+    document.getElementById('btnSabiqContinue').onclick=()=>{
+      document.getElementById('sabiqModal').style.display='none';
+      if(pendingSabiqResolve){ let r=pendingSabiqResolve; pendingSabiqResolve=null; r(true); }
+    };
+  });
+}
+function closeSabiqModal(){
+  document.getElementById('sabiqModal').style.display='none';
+  if(pendingSabiqResolve){ let r=pendingSabiqResolve; pendingSabiqResolve=null; r(false); }
+}
+function closeSabiqModal(){
+  document.getElementById('sabiqModal').style.display='none';
+  if(pendingSabiqResolve){ pendingSabiqResolve(false); pendingSabiqResolve=null; }
+}
+// ===== منطق الاستئناف - END =====
+
+var CURRENT_VER=0;
+
+function logImport(m){ let el=document.getElementById('logImport'); if(el){ el.textContent+=m+'\n'; el.scrollTop=el.scrollHeight; } }
+function setProgress(p,txt){ let wrap=document.getElementById('progressWrap'); let bar=document.getElementById('progressBar'); if(!wrap) return; wrap.style.display='block'; bar.style.width=p+'%'; bar.textContent=p+'% '+(txt||''); }
+function setVerInfo(t){ let el=document.getElementById('verInfo'); if(el) el.textContent=t; }
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    let req=indexedDB.open(DB_NAME,2);
+    req.onupgradeneeded=e=>{
+      let db=e.target.result;
+      if(!db.objectStoreNames.contains('cases')) db.createObjectStore('cases');
+      if(!db.objectStoreNames.contains('ahkam')) db.createObjectStore('ahkam');
+      if(!db.objectStoreNames.contains('d32store')) db.createObjectStore('d32store');
+      if(!db.objectStoreNames.contains('rabtat')) db.createObjectStore('rabtat');
+      CURRENT_VER=e.newVersion;
+    };
+    req.onsuccess=()=>{ CURRENT_VER=req.result.version; setVerInfo('إصدار: '+req.result.version+' - v2 - جماعي + إنتر'); res(req.result); };
+    req.onerror=()=>rej(req.error);
+  });
+}
+
+async function loadAll(){
+  try{
+    let db=await openDB();
+    let tx=db.transaction(['cases','ahkam'],'readonly');
+    let r1=tx.objectStore('cases').get('D32_V3');
+    let r2=tx.objectStore('ahkam').get('D32_AHKAM');
+    r1.onsuccess=()=>{ if(r1.result){ try{ let v=JSON.parse(r1.result); if(Array.isArray(v)&&v.length>1&&Array.isArray(v[1])) v=v[1]; DATA=v||[]; }catch(e){ DATA=[]; } } upd(); };
+    r2.onsuccess=()=>{ if(r2.result){ try{ let v=JSON.parse(r2.result); if(Array.isArray(v)&&v.length>1&&Array.isArray(v[1])) v=v[1]; DATA_AHKAM=v||[]; }catch(e){ DATA_AHKAM=[]; } } upd(); };
+    tx.oncomplete=()=>db.close();
+  }catch(e){ console.log(e); upd(); }
+}
+async function saveAll(){
+  try{
+    let db=await openDB();
+    let tx=db.transaction(['cases','ahkam','d32store'],'readwrite');
+    let sMot=JSON.stringify(DATA);
+    let sAhk=JSON.stringify(DATA_AHKAM);
+    try{tx.objectStore('cases').put(sMot,'D32_V3');}catch(e){}
+    try{tx.objectStore('cases').put(sMot,'D32_FINAL');}catch(e){}
+    try{tx.objectStore('ahkam').put(sAhk,'D32_AHKAM');}catch(e){}
+    try{if(db.objectStoreNames.contains('d32store')){ tx.objectStore('d32store').put(sMot,'D32_V3'); tx.objectStore('d32store').put(sMot,'D32_FINAL'); tx.objectStore('d32store').put(sAhk,'D32_AHKAM'); }}catch(e){}
+    tx.oncomplete=()=>{ upd(); db.close(); };
+    tx.onerror=e=>{ db.close(); alert('خطأ حفظ: '+e.target.error); };
+  }catch(e){ alert('خطأ حفظ: '+e.message); }
+}
+function autoGrow(el){el.style.height='auto';el.style.height=(el.scrollHeight)+'px';}
+function upd(){
+  document.getElementById('cnt').textContent=DATA.length;
+  document.getElementById('cntAhkam').textContent=DATA_AHKAM.length;
+  var set={}; DATA.forEach(x=>{if(x.mahkama) set[x.mahkama.trim()]=1;});
+  var dl=document.getElementById('mahList'); if(dl){ dl.innerHTML=''; for(var k in set){ var o=document.createElement('option'); o.value=k; dl.appendChild(o); } }
+  updateBulkCount();
+}
+function norm(s){return String(s||'').replace(/\s+/g,'').replace(/أ|إ|آ/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();}
+function toEnNum(s){return String(s||'').replace(/[٠-٩]/g,function(c){return '٠١٢٣٤٥٦٧٨٩'.indexOf(c);}).replace(/[۰-۹]/g,function(c){return '۰۱۲۳۴۵۶۷۸۹'.indexOf(c);});}
+function toYMD(v){ if(!v && v!==0) return ''; v=toEnNum(String(v).trim()); if(v.includes('T')) v=v.split('T')[0]; if(v.includes(' ')) v=v.split(' ')[0]; v=v.replace(/-/g,'/').trim(); if(v.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) return v; return v; }
+function cleanDate(s){ if(!s) return ''; s=String(s).trim().replace(/-/g,'/'); return toYMD(s); }
+function parseExcelDate(v){
+  if(v===null||v===undefined||v==='') return '';
+  if(typeof v==='number'){
+    // Excel serial date - 25569 = 1970-01-01
+    if(v>20000 && v<80000){
+      let d=new Date(Math.round((v-25569)*86400*1000));
+      let y=d.getUTCFullYear(), m=String(d.getUTCMonth()+1).padStart(2,'0'), day=String(d.getUTCDate()).padStart(2,'0');
+      return y+'/'+m+'/'+day;
+    }
+    return String(v);
+  }
+  v=toEnNum(String(v).trim());
+  if(v.includes('T')) v=v.split('T')[0];
+  if(v.includes(' ')) v=v.split(' ')[0];
+  v=v.replace(/-/g,'/').trim();
+  // DD/MM/YYYY -> YYYY/MM/DD
+  let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return m[3]+'/'+String(m[2]).padStart(2,'0')+'/'+String(m[1]).padStart(2,'0');
+  // YYYY/MM/DD already
+  if(v.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)){
+    let p=v.split('/'); return p[0]+'/'+String(p[1]).padStart(2,'0')+'/'+String(p[2]).padStart(2,'0');
+  }
+  // numeric string serial
+  if(/^\d{5}$/.test(v)){
+    let num=parseInt(v);
+    if(num>20000 && num<80000){
+      let d=new Date(Math.round((num-25569)*86400*1000));
+      return d.getUTCFullYear()+'/'+String(d.getUTCMonth()+1).padStart(2,'0')+'/'+String(d.getUTCDate()).padStart(2,'0');
+    }
+  }
+  return v;
+}
+
+function parseZawgy(v){var s=String(v||'').trim();if(!s) return 1;if(s=='0'||s=='1'||s=='2') return parseInt(s);var n=norm(s);if(n.indexOf('زوج')>-1) return 2;if(n.indexOf('مضموم')>-1) return 0;return 1;}
+function parseDateStrForSeq(s){
+  s=cleanDate(s);
+  if(!s) return null;
+  var p=s.split('/');
+  if(p.length<3) return null;
+  return {str:s, y:parseInt(p[0]), mo:parseInt(p[1]), d:parseInt(p[2])};
+}
+function getCasesForDateEDKHAL(s){
+  var t=parseDateStrForSeq(s);
+  if(!t) return [];
+  var seen={}; var list=[];
+  DATA.forEach(function(ap, fileIdx){
+    if(ap.tarikhHokm && cleanDate(ap.tarikhHokm)===t.str) return;
+    if(ap.dammTo){ if(!ap.dammDate || cleanDate(ap.dammDate)!==t.str) return; }
+    var matched=false;
+    var jMatched=null;
+    if(ap.jalsat){
+      for(var k=0;k<ap.jalsat.length;k++){
+        var j=ap.jalsat[k];
+        if(j.isMahgoz) continue;
+        var jd=cleanDate(j.tarikh);
+        if(jd && jd===t.str){ matched=true; jMatched=j; break; }
+      }
+    }
+    var q=cleanDate(ap.galsaQadima||ap.galsa||'');
+    if(!matched && q && q===t.str){ matched=true; jMatched={tarikh:t.str}; }
+    var b=cleanDate(ap.galsaAsasia||ap.tar||'');
+    if(!matched && b && b===t.str){ matched=true; jMatched={tarikh:t.str}; }
+    if(matched){
+      var key=ap.raqm+'_'+ap.sana+'_'+t.str;
+      if(!seen[key]){
+        seen[key]=true;
+        var order;
+        if(ap._seq!=null && ap._seq<900000) order=ap._seq;
+        else if(ap._manualOrder!=null && ap._manualOrder<900000) order=ap._manualOrder;
+        else if(ap._sessionOrder!=null && ap._sessionOrder<900000) order=ap._sessionOrder;
+        else if(ap._fileIndex!=null) order=ap._fileIndex;
+        else order=fileIdx;
+        list.push({ap:ap, fileOrder:order});
+      }
+    }
+  });
+  list.sort(function(a,b){ return (a.fileOrder||0)-(b.fileOrder||0); });
+  return list;
+}
+function getNextOrderForDate(dateStr){
+  dateStr=cleanDate(dateStr);
+  if(!dateStr) return DATA.length+1;
+  var list=getCasesForDateEDKHAL(dateStr);
+  if(!list.length) return 1;
+  var max=0;
+  list.forEach(function(o){ var v=(o.fileOrder||0); if(v>max) max=v; });
+  return max+1;
+}
+
+function clearAllInputFields(){
+  // الفردي
+  ['inRaqm','inSana','inMost','inDed','inNoa','inQadima','inQaid','inRaqmAwal','inSanaAwal','inMahkama','inHokmAwal','inNotes'].forEach(function(id){
+    var el=document.getElementById('inRaqm');
+    var el2=document.getElementById(id);
+    if(el2) el2.value='';
+  });
+  // رجّع القوائم للافتراضي
+  var mof=document.getElementById('inMof'); if(mof) mof.value='لم ترد';
+  var zaw=document.getElementById('inZawgy'); if(zaw) zaw.value='1';
+  var mas=document.getElementById('inMasdar'); if(mas) mas.value='جديدة';
+  // الجماعي - امسح كل الصفوف وارجع 20 صف فاضي
+  var tb=document.getElementById('bulkTbody');
+  if(tb){ tb.innerHTML=''; for(var i=0;i<20;i++) addBulkRow(); updateBulkCount(); }
+}
+async function addManual(){
+ var raqm=document.getElementById('inRaqm').value.trim(),sana=document.getElementById('inSana').value.trim(),qadima=document.getElementById('inQadima').value.trim();
+ if(!raqm||!sana||!qadima){alert('رقم وسنة وجلسة قادمة لازم');return;}
+ var raqmAwal=document.getElementById('inRaqmAwal').value.trim();
+ var sanaAwal=document.getElementById('inSanaAwal').value.trim();
+ var mahkama=document.getElementById('inMahkama').value.trim();
+ var tarQaidRaw=document.getElementById('inQaid').value.trim();
+ var tarHokmRaw=document.getElementById('inHokmAwal').value.trim();
+ var qadimaSlash=cleanDate(toYMD(qadima));
+ var tarQaidSlash=cleanDate(toYMD(tarQaidRaw));
+ var tarHokmSlash=cleanDate(toYMD(tarHokmRaw));
+ var mofInput=document.getElementById('inMof').value;
+ var nextOrder = getNextOrderForDate(qadimaSlash);
+ let check=checkEsteenafType(raqm,sana,raqmAwal,sanaAwal,mahkama,tarQaidSlash,tarHokmSlash);
+ let finalMof=mofInput;
+ if(check.sabiq){
+   let cont=await showSabiqAlert(check, raqmAwal, sanaAwal, mahkama);
+   if(!cont) return;
+   finalMof='س ف';
+ } else if(check.type==='مقابل'){
+   finalMof='مقابل';
+ } else if(check.type==='فرعي'){
+   finalMof='فرعى';
+ } else {
+   if(!finalMof) finalMof='لم ترد';
+ }
+ DATA.push({
+   id:Date.now()+Math.random(),
+   raqm:raqm,sana:sana,
+   most:document.getElementById('inMost').value.trim(),
+   mostanef:document.getElementById('inMost').value.trim(),
+   ded:document.getElementById('inDed').value.trim(),
+   noa:document.getElementById('inNoa').value.trim(),
+   galsaQadima:qadimaSlash,galsaAsasia:qadimaSlash,galsa:qadimaSlash,tar:qadimaSlash,
+   galsaSabiqa:'جديدة',
+   tarQaid:tarQaidSlash,
+   tarHokmAwal:tarHokmSlash,
+   raqmAwal:raqmAwal,
+   sanaAwal:sanaAwal,
+   mahkama:mahkama,
+   mofradat:finalMof,mof:finalMof,
+   esteenafType:check.type,
+   zawgy:parseInt(document.getElementById('inZawgy').value||'1'),
+   masdar:document.getElementById('inMasdar').value||'جديدة',
+   molahazat:document.getElementById('inNotes').value.trim(),
+   notes:document.getElementById('inNotes').value.trim(),
+   jalsat:[],
+   _fileIndex: nextOrder, _sessionOrder: nextOrder, _manualOrder: nextOrder, _seq: nextOrder, _updatedAt: Date.now()
+ });
+ await saveAll();
+ let msg='✅ تم الحفظ - رقم '+nextOrder+' في جلسة '+qadimaSlash+' - النوع: '+check.type;
+ if(check.diff!==null) msg+=' (فرق '+check.diff+' يوم)';
+ if(finalMof) msg+=' - المفردات: '+finalMof;
+ alert(msg);
+ clearEditingFlag();
+ document.getElementById('inMof').value=finalMof;
+ clearAllInputFields();
+ document.getElementById('inMof').value=finalMof;
+}
+
+function openImportModal(){document.getElementById('importModal').style.display='flex';}
+function closeImportModal(){document.getElementById('importModal').style.display='none';}
+function openJsonCard(){document.getElementById('jsonImportCard').style.display='block';}
+function closeJsonCard(){document.getElementById('jsonImportCard').style.display='none';}
+function makeV3(){ document.getElementById('mapV3').style.display='block'; }
+function makeAh(){ document.getElementById('mapAh').style.display='block'; }
+
+
+async function rebuildSeqChunked(dataArr, onProgress){
+  return new Promise(resolve=>{
+    let byDate={}; let i=0; let total=dataArr.length;
+    function step1(){
+      let batch=500;
+      for(let c=0;c<batch && i<total;c++,i++){
+        let ap=dataArr[i];
+        let d=cleanDate(ap.galsaAsasia||ap.tar||ap.galsa||'');
+        if(!d) d='__NO_DATE__';
+        if(!byDate[d]) byDate[d]=[];
+        byDate[d].push(ap);
+      }
+      onProgress(Math.floor(i/total*50), 'تجميع '+i+'/'+total);
+      if(i<total) setTimeout(step1,0); else setTimeout(step2,0);
+    }
+    function step2(){
+      let dates=Object.keys(byDate); let di=0;
+      function inner(){
+        let batch=30;
+        for(let c=0;c<batch && di<dates.length;c++,di++){
+          let list=byDate[dates[di]];
+          list.sort((a,b)=>{ var ao=a._fileIndex!=null?a._fileIndex:(a._seq||0); var bo=b._fileIndex!=null?b._fileIndex:(b._seq||0); return ao-bo; });
+          list.forEach((ap,idx)=>{
+            let seq=idx+1;
+            if(ap._seq==null || ap._seq>900000){ ap._fileIndex=seq; ap._sessionOrder=seq; ap._manualOrder=seq; ap._seq=seq; ap._updatedAt=Date.now(); }
+            else { if(ap._manualOrder==null) ap._manualOrder=ap._seq; if(ap._sessionOrder==null) ap._sessionOrder=ap._seq; if(ap._fileIndex==null) ap._fileIndex=ap._seq; }
+          });
+        }
+        onProgress(50+Math.floor(di/dates.length*50), 'ترتيب '+di+'/'+dates.length+' جلسة');
+        if(di<dates.length) setTimeout(inner,0); else resolve();
+      }
+      inner();
+    }
+    step1();
+  });
+}
+
+async function importJsonFile(e){
+  let file=e.target.files[0]; if(!file) return;
+  let st=document.getElementById('jsonStatus'); st.textContent='⏳ جاري القراءة... '+(file.size/1024/1024).toFixed(2)+' MB';
+  setProgress(5,'قراءة الملف...'); 
+  let logEl=document.getElementById('logImport'); if(logEl) logEl.textContent='';
+  logImport('بدء: '+file.name+' - '+(file.size/1024/1024).toFixed(2)+' MB - إصدار 2 - كامل');
+  let reader=new FileReader();
+  reader.onload=async function(ev){
+    try{
+      setProgress(15,'تحليل JSON...'); logImport('تحليل JSON - كامل بدون حذف');
+      let json=JSON.parse(ev.target.result);
+      let allV3=[], allAhkam=[];
+      if(json.D32_V3 || json.D32_FINAL){
+        let rawV = json.D32_V3 || json.D32_FINAL;
+        try{ let arr=JSON.parse(rawV); if(Array.isArray(arr[1])) arr=arr[1]; allV3=arr; }catch(ex){ if(Array.isArray(rawV)) allV3=rawV; }
+        let rawA = json.D32_AHKAM;
+        try{ let arr=JSON.parse(rawA); if(Array.isArray(arr[1])) arr=arr[1]; allAhkam=arr; }catch(ex){ if(Array.isArray(rawA)) allAhkam=rawA; }
+      } else if(typeof json==='object' && !Array.isArray(json)){
+        for(let key in json){
+          let val=json[key];
+          if(!Array.isArray(val)) continue;
+          let k=key.toLowerCase();
+          if(k.includes('حكم') || k.includes('ahkam')) allAhkam=allAhkam.concat(val);
+          else allV3=allV3.concat(val);
+        }
+        if(allV3.length===0 && allAhkam.length===0){
+          let flat=Object.values(json).flat(2).filter(x=>x && typeof x==='object');
+          allV3=flat;
+        }
+      } else if(Array.isArray(json)){ allV3=json; }
+      logImport('قراءة: متداول '+allV3.length+' - أحكام '+allAhkam.length);
+      setProgress(30,'إعادة بناء ترتيب ثابت _seq');
+      await rebuildSeqChunked(allV3, (p,txt)=>{ setProgress(30+Math.floor(p*0.3), txt); });
+      setProgress(80,'حفظ كامل...');
+      st.textContent='✅ قراءة: متداول '+allV3.length+' | أحكام '+allAhkam.length+' - كامل';
+      if(confirm('تم قراءة:\nمتداول: '+allV3.length+'\nأحكام: '+allAhkam.length+'\n\nسيتم استيراد الكل بدون حذف\nهل تريد الاستبدال؟')){
+        DATA=allV3; DATA_AHKAM=allAhkam;
+        setProgress(85,'حفظ إصدار 2 - كامل');
+        await saveAll();
+        setProgress(100,'تم ✅');
+        logImport('✅ تم الحفظ كامل - متداول: '+DATA.length+' أحكام: '+DATA_AHKAM.length);
+        alert('✅ تم الاستيراد كامل\nمتداول: '+DATA.length+'\nأحكام: '+DATA_AHKAM.length);
+      } else {
+        setProgress(0,'ألغي');
+      }
+    }catch(err){ alert('خطأ: '+err.message); st.textContent='❌ '+err.message; logImport('❌ خطأ: '+err.message); setProgress(0,'خطأ'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+
+function reclassifyBatch(newCases){
+  // تمريرة تانية: عشان لو المرتبطين مش ورا بعض (الأول مع الرابع أو الأخير)
+  // بنجمع كل اللي ليهم نفس الجزئي (قديم + جديد) وبنحدد الأصلي هو الأصغر (سنة ثم رقم)
+  // وأي واحد تاني يتحول لمقابل / فرعي / س ف حتى لو كان اتحسب أصلي في أول تمريرة
+  for(let c of newCases){
+    if(!c.raqmAwal||!c.sanaAwal) continue;
+    if(c.mof==='س ف') continue; // س ف يفضل س ف
+    let related = DATA.concat(newCases).filter(a=>{
+      if(a===c) return false;
+      if(!a.raqmAwal||!a.sanaAwal) return false;
+      return normAr(a.raqmAwal)===normAr(c.raqmAwal) && normAr(a.sanaAwal)===normAr(c.sanaAwal) && normAr(a.mahkama||'')===normAr(c.mahkama||'');
+    });
+    if(related.length===0) continue;
+    // هل فيه أصغر مني في نفس المجموعة؟
+    let curSana=parseInt(toNumAr(c.sana)||'0'), curRaqm=parseInt(toNumAr(c.raqm)||'0');
+    let hasSmaller = related.some(a=>{
+      let s=parseInt(toNumAr(a.sana)||'0'), r=parseInt(toNumAr(a.raqm)||'0');
+      if(s!==curSana) return s < curSana;
+      return r < curRaqm;
+    });
+    let hasAnyExistingInData = DATA.some(a=> normAr(a.raqmAwal)===normAr(c.raqmAwal) && normAr(a.sanaAwal)===normAr(c.sanaAwal) && normAr(a.mahkama||'')===normAr(c.mahkama||''));
+    // لو فيه أصغر مني أو فيه قديم في قاعدة البيانات وأنا كنت أصلي -> لازم أتحول لمقابل/فرعي
+    if((hasSmaller || hasAnyExistingInData) && c.esteenafType==='أصلي'){
+      let check=checkEsteenafType(c.raqm,c.sana,c.raqmAwal,c.sanaAwal,c.mahkama,c.tarQaid,c.tarHokmAwal);
+      // check هنا هيشوف _pendingBatch فهيرجع مقابل/فرعي صح
+      if(check.sabiq){ c.mof='س ف'; c.mofradat='س ف'; c.esteenafType='س ف'; }
+      else if(check.type==='مقابل'){ c.mof='مقابل'; c.mofradat='مقابل'; c.esteenafType='مقابل'; }
+      else if(check.type==='فرعي'){ c.mof='فرعى'; c.mofradat='فرعى'; c.esteenafType='فرعي'; }
+      else if(hasSmaller || hasAnyExistingInData){
+        // لو check رجع أصلي عشان diff مش محسوب، بس فيه أصغر/قديم -> إجباري مقابل (زي قاعدتك)
+        c.mof='مقابل'; c.mofradat='مقابل'; c.esteenafType='مقابل';
+      }
+    }
+  }
+}
+
+// ===== إدخال جماعي =====
+function openBulkModal(){
+  let modal=document.getElementById('bulkModal');
+  modal.style.display='flex';
+  if(document.getElementById('bulkTbody').children.length===0){
+    for(let i=0;i<20;i++) addBulkRow();
+  }
+  setTimeout(()=>{ let first=document.querySelector('#bulkTbody tr:first-child input'); if(first) first.focus(); },100);
+}
+function closeBulkModal(){ document.getElementById('bulkModal').style.display='none'; }
+
+function addBulkRow(){
+  let tbody=document.getElementById('bulkTbody');
+  let rowIndex=tbody.children.length+1;
+  let tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td class="rowNum">${rowIndex}</td>
+    <td><input type="text" placeholder="رقم" class="bRa" data-col="0"></td>
+    <td><input type="text" placeholder="سنة" class="bSa" data-col="1" style="width:60px"></td>
+    <td><input type="text" placeholder="المستأنف" class="bMo" data-col="2"></td>
+    <td><input type="text" placeholder="ضده" class="bDe" data-col="3"></td>
+    <td><input type="text" placeholder="نوع الدعوى" class="bNo" data-col="4"></td>
+    <td><input type="date" class="bQa" data-col="5"></td>
+    <td><input type="date" class="bQi" data-col="6"></td>
+    <td><input type="text" placeholder="رقم" class="bRaA" data-col="7" style="width:70px"></td>
+    <td><input type="text" placeholder="سنة" class="bSaA" data-col="8" style="width:50px"></td>
+    <td><input type="text" placeholder="المحكمة" class="bMah" data-col="9" list="mahList"></td>
+    <td><input type="date" class="bHo" data-col="10"></td>
+    <td><input type="text" placeholder="ملاحظات" class="bNoT" data-col="11"></td>
+    <td><button class="btn btn-dark" style="padding:4px 6px;font-size:10px" onclick="this.closest('tr').remove();reindexRows();updateBulkCount();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelectorAll('input, select').forEach(inp=>{
+    inp.addEventListener('keydown', handleBulkEnter);
+    inp.addEventListener('input', updateBulkCount);
+    inp.addEventListener('change', updateBulkCount);
+  });
+  reindexRows();
+}
+
+function add10Rows(){ for(let i=0;i<10;i++) addBulkRow(); }
+
+function reindexRows(){
+  document.querySelectorAll('#bulkTbody tr').forEach((tr,i)=>{ tr.querySelector('.rowNum').textContent=i+1; });
+}
+
+function handleBulkEnter(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    let cur=e.target;
+    let col=parseInt(cur.getAttribute('data-col'));
+    let tr=cur.closest('tr');
+    let nextCol=col+1;
+    let nextTr=tr;
+    if(nextCol>11){
+      nextCol=0;
+      nextTr=tr.nextElementSibling;
+      if(!nextTr){
+        addBulkRow();
+        nextTr=tr.nextElementSibling;
+      }
+    }
+    if(nextTr){
+      let nextInp=nextTr.querySelector(`[data-col="${nextCol}"]`);
+      if(nextInp){ nextInp.focus(); nextInp.select && nextInp.select(); }
+    }
+  }
+}
+
+function updateBulkCount(){
+  let count=0;
+  document.querySelectorAll('#bulkTbody tr').forEach(tr=>{
+    let ra=tr.querySelector('.bRa')?.value.trim();
+    let sa=tr.querySelector('.bSa')?.value.trim();
+    let qa=tr.querySelector('.bQa')?.value.trim();
+    if(ra && sa && qa) count++;
+  });
+  document.getElementById('bulkCount').textContent=count+' قضية جاهزة للحفظ';
+  document.getElementById('bulkCount').style.color=count>0?'#16a34a':'#fff';
+}
+
+async function saveBulk(){
+  let rows=document.querySelectorAll('#bulkTbody tr');
+  let newCases=[];
+  _pendingBatch=newCases;
+  let byDateForSeq={};
+  let existingByDate={};
+  DATA.forEach(a=>{
+    let d=cleanDate(a.galsaQadima||a.galsa||a.galsaAsasia||a.tar||'');
+    if(!d) return;
+    if(!existingByDate[d]) existingByDate[d]=0;
+    let seq;
+    if(a._seq!=null && a._seq<900000) seq=a._seq;
+    else if(a._manualOrder!=null && a._manualOrder<900000) seq=a._manualOrder;
+    else if(a._sessionOrder!=null && a._sessionOrder<900000) seq=a._sessionOrder;
+    else seq=a._fileIndex||0;
+    if(seq>existingByDate[d]) existingByDate[d]=seq;
+  });
+  try{
+    Object.keys(existingByDate).forEach(function(d){
+      var list=getCasesForDateEDKHAL(d);
+      if(list.length){
+        var max=0;
+        list.forEach(function(o){ if((o.fileOrder||0)>max) max=o.fileOrder; });
+        if(max>existingByDate[d]) existingByDate[d]=max;
+      }
+    });
+  }catch(e){}
+
+  let warnings=[];
+  let sabiqList=[];
+
+  for(let tr of rows){
+    let ra=tr.querySelector('.bRa')?.value.trim();
+    let sa=tr.querySelector('.bSa')?.value.trim();
+    let mo=tr.querySelector('.bMo')?.value.trim();
+    let de=tr.querySelector('.bDe')?.value.trim();
+    let no=tr.querySelector('.bNo')?.value.trim();
+    let qa=tr.querySelector('.bQa')?.value.trim();
+    let qi=tr.querySelector('.bQi')?.value.trim();
+    let ma='جديدة';
+    let raA=tr.querySelector('.bRaA')?.value.trim();
+    let saA=tr.querySelector('.bSaA')?.value.trim();
+    let mah=tr.querySelector('.bMah')?.value.trim();
+    let ho=tr.querySelector('.bHo')?.value.trim();
+    let not=tr.querySelector('.bNoT')?.value.trim();
+
+    if(!ra || !sa || !qa) continue;
+
+    let qaSlash=cleanDate(toYMD(qa));
+    let qiSlash=cleanDate(toYMD(qi));
+    let hoSlash=cleanDate(toYMD(ho));
+
+    let check=checkEsteenafType(ra,sa,raA,saA,mah,qiSlash,hoSlash);
+    let finalMof='لم ترد';
+    if(check.sabiq){
+      finalMof='س ف';
+      sabiqList.push({ra:ra+'/'+sa, raA:raA+'/'+saA+' '+(mah||''), sabiq:check.sabiq});
+    } else if(check.type==='مقابل'){
+      finalMof='مقابل';
+    } else if(check.type==='فرعي'){
+      finalMof='فرعى';
+    }
+
+    if(!byDateForSeq[qaSlash]) byDateForSeq[qaSlash]=existingByDate[qaSlash]||0;
+    byDateForSeq[qaSlash]++;
+    let seq=byDateForSeq[qaSlash];
+
+    newCases.push({
+      id:Date.now()+Math.random()+seq,
+      raqm:ra, sana:sa,
+      most:mo, mostanef:mo,
+      ded:de,
+      noa:no,
+      galsaQadima:qaSlash, galsaAsasia:qaSlash, galsa:qaSlash, tar:qaSlash,
+      galsaSabiqa:'جديدة',
+      tarQaid:qiSlash,
+      tarHokmAwal:hoSlash,
+      raqmAwal:raA, sanaAwal:saA,
+      mahkama:mah,
+      mofradat:finalMof, mof:finalMof,
+      esteenafType:check.type,
+      esteenafDiff:check.diff,
+      zawgy:1,
+      masdar:ma,
+      molahazat:not, notes:not,
+      jalsat:[],
+      _fileIndex:seq, _sessionOrder:seq, _manualOrder:seq, _seq:seq, _updatedAt:Date.now()
+    });
+
+    if(check.type!=='أصلي'){
+      warnings.push(ra+'/'+sa+' => '+check.type+' ('+finalMof+')'+(check.diff!==null?' فرق '+check.diff+' يوم':''));
+    }
+  }
+
+  // تمريرة تانية: تصحيح لو المرتبطين مش ورا بعض (الأول مع الرابع/الأخير)
+  reclassifyBatch(newCases);
+  // أعد بناء التحذيرات بعد التصحيح
+  warnings=[]; sabiqList=[];
+  newCases.forEach(c=>{
+    if(c.esteenafType!=='أصلي') warnings.push(c.raqm+'/'+c.sana+' => '+c.esteenafType+' ('+c.mof+')'+(c.esteenafDiff!==null?' فرق '+c.esteenafDiff+' يوم':''));
+    if(c.mof==='س ف'){
+      let ch=checkEsteenafType(c.raqm,c.sana,c.raqmAwal,c.sanaAwal,c.mahkama,c.tarQaid,c.tarHokmAwal);
+      if(ch.sabiq) sabiqList.push({ra:c.raqm+'/'+c.sana, raA:c.raqmAwal+'/'+c.sanaAwal+' '+(c.mahkama||''), sabiq:ch.sabiq});
+    }
+  });
+  if(newCases.length===0){ alert('لا يوجد صفوف مكتملة'); return; }
+
+  let confirmMsg='سيتم حفظ '+newCases.length+' قضية\n';
+  if(sabiqList.length>0){
+    confirmMsg+='\n⚠ تنبيه سابقة فصل ('+sabiqList.length+'):\n'+sabiqList.map(s=> s.ra+' - '+s.raA+' - سبق فصل في '+s.sabiq.raqm+'/'+s.sabiq.sana+' - '+ (s.sabiq.qar||'')).join('\n')+'\nسيتم حفظها كـ س ف\n';
+  }
+  if(warnings.length>0){
+    confirmMsg+='\nتصنيف الاستئنافات:\n'+warnings.join('\n')+'\n';
+  }
+  confirmMsg+='\nهل أنت متأكد؟';
+
+  if(sabiqList.length>0){
+    let firstSabiq=newCases.find(c=>c.mof==='س ف');
+    if(firstSabiq){
+      let check=checkEsteenafType(firstSabiq.raqm,firstSabiq.sana,firstSabiq.raqmAwal,firstSabiq.sanaAwal,firstSabiq.mahkama,firstSabiq.tarQaid,firstSabiq.tarHokmAwal);
+      let cont=await showSabiqAlert(check, firstSabiq.raqmAwal, firstSabiq.sanaAwal, firstSabiq.mahkama);
+      if(!cont){ _pendingBatch=[]; return; }
+    }
+  }
+
+  if(!confirm(confirmMsg)){ _pendingBatch=[]; return; }
+
+  DATA=DATA.concat(newCases);
+  _pendingBatch=[];
+  await saveAll();
+  let msg='✅ تم حفظ '+newCases.length+' قضية\nالعدد الكلي: '+DATA.length;
+  if(sabiqList.length) msg+='\nس ف: '+sabiqList.length;
+  let cntM= newCases.filter(c=>c.mof==='مقابل').length;
+  let cntF= newCases.filter(c=>c.mof==='فرعى').length;
+  if(cntM) msg+=' - مقابل: '+cntM;
+  if(cntF) msg+=' - فرعي: '+cntF;
+  alert(msg);
+  clearAllInputFields();
+  closeBulkModal();
+}
+
+
+loadAll();
+</script>
+
+<!-- مودال تنبيه سابق فصل -->
+<div id="sabiqModal" style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:20000;display:none;align-items:center;justify-content:center;padding:15px">
+<div style="background:#fff;border-radius:12px;max-width:650px;width:100%;border:3px solid #b00020;overflow:hidden">
+<div style="background:#b00020;color:#fff;padding:12px;font-weight:bold;text-align:center;font-size:15px">⚠ تنبيه - سبق الفصل في الدعوى</div>
+<div style="padding:16px;line-height:1.8;font-size:13px">
+<div id="sabiqMsg" style="background:#fff3cd;border:2px solid #d4a017;padding:12px;border-radius:8px;margin-bottom:12px"></div>
+<div style="background:#e8f5e9;border:1px solid #16a34a;padding:8px;border-radius:6px;font-size:11px">
+<b>التفسير:</b><br>
+- الاستئناف الأصلي: يُرفع خلال 40 يوم من حكم أول درجة<br>
+- المقابل: خلال 40 يوم أيضاً ويأخذ رقم بعد الأصلي<br>
+- الفرعي: بعد 40 يوم على نفس الدعوى = فرع من الأصلي<br>
+- س ف = سابقة فصل: الدعوى سبق الفصل فيها بحكم قطعي
+</div>
+</div>
+<div style="display:flex;gap:10px;justify-content:center;padding:12px;background:#f8f9fa">
+<button class="btn btn-green" id="btnSabiqContinue" style="padding:10px 25px">✅ إكمال - حفظ كـ س ف</button>
+<button class="btn btn-dark" onclick="closeSabiqModal()" style="padding:10px 20px">✕ إلغاء</button>
+</div>
+</div>
+</div>
+
+</body></html>

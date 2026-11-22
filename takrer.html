@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>تقرير مستقبلي - الدائرة 32 - 3 جداول - مستقبلية 3 جلسات+</title>
+<script>
+(function(){
+  const DB_NAME='D32_DB';
+  window.openDB=function(){return new Promise((res,rej)=>{
+    let r=indexedDB.open(DB_NAME,2);
+    r.onupgradeneeded=e=>{
+      let db=e.target.result;
+      if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');
+      if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');
+      if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');
+    };
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });}
+})();
+</script>
+<style>
+*{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
+body{background:#fff;direction:rtl;padding:10px}
+header{background:#0f1f3a;color:#C9A227;padding:14px;border-radius:12px;border:2px solid #C9A227;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.card{background:#fff;padding:12px;border-radius:10px;margin-top:10px;border:2px solid #000}
+.btn{padding:8px 14px;border:2px solid #000;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;margin:2px}
+.btn-navy{background:#0A2342;color:#fff}.btn-gold{background:#C9A227;color:#000}.btn-green{background:#16a34a;color:#fff}.btn-purple{background:#6A1B9A;color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{padding:10px;border:2px solid #000;background:#0f1f3a;color:#C9A227;text-align:center;font-size:13px}
+td{padding:8px;border:1px solid #000;text-align:center;font-size:13px;font-weight:bold}
+td.num{font-size:16px;background:#fefce8}
+.total-row{background:#0f1f3a;color:#C9A227;font-weight:bold;font-size:14px}
+.kh-th{background:#4A148C!important;color:#fff!important}
+.kh-card{border:2px solid #4A148C!important}
+.kh-header{background:#4A148C;color:#fff;padding:10px;border-radius:8px;text-align:center;font-weight:bold;font-size:15px;margin-bottom:8px}
+@media print{.no-print{display:none} body{padding:0} header{border:none} }
+</style>
+</head>
+<body>
+<header>
+<div>
+<h2>📊 تقرير القضايا المستقبلية - الدائرة 32 أسرة - 3 جداول</h2>
+<div style="font-size:12px;margin-top:4px">الجلسة القادمة > اليوم | يستبعد جديدة | بدون خبراء في الجدول الأول</div>
+</div>
+<div class="no-print">
+<button class="btn btn-navy" onclick="loadReport()">🔄 تحديث</button>
+<button class="btn btn-gold" onclick="window.print()">🖨 طباعة</button>
+<button class="btn btn-green" onclick="exportExcel3J()">📥 Excel 3 جلسات+</button>
+<span id="dbStatus" style="background:#eee;color:#000;padding:4px 8px;border-radius:6px;font-size:11px"></span>
+</div>
+</header>
+
+<div class="card">
+<b>إجمالي المتداول: <span id="totalMotAll">0</span></b> |
+<b>المستقبلية (بعد استبعاد جديدة): <span id="totalMot">0</span></b> |
+<b>المستبعدة (جديدة): <span id="totalGadida">0</span></b> |
+<span>اليوم: <b id="todayDate"></b></span>
+<div id="futureInfo" style="background:#fef3c7;padding:5px 10px;border-radius:6px;margin-top:6px;text-align:center;font-weight:bold"></div>
+</div>
+
+<div class="card">
+<h3 style="text-align:center;background:#0f1f3a;color:#C9A227;padding:8px;border-radius:6px">📊 الجدول الأول: إحصائية المستقبلية</h3>
+<table id="mainTable"><thead><tr><th style="width:50%">نوع القرار</th><th style="width:16%">فردي</th><th style="width:16%">منضم</th><th style="width:18%">الإجمالي</th></tr></thead><tbody id="mainBody"></tbody><tfoot id="mainFoot"></tfoot></table>
+</div>
+
+<div class="card kh-card">
+<div class="kh-header">🔬 الجدول الثاني: قضايا الخبراء والطب الشرعي</div>
+<table id="khTable"><thead><tr>
+<th class="kh-th">م</th><th class="kh-th">رقم الاستئناف</th><th class="kh-th">تاريخ الحكم التمهيدي</th><th class="kh-th">مقدار الأمانة</th><th class="kh-th">تاريخ السداد</th><th class="kh-th">رقم إيصال السداد</th><th class="kh-th">تاريخ الإرسال</th><th class="kh-th">رقم الصادر</th><th class="kh-th">آخر استعجال</th><th class="kh-th">الجلسة القادمة</th><th class="kh-th">الجهة</th>
+</tr></thead><tbody id="khBody"></tbody><tfoot id="khFoot"></tfoot></table>
+</div>
+
+<div class="card" style="border:2px solid #B45309!important">
+<div style="background:#B45309;color:#fff;padding:10px;border-radius:8px;text-align:center;font-weight:bold">⏳ الجدول الثالث: القضايا التي مر عليها أكثر من جلستين (3 جلسات+ مستقبلية فقط - الجلسة القادمة > اليوم)</div>
+<div style="margin:6px 0;font-size:12px"><b>إجمالي: <span id="total3J">0</span></b> | <span id="j3Info"></span></div>
+<table id="j3Table"><thead><tr>
+<th style="background:#B45309!important">م</th><th style="background:#B45309!important">رقم الاستئناف</th><th style="background:#B45309!important">اسم المستأنف</th><th style="background:#B45309!important">أول جلسة أساسية</th><th style="background:#B45309!important">الجلسة القادمة</th><th style="background:#B45309!important">القرار</th><th style="background:#B45309!important">عدد التأجيلات</th><th style="background:#B45309!important">عدد الجلسات</th>
+</tr></thead><tbody id="j3Body"></tbody><tfoot id="j3Foot"></tfoot></table>
+</div>
+
+<script>
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9]/g,'');}
+function toAr(s){if(s==null) return ''; return String(s).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function cleanDate(s){if(!s) return ''; s=String(s).replace(/-/g,'/').trim(); var m=s.match(/\d+/g); if(!m||m.length<3) return ''; var d,mo,ye; if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];} else{d=m[0];mo=m[1];ye=m[2]; if(ye.length==2) ye='20'+ye;} return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0'); }
+function fmt(t){if(!t) return '';var s=String(t).trim();if(/^\d+(\.\d+)?$/.test(s)&&parseFloat(s)>30000){var num=parseFloat(s);var dt=new Date(Math.round((num-25569)*86400*1000));return dt.getFullYear()+'/'+('0'+(dt.getMonth()+1)).slice(-2)+'/'+('0'+dt.getDate()).slice(-2);}return s;}
+function formatDateYYYYMMDD(s){ if(!s) return '-'; s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim(); var m=s.match(/\d+/g); if(!m||m.length<3) return s; var d,mo,ye; if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];} else{d=m[0];mo=m[1];ye=m[2]; if(ye.length==2) ye='20'+ye;} ye=ye.padStart(4,'0'); mo=String(mo).padStart(2,'0'); d=String(d).padStart(2,'0'); return ye+'/'+mo+'/'+d; }
+function getNextGalsaDate(c){ try{ let candidates=[]; if(c.jalsat && Array.isArray(c.jalsat) && c.jalsat.length>0){ let last=c.jalsat[c.jalsat.length-1]; if(last){ if(last.ta2gil) candidates.push(last.ta2gil); if(last.tarikh) candidates.push(last.tarikh); if(last.galsa) candidates.push(last.galsa); } c.jalsat.forEach(j=>{ if(j.ta2gil) candidates.push(j.ta2gil); if(j.tarikh) candidates.push(j.tarikh); }); } if(c.galsaQadima) candidates.push(c.galsaQadima); if(c.galsa) candidates.push(c.galsa); if(c.galsaAsasia) candidates.push(c.galsaAsasia); if(c.tarGalsa) candidates.push(c.tarGalsa); if(c.nextGalsa) candidates.push(c.nextGalsa); for(let raw of candidates){ let cd=cleanDate(fmt(raw)); if(!cd) continue; let d=new Date(cd); if(isNaN(d)) continue; return {str:cd, date:d}; } }catch(e){} return null; }
+function isFutureCase(c){ let nxt=getNextGalsaDate(c); if(!nxt) return false; let today=new Date(); today.setHours(0,0,0,0); return nxt.date > today; }
+function normalizeText(q){ q=String(q||'').toLowerCase(); q=q.replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/[أإآ]/g,'ا'); q=q.replace(/ـ/g,'').trim(); return q; }
+function getSababTa2gil(c){ let sabab=''; if(c.jalsat && Array.isArray(c.jalsat) && c.jalsat.length>0){ let last=c.jalsat[c.jalsat.length-1]; sabab=(last.sababTa2gil||last.sabab||last.qarar||'').toString(); } if(!sabab) sabab=(c.sababTa2gil||c.sabab||c.qarar||c.qar||'').toString(); return sabab; }
+function isGadida(c){ let candidates=[]; if(c.galsaSabka) candidates.push(c.galsaSabka); if(c.galsaSabiqa) candidates.push(c.galsaSabiqa); if(c.hala) candidates.push(c.hala); if(c.no3) candidates.push(c.no3); if(c.jalsat && Array.isArray(c.jalsat)){ c.jalsat.forEach(j=>{ if(j.hala) candidates.push(j.hala); if(j.no3) candidates.push(j.no3); }); } for(let raw of candidates){ let txt=normalizeText(raw); if(txt.includes('جديده')) return true; } return false; }
+function detectKhobaraFromQarar(q){ if(!q) return null; var s=String(q); if(s.indexOf('خبير')>-1 || s.indexOf('خبراء')>-1) return 'خبراء'; if(s.indexOf('طب شرعي')>-1 || s.indexOf('شرعي')>-1) return 'طب شرعي'; return null; }
+function getTamhidiDate(c){ try{ if(c.jalsat && Array.isArray(c.jalsat)){ for(var i=c.jalsat.length-1;i>=0;i--){ var j=c.jalsat[i]; if(!j) continue; if(detectKhobaraFromQarar(j.qarar||j.sabab||j.sababTa2gil||'')){ let raw=j.tarikh||j.ta2gil||j.galsa||''; let cd=formatDateYYYYMMDD(fmt(raw)); if(cd && cd!=='-') return cd; } } } if(c.khobara && c.khobara.tamhidiDate) return formatDateYYYYMMDD(c.khobara.tamhidiDate); }catch(e){} return '-'; }
+function getAmanahAmount(c){ if(!c.khobara) return '-'; let k=c.khobara; let candidates=[k.amanahAmount, k.amanahValue, k.amount, k.miqdar]; for(let v of candidates){ if(v!=null && String(v).trim()!=='' && String(v)!=='0') return toAr(String(v)); } return '-'; }
+function getLastIsti3jal(c){ if(!c.khobara) return '-'; let k=c.khobara; if(k.lastIsti3jalDate) return formatDateYYYYMMDD(k.lastIsti3jalDate); if(k.isti3jalDates && Array.isArray(k.isti3jalDates)) return formatDateYYYYMMDD(k.isti3jalDates[k.isti3jalDates.length-1]); return '-'; }
+
+async function loadReport(){
+  let today=new Date(); today.setHours(0,0,0,0);
+  document.getElementById('todayDate').textContent=today.toLocaleDateString('ar-EG');
+  let dbStatus=document.getElementById('dbStatus');
+  try{
+    let db=await openDB();
+    dbStatus.textContent='✅ متصل';
+    let tx=db.transaction(['cases','d32store'],'readonly');
+    let keys=['D32_V3','D32_FINAL','D32_V3']; let stores=['cases','cases','d32store']; let all=[];
+    for(let i=0;i<keys.length;i++){
+      let val=await new Promise(res=>{ try{ let rq=tx.objectStore(stores[i]).get(keys[i]); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null); }catch(e){res(null);} });
+      if(val){ try{ let arr=JSON.parse(val); if(Array.isArray(arr)&&Array.isArray(arr[1])) arr=arr[1]; if(Array.isArray(arr)) all=all.concat(arr);}catch(e){} }
+    }
+    let map={}; let mot=[];
+    all.forEach(c=>{ let key=toEn(c.raqm)+'/'+toEn(c.sana); if(!key||key==='/' ) return; if(!map[key]){ map[key]=1; mot.push(c); } });
+    document.getElementById('totalMotAll').textContent=toAr(mot.length);
+    // 1- مستقبلية: الجلسة القادمة > اليوم
+    let futureCases=mot.filter(c=> isFutureCase(c));
+    let gadidaCount=0; let filteredFuture=[];
+    futureCases.forEach(c=>{ if(isGadida(c)) gadidaCount++; else filteredFuture.push(c); });
+    document.getElementById('totalMot').textContent=toAr(filteredFuture.length);
+    document.getElementById('totalGadida').textContent=toAr(gadidaCount);
+    document.getElementById('futureInfo').textContent='مستقبلية (جلسة قادمة > اليوم): '+toAr(filteredFuture.length)+' | جديدة: '+toAr(gadidaCount);
+
+    // جدول1
+    let withoutKhobara = filteredFuture.filter(c=>{
+      let sabab=normalizeText(getSababTa2gil(c));
+      if(sabab.includes('خبير')||sabab.includes('خبراء')||sabab.includes('شرعي')) return false;
+      return true;
+    });
+    analyze(withoutKhobara);
+
+    // جدول2
+    let khobaraCases = filteredFuture.filter(c=>{
+      let sabab=normalizeText(getSababTa2gil(c));
+      if(sabab.includes('خبير')||sabab.includes('خبراء')||sabab.includes('شرعي')) return true;
+      if(c.jalsat){ for(let j of c.jalsat){ if(detectKhobaraFromQarar(j.qarar||j.sabab||'')) return true; } }
+      if(c.khobara && c.khobara.sentTo) return true;
+      return false;
+    });
+    renderKhobara(khobaraCases);
+
+    // جدول3: القضايا التي تكون الجلسة القادمة > اليوم AND فيها 3 جلسات او اكثر
+    let cases3J = filteredFuture.filter(c=>{
+      let count = (c.jalsat && Array.isArray(c.jalsat)) ? c.jalsat.length : 0;
+      return count>=3;
+    });
+    render3J(cases3J);
+
+  }catch(e){ dbStatus.textContent='❌ '+e.message; }
+}
+
+function getMofradatValue(c){
+  let v=(c.mofradat||c.mof||c.mofrad||'').toString().trim();
+  return normalizeText(v);
+}
+function analyze(cases){
+  let stats={
+    mahgozHokm:{fardi:0,monadam:0,total:0},
+    damLamTared:{fardi:0,monadam:0,total:0},
+    damWared:{fardi:0,monadam:0,total:0},
+    elan:{fardi:0,monadam:0,total:0},
+    eadaElan:{fardi:0,monadam:0,total:0},
+    mostanadat:{fardi:0,monadam:0,total:0},
+    ettela3:{fardi:0,monadam:0,total:0},
+    taqrir:{fardi:0,monadam:0,total:0},
+    asbabOkhra:{fardi:0,monadam:0,total:0}
+  };
+  let gazMap={};
+  cases.forEach(c=>{
+    let gKey=toEn(c.raqmAwal)+'/'+toEn(c.sanaAwal);
+    if(!gazMap[gKey]) gazMap[gKey]=[];
+    gazMap[gKey].push(c);
+  });
+  cases.forEach(c=>{
+    let sababRaw=getSababTa2gil(c);
+    let sabab=normalizeText(sababRaw);
+    let qarar=normalizeText((c.qarar||c.qar||'').toString());
+    let combined=sabab+' '+qarar;
+    let mofVal=getMofradatValue(c);
+    let isMonadam=false;
+    let gKey=toEn(c.raqmAwal)+'/'+toEn(c.sanaAwal);
+    if(gazMap[gKey] && gazMap[gKey].length>1){
+      let sorted=gazMap[gKey].slice().sort((a,b)=> parseInt(toEn(a.raqm)) - parseInt(toEn(b.raqm)));
+      if(sorted[0]!==c) isMonadam=true;
+    }
+    function inc(cat){ cat.total++; if(isMonadam) cat.monadam++; else cat.fardi++; }
+    if(combined.includes('حجز') && (combined.includes('حكم') || combined.includes('للحكم'))){
+      inc(stats.mahgozHokm);
+    }
+    else if( (combined.includes('مفردات') || combined.includes('للمفردات')) && mofVal.includes('لم ترد')){
+      inc(stats.damLamTared);
+    }
+    else if( (combined.includes('مفردات') || combined.includes('للمفردات')) && (mofVal.includes('وردت') || mofVal.includes('ورد'))){
+      inc(stats.damWared);
+    }
+    else if(combined.includes('مفردات') || combined.includes('للمفردات')){
+      if(mofVal.includes('لم ترد')) inc(stats.damLamTared);
+      else if(mofVal.includes('وردت') || mofVal.includes('ورد')) inc(stats.damWared);
+      else inc(stats.damLamTared);
+    }
+    else if(combined.includes('اعاده اعلان') || combined.includes('اعادة اعلان')){
+      inc(stats.eadaElan);
+    }
+    else if(combined.includes('اعلان')){
+      inc(stats.elan);
+    }
+    else if(combined.includes('مستندات') || combined.includes('مذكرات')){
+      inc(stats.mostanadat);
+    }
+    else if(combined.includes('اطلاع')){
+      inc(stats.ettela3);
+    }
+    else if(combined.includes('تقرير')){
+      inc(stats.taqrir);
+    }
+    else{
+      inc(stats.asbabOkhra);
+    }
+  });
+  let rows=[
+    {label:'📦 إجمالي المستقبلية (بدون خبراء وبدون جديدة)', key:'total', isTotal:true},
+    {label:'⚖️ محجوزة للحكم', key:'mahgozHokm'},
+    {label:'📂 للمفردات ولم ترد', key:'damLamTared'},
+    {label:'✅ للمفردات ووردت', key:'damWared'},
+    {label:'📢 للإعلان', key:'elan'},
+    {label:'🔁 لإعادة الإعلان', key:'eadaElan'},
+    {label:'📄 للمستندات', key:'mostanadat'},
+    {label:'👁️ للاطلاع', key:'ettela3'},
+    {label:'📋 للتقرير', key:'taqrir'},
+    {label:'⏰ لأسباب أخرى (شامل غير محدد)', key:'asbabOkhra'}
+  ];
+  let tbody=document.getElementById('mainBody');
+  tbody.innerHTML='';
+  let totalFardi=0,totalMonadam=0,totalAll=cases.length;
+  rows.forEach(r=>{
+    let data;
+    if(r.isTotal){
+      data={fardi:0,monadam:0,total:totalAll};
+      Object.values(stats).forEach(s=>{ data.fardi+=s.fardi; data.monadam+=s.monadam; });
+    }else{
+      data=stats[r.key];
+    }
+    let tr=document.createElement('tr');
+    if(r.isTotal) tr.className='total-row';
+    tr.innerHTML=`<td style="text-align:right">${r.label}</td>
+      <td class="num">${toAr(data.fardi)}</td>
+      <td class="num">${toAr(data.monadam)}</td>
+      <td class="num">${toAr(data.total)}</td>`;
+    tbody.appendChild(tr);
+    if(!r.isTotal){ totalFardi+=data.fardi; totalMonadam+=data.monadam; }
+  });
+  document.getElementById('mainFoot').innerHTML=`<tr class="total-row"><td>الإجمالي</td><td>${toAr(totalFardi)}</td><td>${toAr(totalMonadam)}</td><td>${toAr(totalAll)}</td></tr>`;
+}
+function renderKhobara(cases){
+  document.getElementById('khBody').innerHTML='';
+  cases.forEach((c,i)=>{
+    let sanaRaqm=toAr(c.sana||'-')+'/'+toAr(c.raqm||'-');
+    let tamhidi=getTamhidiDate(c); let amount=getAmanahAmount(c);
+    let amanahDate=c.khobara && c.khobara.amanahDate? formatDateYYYYMMDD(c.khobara.amanahDate) : '-';
+    let receiptNo=c.khobara && c.khobara.receiptNo? c.khobara.receiptNo : '-';
+    let sentDate=c.khobara && c.khobara.sentDate? formatDateYYYYMMDD(c.khobara.sentDate) : '-';
+    let sader = (c.khobara? (c.khobara.saderAam||'')+'/'+(c.khobara.saderKhas||'') : '-');
+    let lastIsti3jal=getLastIsti3jal(c);
+    let nextGalsa=getNextGalsaDate(c); let nextStr=nextGalsa? nextGalsa.str : '-';
+    let jeha=c.khobara && c.khobara.sentTo? c.khobara.sentTo : 'خبراء';
+    let tr=document.createElement('tr');
+    tr.innerHTML=`<td>${toAr(i+1)}</td><td>${sanaRaqm}</td><td>${toAr(tamhidi)}</td><td>${amount}</td><td>${toAr(amanahDate)}</td><td>${toAr(receiptNo)}</td><td>${toAr(sentDate)}</td><td>${toAr(sader)}</td><td>${toAr(lastIsti3jal)}</td><td>${toAr(nextStr)}</td><td>${jeha}</td>`;
+    document.getElementById('khBody').appendChild(tr);
+  });
+}
+function render3J(cases){
+  document.getElementById('total3J').textContent=toAr(cases.length);
+  document.getElementById('j3Info').textContent='مستقبلية فقط (الجلسة القادمة > اليوم) + 3 جلسات أساسية أو أكثر | مرتبة حسب أول جلسة';
+  cases.sort((a,b)=>{
+    let ta=0,tb=0;
+    try{ if(a.jalsat && a.jalsat[0]) ta=new Date(cleanDate(fmt(a.jalsat[0].tarikh||''))).getTime()||0; }catch(e){}
+    try{ if(b.jalsat && b.jalsat[0]) tb=new Date(cleanDate(fmt(b.jalsat[0].tarikh||''))).getTime()||0; }catch(e){}
+    return ta-tb;
+  });
+  let tbody=document.getElementById('j3Body'); tbody.innerHTML='';
+  cases.forEach((c,i)=>{
+    let sanaRaqm=toAr(c.sana||'-')+'/'+toAr(c.raqm||'-');
+    let mostanef=(c.mostanef||'-').toString().substring(0,30);
+    let firstGalsa='-'; try{ if(c.jalsat && c.jalsat[0]) firstGalsa=formatDateYYYYMMDD(fmt(c.jalsat[0].tarikh||'')); }catch(e){}
+    let nextGalsa='-'; try{ let nxt=getNextGalsaDate(c); if(nxt) nextGalsa=nxt.str; }catch(e){}
+    let qarar=getSababTa2gil(c); qarar=String(qarar).substring(0,80);
+    let countJ=c.jalsat?c.jalsat.length:0; let ta2gilat=Math.max(0,countJ-1);
+    let tr=document.createElement('tr');
+    tr.innerHTML=`<td>${toAr(i+1)}</td><td>${sanaRaqm}</td><td style="text-align:right">${mostanef}</td><td>${toAr(firstGalsa)}</td><td style="background:#e8f5e9">${toAr(nextGalsa)}</td><td style="text-align:right;font-size:11px">${qarar}</td><td>${toAr(ta2gilat)}</td><td>${toAr(countJ)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function exportExcel3J(){ let table=document.getElementById('j3Table'); let blob=new Blob(['\ufeff'+table.outerHTML],{type:'application/vnd.ms-excel'}); let url=URL.createObjectURL(blob); let a=document.createElement('a'); a.href=url; a.download='3جلسات_مستقبلية.xls'; a.click(); }
+document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('todayDate').textContent=new Date().toLocaleDateString('ar-EG'); loadReport(); });
+</script>
+</body>
+</html>

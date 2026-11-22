@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>كشف التأجيلات - V2 FIXED - COUNT FIXED</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial, Tahoma, sans-serif}
+body{background:#fff;direction:rtl;display:flex;flex-direction:column;height:100vh;padding:6px;font-family:Arial, Tahoma, sans-serif}
+h1{text-align:center;background:#f8d7da;color:#000;padding:12px;border-radius:6px;font-size:24px;font-family:Arial;font-weight:bold;border:2px solid #000}
+h1 span{color:#000}
+.sheet{flex:1;display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.block{flex:1;display:flex;flex-direction:column;border:2px solid #000;border-radius:6px;overflow:hidden}
+.block h2{text-align:center;background:#f8d7da;color:#000;padding:6px;font-size:20px;font-family:Arial;font-weight:bold;border-bottom:2px solid #000}
+table{width:100%;flex:1;border-collapse:collapse;table-layout:fixed;display:flex;flex-direction:column;font-family:Arial}
+thead, tbody{display:flex;flex-direction:column;width:100%}
+tbody{flex:1}
+tr{flex:1;display:flex;width:100%;min-height:36px}
+th,td{flex:1;border:1px solid #000;display:flex;align-items:center;justify-content:center;font-weight:bold;padding:3px;font-family:Arial}
+th{background:#f8d7da;color:#000;font-size:18px}
+td{font-size:16px;background:#fff;color:#000}
+th.tah, th.ist{background:#f8d7da;color:#000}
+th.code, td.code{width:40px;min-width:40px;max-width:40px;background:#fff}
+td.date{background:#fff}
+td.empty{background:#f0f0f0}
+@page{size:A4 portrait;margin:5mm}
+@media print{
+.noPrint{display:none!important}
+*{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important}
+ html,body{height:100%;margin:0;padding:0;font-family:Arial !important}
+ h1{margin:0 0 2mm 0;padding:4mm;font-size:24px !important;background:#f8d7da !important;color:#000 !important;border:2px solid #000}
+ .block h2{background:#f8d7da !important;color:#000 !important;font-size:20px !important}
+ th{background:#f8d7da !important;color:#000 !important;font-size:18px !important}
+ td{font-size:16px !important}
+.sheet{height:270mm;gap:2mm;display:flex;flex-direction:column}
+.block{height:87mm;flex:none!important;page-break-inside:avoid;break-inside:avoid}
+ table{height:100%}
+ tr{height:calc(100% / 7);min-height:0}
+}
+</style>
+</head>
+<body>
+
+<div class="noPrint" style="text-align:center;margin-bottom:4px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;font-family:Arial">
+<label style="font-family:Arial;font-weight:bold">سنة <input id="year" style="width:70px;text-align:center;font-weight:bold;padding:4px;font-family:Arial"></label>
+<label style="font-family:Arial;font-weight:bold">شهر <select id="monthSel" style="width:140px;text-align:center;font-weight:bold;padding:4px;font-family:Arial"></select></label>
+<button onclick="build()" style="padding:6px 12px;background:#0f1f3a;color:#fff;border:none;border-radius:4px;font-weight:bold;font-family:Arial">عرض</button>
+<button onclick="window.print()" style="padding:6px 12px;background:#b00020;color:#fff;border:none;border-radius:4px;font-family:Arial">🖨 طباعة ورقة واحدة</button>
+<span id="debug" style="font-size:12px;background:#fff3cd;padding:4px 8px;border:1px solid #000;border-radius:4px"></span>
+</div>
+
+<h1 id="mainTitle">كشف تأجيلات الدائرة / <span id="dairaNum"></span> أحوال</h1>
+<div class="sheet" id="sheet"></div>
+
+<script>
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+
+var CACHED_DATA=[], CACHED_AGENDA=[], CACHED_DAIRA='';
+
+async function getFromStore(db, storeName, key){
+  return new Promise(r=>{
+    try{
+      let tx=db.transaction(storeName,'readonly');
+      let rq=tx.objectStore(storeName).get(key);
+      rq.onsuccess=()=>r(rq.result);
+      rq.onerror=()=>r(null);
+    }catch(e){ r(null); }
+  });
+}
+
+async function loadAll(){
+  let db=await openDB();
+  let keysAgenda = ['D32_NATIGA_FULL','D32_NATIGA','D32_AGENDA','D32_GALSAT','D32_DATES'];
+  let keysDaira = ['D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_DAIRA'];
+
+  let allCases=[];
+  // نفس كود الجلسات بالظبط: بيقرا من cases:D32_V3 فقط
+  let v=await getFromStore(db,'cases','D32_V3');
+  if(v){
+    try{
+      let j=JSON.parse(v);
+      if(Array.isArray(j) && Array.isArray(j[1])) j=j[1];
+      if(Array.isArray(j)) allCases=j;
+      else if(j) allCases=[j];
+    }catch(e){}
+  }
+  CACHED_DATA=allCases;
+
+  let agenda=[];
+  for(let k of keysAgenda){
+    let vv=await getFromStore(db,'d32store',k);
+    if(vv){
+      try{
+        let j=JSON.parse(vv);
+        if(Array.isArray(j) && j.length){
+          agenda=j.map(cleanDate).filter(Boolean);
+          if(agenda.length) break;
+        }else if(typeof j==='object'){
+          let list=[];
+          Object.keys(j).forEach(kk=>{
+            if(j[kk] && j[kk].dates) list=list.concat(j[kk].dates);
+            else if(Array.isArray(j[kk])) list=list.concat(j[kk]);
+            else if(typeof j[kk]==='string') list.push(j[kk]);
+          });
+          agenda=list.map(cleanDate).filter(Boolean);
+          if(agenda.length) break;
+        }
+      }catch(e){}
+    }
+  }
+  CACHED_AGENDA=agenda;
+
+  for(let k of keysDaira){
+    let vv=await getFromStore(db,'d32store',k);
+    if(vv){
+      try{
+        let j=JSON.parse(vv);
+        if(j.dairaNumber||j.daira){ CACHED_DAIRA=j.dairaNumber||j.daira; break; }
+        if(typeof j==='string'){ CACHED_DAIRA=j; break; }
+      }catch(e){
+        CACHED_DAIRA=vv;
+        break;
+      }
+    }
+  }
+
+  let dbg=document.getElementById('debug');
+  if(dbg) dbg.textContent='البيانات: '+toAr(CACHED_DATA.length)+' قضية (D32_V3 فقط - نفس الجلسات) | الأجندة: '+toAr(CACHED_AGENDA.length)+' تاريخ | الدائرة: '+(CACHED_DAIRA||'-');
+}
+
+function toAr(n){return String(n==null?'':n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function parseDateStr(s){var cd=cleanDate(s);if(!cd)return null;var p=cd.split('/');return{str:cd,y:parseInt(p[0]),mo:parseInt(p[1]),d:parseInt(p[2])};}
+function datesEqual(a,b){a=cleanDate(a);b=cleanDate(b);if(!a||!b)return false;var pa=a.split('/').map(Number),pb=b.split('/').map(Number);return pa[0]==pb[0]&&pa[1]==pb[1]&&pa[2]==pb[2];}
+function getAgenda(){ return CACHED_AGENDA; }
+function getData(){ return CACHED_DATA; }
+function getDaira(){ return CACHED_DAIRA; }
+var MONTH_NAMES=['','يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+var DAY_NAMES=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+/* ====== مطابق 100% لكود الجلسات - الرول 22 والعد بدون تكرار ====== */
+function countForDate(targetStr, DATA){
+ var t = parseDateStr(targetStr);
+ if(!t) return [];
+ var seen={};
+ var list=[];
+ DATA.forEach(function(ap, fileIdx){
+   // 1- محكوم
+   if(ap.tarikhHokm && datesEqual(ap.tarikhHokm, t.str)) return;
+   // 2- ضم
+   if(ap.dammTo){
+     if(!ap.dammDate || !datesEqual(ap.dammDate, t.str)) return;
+   }
+   var matched=false;
+   var jMatched=null;
+   // 3- jalsat.tarikh == التاريخ
+   if(ap.jalsat && Array.isArray(ap.jalsat)){
+     for(var k=0;k<ap.jalsat.length;k++){
+       var j=ap.jalsat[k];
+       if(j.isMahgoz) continue;
+       var pd=parseDateStr(j.tarikh);
+       if(pd && datesEqual(pd.str, t.str)){
+         matched=true;
+         jMatched=j;
+         break;
+       }
+     }
+   }
+   // 4- galsaAsasia == التاريخ
+   var b=cleanDate(ap.galsaAsasia||'');
+   if(!matched && b && datesEqual(b, t.str)){
+     matched=true;
+     if(ap.jalsat && Array.isArray(ap.jalsat)){
+       for(var k=0;k<ap.jalsat.length;k++){
+         if(datesEqual(ap.jalsat[k].tarikh, t.str)){ jMatched=ap.jalsat[k]; break; }
+       }
+     }
+     if(!jMatched) jMatched={tarikh:t.str, qarar:'', ta2gil: ap.galsaQadima||'', halat: ap.halat||'متداول'};
+   }
+   if(!matched) return;
+   // 5- منع التكرار: رقم+سنة+تاريخ = يحسبها 1 فقط حتى لو مكررة 3 مرات
+   var key = (ap.raqm||'')+''+(ap.sana||'')+''+t.str;
+   if(seen[key]) return;
+   seen[key]=true;
+   var order=0;
+   if(ap._seq!=null && ap._seq<900000) order=ap._seq;
+   else if(ap._manualOrder!=null && ap._manualOrder<900000) order=ap._manualOrder;
+   else if(ap._sessionOrder!=null && ap._sessionOrder<900000) order=ap._sessionOrder;
+   else if(ap._fileIndex!=null) order=ap._fileIndex;
+   else order=fileIdx;
+   list.push({ap:ap, j:jMatched, fileOrder:order});
+ });
+ list.sort(function(a,b){ return (a.fileOrder||0)-(b.fileOrder||0); });
+ return list;
+}
+
+
+function initMonthYear(){
+ var yEl=document.getElementById('year');
+ var mEl=document.getElementById('monthSel');
+ var now=new Date();
+ if(!yEl.value) yEl.value=now.getFullYear();
+ mEl.innerHTML='';
+ for(var i=1;i<=12;i++){
+   var op=document.createElement('option');
+   op.value=i;
+   op.textContent=toAr(i)+' - '+MONTH_NAMES[i];
+   op.style.fontFamily='Arial';
+   mEl.appendChild(op);
+ }
+ var nextM = now.getMonth()+2;
+ if(nextM>12){ nextM=1; yEl.value=now.getFullYear()+1; }
+ mEl.value=nextM;
+ yEl.addEventListener('change', build);
+ mEl.addEventListener('change', build);
+}
+
+async function build(){
+ await loadAll();
+ var yEl=document.getElementById('year');
+ var mEl=document.getElementById('monthSel');
+ var year=parseInt(yEl.value)||new Date().getFullYear();
+ var selM=parseInt(mEl.value)||new Date().getMonth()+1;
+
+ var dairaRaw=getDaira();
+ document.getElementById('dairaNum').textContent=dairaRaw?toAr(String(dairaRaw).replace(/[^\d]/g,'')):'';
+
+ var agenda=getAgenda();
+ var DATA=getData();
+
+ var monthsInfo=[];
+ for(var k=0;k<3;k++){
+   var mm=selM+k;
+   var yy=year;
+   while(mm>12){ mm-=12; yy++; }
+   monthsInfo.push({m:mm, y:yy});
+ }
+
+ var html='';
+ monthsInfo.forEach(info=>{
+  var m=info.m;
+  var y=info.y;
+  var dates=agenda.filter(s=>{var p=s.split('/'); return parseInt(p[0])==y && parseInt(p[1])==m;}).sort().slice(0,6);
+  if(dates.length===0 && DATA.length>0){
+    let tmpSet={};
+    DATA.forEach(ap=>{
+      let candidates=[];
+      if(ap.jalsat && Array.isArray(ap.jalsat)){
+        ap.jalsat.forEach(j=>{ if(j.tarikh) candidates.push(j.tarikh); if(j.ta2gil) candidates.push(j.ta2gil); });
+      }
+      if(ap.galsaAsasia) candidates.push(ap.galsaAsasia);
+      if(ap.galsa) candidates.push(ap.galsa);
+      if(ap.galsaQadima) candidates.push(ap.galsaQadima);
+      candidates.forEach(c=>{
+        let cd=cleanDate(c);
+        if(cd){
+          let pp=cd.split('/');
+          if(parseInt(pp[0])==y && parseInt(pp[1])==m) tmpSet[cd]=1;
+        }
+      });
+    });
+    dates=Object.keys(tmpSet).sort().slice(0,6);
+  }
+
+  html+='<div class="block"><h2>شهر '+MONTH_NAMES[m]+' ( '+toAr(m)+' ) لعام '+toAr(y)+'</h2>';
+  html+='<table><thead><tr><th>اليوم</th><th>التاريخ</th><th>الرول</th><th class="tah">تحقيق</th><th class="ist">استجواب</th><th class="code">A</th><th class="code">B</th><th class="code">C</th><th class="code">D</th><th class="code">E</th><th class="code">F</th></tr></thead><tbody>';
+  for(var i=0;i<6;i++){
+   var dStr=dates[i]||'';
+   if(dStr){
+    var list=countForDate(dStr, DATA);
+    // التحقيق والاستجواب من السابقة - نفس المنطق الصح
+    var tahqiq=list.filter(o=>{
+      var ap=o.ap; var j=o.j;
+      var gSabiqa = (ap.galsaSabiqa||'').trim();
+      var muagal = (j.muagalFrom||'').trim();
+      var qarar = (j.qarar||ap.qarar||'').trim();
+      if(qarar.indexOf('إنهاء')>-1 && qarar.indexOf('تحقيق')>-1 && qarar.indexOf('إعادة')>-1) return false;
+      if(gSabiqa.indexOf('تحقيق')>-1) return true;
+      if(muagal.indexOf('تحقيق')>-1) return true;
+      return (j.halat||'').indexOf('تحقيق')>-1;
+    }).length;
+    var istig=list.filter(o=>{
+      var ap=o.ap; var j=o.j;
+      var gSabiqa = (ap.galsaSabiqa||'').trim();
+      if(gSabiqa.indexOf('استجواب')>-1) return true;
+      if((j.muagalFrom||'').indexOf('استجواب')>-1) return true;
+      return (j.halat||ap.halat||'').indexOf('استجواب')>-1 || (j.qarar||'').indexOf('استجواب')>-1;
+    }).length;
+    var roll=list.length;
+    var dt=new Date(parseInt(dStr.split('/')[0]), parseInt(dStr.split('/')[1])-1, parseInt(dStr.split('/')[2]));
+    var dayName=DAY_NAMES[dt.getDay()];
+    html+='<tr><td>'+dayName+'</td><td class="date">'+toAr(dStr)+'</td><td style="background:#fff">'+toAr(roll)+'</td><td>'+toAr(tahqiq||'—')+'</td><td>'+toAr(istig||'—')+'</td><td class="code"></td><td class="code"></td><td class="code"></td><td class="code"></td><td class="code"></td><td class="code"></td></tr>';
+   }else{
+    html+='<tr><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="empty"></td><td class="code empty"></td><td class="code empty"></td><td class="code empty"></td><td class="code empty"></td><td class="code empty"></td><td class="code empty"></td></tr>';
+   }
+  }
+  html+='</tbody></table></div>';
+ });
+ document.getElementById('sheet').innerHTML=html || '<div style="padding:20px;text-align:center;color:#b00020">لا يوجد تواريخ في الأجندة لهذا الشهر - الأجندة فاضية: '+toAr(getAgenda().length)+' - البيانات: '+toAr(getData().length)+'</div>';
+}
+
+initMonthYear();
+build();
+</script>
+</body>
+</html>

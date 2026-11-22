@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Ketabet-Ahkam - يعمل فورا - منضم مرتب بالأقدمية</title>
+<style>
+*{box-sizing:border-box;font-family:Arial, sans-serif!important}
+html,body{width:100%;margin:0;padding:0}
+body{font-family:Arial;background:#f6f3ee;padding:10px}
+header{background:#1a3a32;color:#fff;padding:10px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card{background:#fff;padding:12px;border-radius:10px;margin-top:10px}
+.btn{padding:8px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+.btn-navy{background:#0f1f3a;color:#fff}.btn-green{background:#0a7a42;color:#fff}.btn-gray{background:#ddd}
+.input{padding:8px;border:1px solid #bbb;border-radius:6px;width:100%;font-family:Arial}
+.search-box{display:grid;grid-template-columns:1fr 1fr auto auto;gap:6px;align-items:end;background:#fffde7;border:2px solid #8a6d3b;padding:10px;border-radius:10px}
+#paper{background:#fff;padding:24px 32px;border:1px solid #d0c8b8;width:100%;max-width:none;margin:20px 0;line-height:1.6;font-family:Arial!important;font-size:14pt;min-height:800px;color:#000;text-align:right;box-sizing:border-box;font-weight:bold}
+.editable{border:1px dashed #c9b896;padding:1px 6px;min-width:60px;display:inline-block;outline:none;background:#fffbe6;font-weight:normal!important}
+.editable:focus{border-color:#0f1f3a;background:#fff3cd}
+.editable-box{border:1px dashed #c9b896;padding:6px;min-height:40px;width:100%;display:block;outline:none;white-space:pre-wrap;background:#fffff0;line-height:1.5;font-weight:normal!important}
+.center{text-align:center!important;font-weight:bold;margin:8px 0;display:block;width:100%}
+.hay-wrap{width:100%;max-width:100%;margin:0 auto;display:flex;flex-direction:column;gap:0;font-weight:bold}
+.hay-row{display:flex;justify-content:space-between;align-items:baseline;width:100%;margin:6px 0;line-height:1.6;gap:12px;font-weight:bold}
+.hay-main{white-space:nowrap;font-weight:bold}
+.hay-title{white-space:nowrap;flex-shrink:0;font-weight:bold}
+.data-normal{font-weight:normal!important}
+.label-bold{font-weight:bold!important}
+.content-14{font-size:14pt!important;font-weight:bold;line-height:1.6}
+.print-header-continuation{display:none;position:fixed;top:0;left:12mm;right:12mm;text-align:center;font-size:10pt!important;font-weight:bold!important;font-family:Arial!important;background:#fff;padding:2mm 0 1.5mm 0;border-bottom:1.2px solid #000;line-height:1.3}
+.print-footer-number{display:none;position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:10pt!important;font-weight:bold!important;font-family:Arial!important;background:#fff;padding:1mm 0 2mm 0}
+.print-footer-number::after{content:" - " counter(page, arabic-indic) " - "}
+.first-page-mask{display:none}
+@page{size:A4;margin:20mm 12mm 18mm 12mm;@top-center{content:var(--header-text, "");font-family:Arial;font-size:10pt;font-weight:bold;border-bottom:1.2px solid #000;padding-bottom:1.5mm;white-space:nowrap}@bottom-center{content:" - " counter(page, arabic-indic) " - ";font-family:Arial;font-size:10pt;font-weight:bold}}
+@page :first{margin:10mm 12mm 18mm 12mm;@top-center{content:none}}
+@media print{
+html,body{width:100%!important;height:auto!important;margin:0!important;padding:0!important;background:#fff!important}
+header,.no-print,.card.no-print{display:none!important}
+.editable{font-weight:bold!important}
+.editable.data-normal{font-weight:bold!important}
+.hay-main .editable{font-weight:bold!important}
+body > div[style*="grid-template-columns"]{display:block!important;width:100%!important;margin:0!important;padding:0!important}
+#paper{display:block!important;width:100%!important;max-width:100%!important;min-width:100%!important;margin:0!important;padding:6mm 14mm 10mm 14mm!important;border:none!important;box-shadow:none!important;background:#fff!important;color:#000!important;font-size:14pt!important;line-height:1.6!important;text-align:right!important;box-sizing:border-box!important;font-weight:bold!important}
+.hay-wrap{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+.hay-wrap[style*="40px"]{width:calc(100% - 80px)!important;margin-left:40px!important;margin-right:40px!important;box-sizing:border-box!important}
+.hay-wrap[style*="20px"]{width:calc(100% - 40px)!important;margin-left:20px!important;margin-right:20px!important;margin-top:10px!important;box-sizing:border-box!important}
+.hay-row{width:100%!important;box-sizing:border-box!important;display:flex!important;justify-content:space-between!important;align-items:baseline!important}
+.hay-main{flex:1!important;white-space:nowrap!important;overflow:visible!important}
+.hay-title{white-space:nowrap!important;flex-shrink:0!important;display:inline-block!important;min-width:90px!important;text-align:left!important}
+.editable,.editable-box,.data-normal{border:none!important;background:transparent!important;box-shadow:none!important;font-weight:normal!important}
+.center{text-align:center!important;font-weight:bold!important;page-break-inside:avoid!important;break-inside:avoid!important}
+.content-14{font-size:14pt!important;page-break-inside:avoid!important;break-inside:avoid!important}
+.print-header-continuation, .print-footer-number, .first-page-mask{display:none!important}
+}
+
+header{position:sticky;top:0;z-index:1000;border-radius:0 0 10px 10px;margin:0;padding:8px 12px}
+#mainContent{display:flex;flex-direction:row;gap:10px;align-items:flex-start;margin-top:6px}
+#paperWrap{flex:1;max-height:calc(100vh - 60px);overflow-y:auto;border:1px solid #d0c8b8;background:#fff;border-radius:8px;order:2;margin-top:0}
+#paper{margin:0!important;width:100%!important;max-width:100%!important;min-height:800px;border:none!important;padding:16px 24px!important}
+#rightPanel{width:300px;min-width:300px;max-width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;position:sticky;top:60px;order:1;height:fit-content}
+#searchCardSmall{border:2px solid #2e7d32;padding:8px;border-radius:8px;background:#e8f5e9;display:block!important;width:300px}
+#sideDateResults{width:300px;min-width:300px;max-width:300px;max-height:calc(100vh - 220px);overflow-y:auto;display:block!important;border:2px solid #0f1f3a;padding:4px;background:#fff}
+@media print{header,.no-print{display:none!important} #mainContent{display:block!important} #paperWrap{max-height:none!important;overflow:visible!important} #rightPanel{display:none!important}}
+
+</style>
+</head>
+<body>
+<!-- عناصر الطباعة الثابتة -->
+<div id="printHeaderCont" class="print-header-continuation"></div>
+<div class="print-footer-number"></div>
+<header>
+<div>📜 كتابة الأحكام - / مسافة واحدة - <span id="dbStatus">جاهز - يعمل بدون قاعدة</span> | <span id="countInfo"></span></div>
+<div style="display:flex;gap:6px"><button class="btn btn-navy" onclick="openHay2aModal()" style="background:#6a1b9a">👥 إضافة هيئة</button><button class="btn btn-green" onclick="doSaveWord()" style="background:#1a237e">📝 وورد</button><button class="btn btn-green" onclick="doPrint()" style="background:#0a7a42">🖨 طباعة</button><button class="btn btn-green" onclick="doPrintMantoq()" style="background:#b71c1c">📜 طباعة المنطوق</button><button class="btn btn-green" onclick="doPrintAllManatiq()" style="background:#4a148c">📚 طباعة كل المناطيق</button><button class="btn btn-gray" onclick="buildPaper()">🔄 تحديث الورقة</button></div>
+</header>
+
+
+<div id="mainContent">
+  <div id="paperWrap">
+    <div style="display:block;width:100%">
+      <div style="display:none">
+        <input id="f_raqm"><input id="f_sana"><input id="f_mostanef"><input id="f_mostanef_addr"><input id="f_ded"><input id="f_ded_addr">
+        <input id="f_mawdou3_tarikh"><input id="f_raqm_joz2i"><input id="f_sana_joz2i"><input id="f_mahkama_1"><input id="f_tar">
+        <input id="f_rais"><input id="f_member2"><input id="f_member3"><input id="f_rais2"><input id="f_member2_2"><input id="f_member3_2"><input id="f_wakil"><input id="f_amin">
+        <textarea id="f_haytheyat" style="display:none"></textarea><textarea id="f_manteq" style="display:none"></textarea>
+        <input type="checkbox" id="f_has_hay2a"><select id="caseSelect" style="display:none"></select>
+      </div>
+      <div id="paper"></div>
+    </div>
+  </div>
+
+  <div id="rightPanel">
+    <!-- خانة البحث بالتاريخ -->
+    <div class="card no-print" id="searchCardSmall">
+      <label style="font-weight:bold;color:#1b5e20;font-size:13px;display:block;margin-bottom:4px">📅 بحث بتاريخ الحكم</label>
+      <input id="s_tarikh" class="input" type="date" style="font-size:13px;padding:6px;margin-bottom:6px">
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-navy" onclick="searchByTarikh()" style="background:#2e7d32;flex:1;font-size:13px;padding:6px">بحث</button>
+        <button class="btn btn-gray" onclick="clearDateSearch()" style="flex:1;font-size:13px;padding:6px">مسح</button>
+      </div>
+      <!-- خانة اختيار عضو - تظهر عند الضغط على بحث -->
+      <div id="memberFilterBox" style="display:none;margin-top:8px;padding:8px;background:#fffde7;border:2px solid #0f1f3a;border-radius:6px">
+        <label style="font-weight:bold;color:#0f1f3a;font-size:12px;display:block;margin-bottom:4px">👤 فلترة بكود العضو:</label>
+        <select id="filterByMember" class="input" style="font-size:13px;padding:6px;background:#fff;border:2px solid #0f1f3a;font-weight:bold" onchange="filterByMemberChanged()">
+          <option value="ALL">الكل</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+        </select>
+      </div>
+      <div id="searchMsg" style="margin-top:6px;font-weight:bold;min-height:18px;font-size:13px;display:none"></div>
+    </div>
+
+    <!-- القائمة الجانبية ظاهرة على طول - 220px -->
+    <div class="card no-print" id="sideDateResults">
+      <h4 style="margin:0 0 6px 0;background:#0f1f3a;color:#fff;padding:6px;border-radius:6px;text-align:center;font-size:13px">قائمة هذا التاريخ<br><span id="sideDateLabel" style="font-size:9px;font-weight:normal"></span> <span id="dateResultsBadge" style="background:#2e7d32;color:#fff;padding:2px 6px;border-radius:8px;font-size:12px"></span></h4>
+      <div id="dateResultsList" style="display:block"><div style="padding:20px;text-align:center;color:#888;font-size:13px">اختر تاريخ الحكم لعرض القضايا هنا<br>٣ أعمدة: م | رقم/سنة | كود</div></div>
+    </div>
+  </div>
+</div>
+<script src="daira-core.js"></script>
+<script>
+// ===== يعمل حتى لو مفيش قاعدة - بناء الورقة فورا =====
+const DB_NAME='D32_DB';
+let DATA=[], DATA_MOT=[], MEMBERS={}, ALL_LIST=[];
+let CURRENT_CASE={}, CURRENT_DAMM=[];
+
+var DAIRA_NUM='32';
+async function loadDairaNum(){
+  try{
+    var db=await openDB();
+    var keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_DAIRA'];
+    for(var i=0;i<keys.length;i++){
+      var val=await new Promise(function(res){
+        var tx=db.transaction('d32store','readonly');
+        var rq=tx.objectStore('d32store').get(keys[i]);
+        rq.onsuccess=function(){res(rq.result);}; rq.onerror=function(){res(null);};
+      });
+      if(val){
+        try{
+          var c=(typeof val==='string')?JSON.parse(val):val;
+          var n=c.dairaNumber||c.daira||c.circle||c.number||'';
+          if(n){ DAIRA_NUM=String(n); window.CURRENT_DAIRA=DAIRA_NUM; window.DAIRA_NUMBER=DAIRA_NUM; break; }
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  try{ buildPaper(); }catch(e){}
+  return DAIRA_NUM;
+}
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    try{
+      let r=indexedDB.open(DB_NAME,2);
+      r.onupgradeneeded=e=>{
+        let db=e.target.result;
+        try{ if(!db.objectStoreNames.contains('cases')) db.createObjectStore('cases'); }catch(e){}
+        try{ if(!db.objectStoreNames.contains('ahkam')) db.createObjectStore('ahkam'); }catch(e){}
+        try{ if(!db.objectStoreNames.contains('d32store')) db.createObjectStore('d32store'); }catch(e){}
+      };
+      r.onsuccess=()=>res(r.result);
+      r.onerror=()=>rej(r.error);
+      r.onblocked=()=>{ try{res(r.result);}catch(e){res(null);} };
+    }catch(e){ rej(e); }
+  });
+}
+function toAr(n){if(n==null||n==='')return'';return String(n).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c));}
+function isIltimasCase(x){
+  if(!x) return false;
+  try{
+    let txt = JSON.stringify(x||{});
+    if(txt.includes('التماس') || txt.includes('إلتماس') || txt.includes('التماس')) return true;
+    let fields = [x.no3||'', x.type||'', x.no3ElDa3wa||'', x.mawdou3||'', x.mawdoo3||'', x.mawdou3Text||'', x.title||'', x.qar||'', x.mantouq||''].join(' ');
+    if(fields.includes('التماس') || fields.includes('إلتماس')) return true;
+  }catch(e){}
+  return false;
+}
+function getTarikhHokm(x){if(!x) return ''; return x.tarikhHokm||x.tarHokm||x.tar||x.galsa||'';}
+function getDayName(d){try{if(!d) return ''; let c=d.replace(/[٠-٩]/g,x=>'٠١٢٣٤٥٦٧٨٩'.indexOf(x)); let p=c.split(/[\/\-]/).map(s=>s.trim()); let y,m,day; if(p[0].length===4){y=parseInt(p[0]); m=parseInt(p[1])-1; day=parseInt(p[2]);} else {day=parseInt(p[0]); m=parseInt(p[1])-1; y=parseInt(p[2]); if(y<100) y+=2000;} let dt=new Date(y,m,day); if(isNaN(dt.getTime())) return ''; let days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']; return days[dt.getDay()];}catch(e){return '';}}
+function resolveMember(c){if(!c) return ''; let s=String(c).trim(); if(s.length===1 && /^[A-G]$/.test(s)) return MEMBERS[s]||''; return s;}
+function getDammList(x){
+  if(!x) return [];
+  if(x.dammList && Array.isArray(x.dammList) && x.dammList.length>0) return x.dammList;
+  try{
+    let r = String(x.raqm||'').trim();
+    if(r && DATA_MOT){
+      for(let i=0;i<DATA_MOT.length;i++){
+        let m=DATA_MOT[i];
+        if(String(m.raqm).trim()===r && String(m.sana).trim()===String(x.sana||'').trim()){
+          if(m.dammList && m.dammList.length>0) return m.dammList;
+        }
+      }
+    }
+  }catch(e){}
+  return [];
+}
+function getRaqm(x){return (x&&x.raqm||'').toString().trim();}
+function getSana(x){return (x&&x.sana||'').toString().trim();}
+function getMost(x){return (x&& (x.mostanef||x.most)||'').toString().trim();}
+function getDed(x){return (x&& (x.ded)||'').toString().trim();}
+function getHay2a(x){ if(!x) return []; if(x.hay2aAwal && Array.isArray(x.hay2aAwal) && x.hay2aAwal.length>0) return x.hay2aAwal; if(x.hay2a && Array.isArray(x.hay2a) && x.hay2a.length>0) return x.hay2a; if(x.hay2aAwalText) return String(x.hay2aAwalText).split(/[-–—]/).map(s=>s.trim()).filter(Boolean); return []; }
+function cleanManteqPrefix(s){
+  if(!s) return '';
+  var orig = s.trim();
+  var pattern = /^\s*حكمت\s+المحكمة\s*/;
+  var cleaned = orig.replace(pattern, '');
+  return cleaned;
+}
+function getManteqFromDB(x){
+  if(!x) return '';
+  var raw = (x.manteq||x.mantouq||x.mantouqText||x.qar||x.qarar||x.qararHokm||x.mantouqHokm||x.hokmManteq||x.mantoq||x.nasManteq||x.manteqHokm||x.qarText||'').toString().trim();
+  return cleanManteqPrefix(raw);
+}
+function getHaytheyatFromDB(x){
+  if(!x) return '';
+  return (x.haytheyat||x.haythiyat||x.haytheyatText||x.asbab||x.asbabHokm||x.haytheyatHokm||x.haythiat||x.ta3lil||x.taalil||'').toString().trim();
+}
+function getDairaNumberForMantoq(){
+  try{
+    if(DAIRA_NUM && DAIRA_NUM!=='32') return DAIRA_NUM;
+    if(window.CURRENT_DAIRA) return window.CURRENT_DAIRA;
+    if(window.DAIRA_NUMBER) return window.DAIRA_NUMBER;
+    var cur = window.CURRENT_CASE || window.CURRENT_CASE_SERIAL_DATA || {};
+    if(cur.dayra) return cur.dayra;
+    if(cur.daira) return cur.daira;
+    if(cur.dairaNumber) return cur.dairaNumber;
+    if(cur.DAIRA_NUMBER) return cur.DAIRA_NUMBER;
+    if(typeof getJoz2iData === 'function'){
+      var jz = getJoz2iData(cur);
+      if(jz && (jz.dayra||jz.daira)) return jz.dayra||jz.daira;
+    }
+    return '';
+  }catch(e){ return ''; }
+}
+
+
+function getJoinedCasesDetails(){
+  let list = CURRENT_DAMM||[];
+  if(!list || list.length===0) return [];
+  let all = (ALL_LIST||[]).concat(DATA||[]).concat(DATA_MOT||[]);
+  let found=[];
+  list.forEach(d=>{
+    let r = String(d.raqm||d.r||'').trim();
+    let s = String(d.sana||d.s||'').trim();
+    if(!r) return;
+    let f = all.find(x=> String(x.raqm).trim()===r && (!s || String(x.sana).trim()===s));
+    if(f) found.push(f);
+    else found.push({raqm:r, sana:s, mostanef: d.mostanef||'', ded: d.ded||'', isMissing:true});
+  });
+  return found;
+}
+function findCaseByRaqmSana(raqm, sana){
+  try{
+    let all = (ALL_LIST||[]).concat(DATA||[]).concat(DATA_MOT||[]);
+    let re = toEn(String(raqm||'').trim());
+    let se = toEn(String(sana||'').trim());
+    for(let x of all){ if(toEn(getRaqm(x))===re && toEn(getSana(x))===se) return x; }
+    for(let x of all){ if(toEn(getRaqm(x))===re) return x; }
+  }catch(e){}
+  return null;
+}
+function fillSelect(list){
+  try{
+    let sel=document.getElementById('caseSelect');
+    if(!sel) return;
+    sel.innerHTML='<option value="">-- اختر قضية --</option>';
+    list.forEach((x,i)=>{
+      let raqm=getRaqm(x), sana=getSana(x);
+      if(!raqm) return;
+      let opt=document.createElement('option');
+      opt.value=i;
+      opt.textContent=toAr(raqm)+' / '+toAr(sana)+' - '+getMost(x);
+      sel.appendChild(opt);
+    });
+    ALL_LIST=list;
+  }catch(e){}
+}
+function findKashidaInsertPos(word){
+ if(word==='وعضوية') return 3;
+ const preferred = ['ض','ص','س','ش','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ب','ت','ث','ج','ح','خ','ر','ز','ذ','د'];
+ for(let i=word.length-2; i>=1; i--){
+   if(preferred.includes(word[i])){
+     let nxt = word[i+1];
+     if(nxt==='ة' || nxt==='ـ') continue;
+     let noConnect = ['ا','أ','إ','آ','د','ذ','ر','ز','و','ؤ'];
+     if(noConnect.includes(word[i])) continue;
+     return i+1;
+   }
+ }
+ return Math.max(1, word.length-1);
+}
+function kashidaInsideWord(word, count){
+ if(!word || word.length<3 || count<=0) return word;
+ let pos = findKashidaInsertPos(word);
+ return word.slice(0,pos) + 'ـ'.repeat(count) + word.slice(pos);
+}
+function stretchLineWithKashida(line, targetLen){
+ if(!line) return line;
+ let words = line.split(' ');
+ let diff = targetLen - line.length;
+ if(diff<=0) return line;
+ let eligibleIdx = [];
+ words.forEach((w,i)=>{ if(w.length>=3) eligibleIdx.push(i); });
+ if(eligibleIdx.length===0) return line;
+ let per = Math.floor(diff / eligibleIdx.length);
+ let rem = diff % eligibleIdx.length;
+ let newWords = [...words];
+ eligibleIdx.forEach((idx, j)=>{
+   let extra = per + (j<rem?1:0);
+   if(extra>0){ newWords[idx] = kashidaInsideWord(newWords[idx], extra); }
+ });
+ return newWords.join(' ');
+}
+
+function justifyJudgesNames(names){
+  let clean = names.map(s=> String(s||'').trim()).filter(s=> s && s!=='.........' );
+  if(clean.length===0) return names;
+  let maxLen = Math.max(...clean.map(s=> s.length));
+  return names.map(n=>{
+    let orig = String(n||'').trim();
+    if(!orig || orig==='.........') return orig;
+    if(orig.length>=maxLen) return orig;
+    let words = orig.split(/\s+/);
+    let diff = maxLen - orig.length;
+    if(words.length===1){
+      return stretchLineWithKashida(orig, maxLen);
+    } else {
+      let perWord = Math.floor(diff / words.length);
+      let rem = diff % words.length;
+      let stretched = words.map((w,i)=>{
+        let extra = perWord + (i < rem ? 1 : 0);
+        if(extra<=0) return w;
+        return kashidaInsideWord(w, extra);
+      });
+      let result = stretched.join(' ');
+      while(result.length < maxLen){
+        stretched[0] = kashidaInsideWord(stretched[0], 1);
+        result = stretched.join(' ');
+        if(result.length >= maxLen+5) break;
+      }
+      return result;
+    }
+  });
+}
+
+function justifyLinesWithKashida(lines){
+ let maxLen = Math.max(...lines.map(s=>s.length));
+ return lines.map(s=> s.length>=maxLen ? s : stretchLineWithKashida(s, maxLen));
+}
+
+
+
+function buildPaper(){
+ try{
+  let cur=CURRENT_CASE||{};
+  let raqmRaw=(document.getElementById('f_raqm')?.value||'').trim()||getRaqm(cur);
+  let sanaRaw=(document.getElementById('f_sana')?.value||'').trim()||getSana(cur);
+  let raqm=toAr(raqmRaw); let sana=toAr(sanaRaw);
+  let most=(document.getElementById('f_mostanef')?.value||'').trim()||getMost(cur);
+  let ded=(document.getElementById('f_ded')?.value||'').trim()||getDed(cur);
+  let mostAddr=(document.getElementById('f_mostanef_addr')?.value||'').trim();
+  let dedAddr=(document.getElementById('f_ded_addr')?.value||'').trim();
+  let rais=(document.getElementById('f_rais')?.value||'').trim();
+  let m2=(document.getElementById('f_member2')?.value||'').trim();
+  let m3=(document.getElementById('f_member3')?.value||'').trim();
+  let rais2=(document.getElementById('f_rais2')?.value||'').trim();
+  let m2_2=(document.getElementById('f_member2_2')?.value||'').trim();
+  let m3_2=(document.getElementById('f_member3_2')?.value||'').trim();
+  let jz=getJoz2iData(cur);
+  let tarAwal=toAr((document.getElementById('f_mawdou3_tarikh')?.value||'').trim()||jz.tar||'');
+  let raqmJz=toAr((document.getElementById('f_raqm_joz2i')?.value||'').trim()||jz.raqm||'');
+  let sanaJz=toAr((document.getElementById('f_sana_joz2i')?.value||'').trim()||jz.sana||'');
+  let mahkama=(document.getElementById('f_mahkama_1')?.value||'').trim()||jz.mahkama||'';
+  let tarHokmRaw=(document.getElementById('f_tar')?.value||'').trim()||getTarikhHokm(cur);
+  let tarHokm=toAr(tarHokmRaw);
+  let dayName=getDayName(tarHokmRaw);
+  let haytheyat=document.getElementById('f_haytheyat')?.value||'';
+  let manteq=document.getElementById('f_manteq')?.value||'';
+  let hasHay2aThania=false;
+  if(rais2||m2_2||m3_2) hasHay2aThania=true;
+  let judgesAwal = justifyJudgesNames([rais, m2, m3]);
+  let r_rais = judgesAwal[0]||rais||'.........';
+  let r_m2 = judgesAwal[1]||m2||'.........';
+  let r_m3 = judgesAwal[2]||m3||'.........';
+  let judgesAkher = justifyJudgesNames([rais2, m2_2, m3_2]);
+  let r_rais2 = judgesAkher[0]||rais2||'.........';
+  let r_m2_2 = judgesAkher[1]||m2_2||'.........';
+  let r_m3_2 = judgesAkher[2]||m3_2||'.........';
+  let rawPrefixes = ['برئاسة السيد الأستاذ المستشار','وعضوية السيد المستشار','وعضوية السيد المستشار','وحضور السيد الأستاذ','وحضور السيد'];
+  let rawTitles = ['رئيس المحكمة','الرئيس بالمحكمة','الرئيس بالمحكمة','وكيل النيابة','أمين السر'];
+  let justPrefixes = justifyLinesWithKashida(rawPrefixes);
+  let justTitles = justifyLinesWithKashida(rawTitles);
+  function addrLine(addr){
+    if(!addr || addr.trim()==='' || addr.trim()==='.........' ) return '';
+    return '<br><span style="font-weight:bold">المقيم</span> <span class="editable" contenteditable="true" style="font-weight:normal;min-width:150px">'+addr+'</span>';
+  }
+  function addrEditable(addr){
+    if(!addr || addr.trim()==='' ) return '';
+    if(addr==='.........' ) return '';
+    return '<br><span style="font-weight:bold">المقيم</span> <span class="editable data-normal" contenteditable="true">'+addr+'</span>';
+  }
+  let dammDetails = getJoinedCasesDetails();
+  let hasDamm = dammDetails && dammDetails.length>0;
+
+  let contText='';
+  try{
+    if(hasDamm){
+      let other = dammDetails[0];
+      function cmp2(a,b){
+        let sa = parseInt(toEn(String(a.sana||'')))||0;
+        let sb = parseInt(toEn(String(b.sana||'')))||0;
+        if(sa!==sb) return sa-sb;
+        let ra = parseInt(toEn(String(a.raqm||'')))||0;
+        let rb = parseInt(toEn(String(b.raqm||'')))||0;
+        return ra-rb;
+      }
+      let c1t = {raqm: getRaqm(cur)||raqmRaw, sana: getSana(cur)||sanaRaw};
+      let c2t = {raqm: getRaqm(other)||other.raqm, sana: getSana(other)||other.sana};
+      let sortedT = [c1t,c2t].sort(cmp2);
+      let r1t = toAr(sortedT[0].raqm), s1t = toAr(sortedT[0].sana);
+      let r2t = toAr(sortedT[1].raqm), s2t = toAr(sortedT[1].sana);
+      contText = 'تابع الحكم الصادر في الاستئنافين رقمي '+(r1t||'....')+' لسنة '+(s1t||'....')+' و '+ (r2t||'....')+' لسنة '+(s2t||'....')+' ق';
+    } else {
+      contText = 'تابع الحكم الصادر في الاستئناف رقم '+(raqm||'....')+' لسنة '+(sana||'....')+' ق';
+    }
+  }catch(e){ contText = 'تابع الحكم الصادر في الاستئناف رقم '+(raqm||'....')+' لسنة '+(sana||'....')+' ق'; }
+  try{
+    let hdrEl=document.getElementById('printHeaderCont');
+    if(hdrEl) hdrEl.textContent=contText;
+    document.documentElement.style.setProperty('--header-text', '"'+contText.replace(/"/g,'\"')+'"');
+  }catch(e){}
+
+  let html='';
+  html+='<div class="first-page-mask"></div>';
+  let serialForPaper = window.CURRENT_SERIAL || '';
+  let serialHtml = serialForPaper ? '<span style="position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:13pt;color:#000;font-weight:bold"> '+toAr(serialForPaper)+' </span>' : '';
+  html+='<div class="center" style="font-size:14pt;position:relative;display:flex;justify-content:center;align-items:center"><span style="border-bottom:0.8px solid #000;padding-bottom:2px">باسم الشعب</span>'+serialHtml+'</div>';
+  html+='<div class="center" style="font-size:14pt;margin-top:6px"><span style="border-bottom:0.8px solid #000;padding-bottom:2px">محكمة استئناف القاهرة</span></div>';
+  html+='<div class="center" style="font-size:14pt;margin-top:4px"><span style="border-bottom:0.8px solid #000;padding-bottom:2px">الدائرة '+toAr(DAIRA_NUM)+' لشئون الاسرة</span></div>';
+  html+='<div class="center" style="font-size:14pt;margin:9px 0"><span style="border-bottom:0.8px solid #000;padding-bottom:2px">حكـــــــــم</span></div>';
+  html+='<div class="center content-14">بالجلسة المنعقدة علنا اليوم بسراي محكمة الأسرة الكائن مقرها بالقاهرة الجديدة</div>';
+  let wakilName = (window.WAKIL_NIYABA || document.getElementById('f_wakil')?.value || '').trim() || '.........';
+  let aminName = (window.AMIN_SIR || document.getElementById('f_amin')?.value || '').trim() || '.........';
+  html+='<div class="hay-wrap content-14" style="margin:10px 20px 0 20px;width:calc(100% - 40px);box-sizing:border-box">';
+  html+='<div class="hay-row"><span class="hay-main">'+justPrefixes[0]+' / <span class="editable" contenteditable="true" style="font-weight:bold!important;font-size:16pt">'+(r_rais||'.........')+'</span></span><span class="hay-title" style="font-size:16pt">'+justTitles[0]+'</span></div>';
+  html+='<div class="hay-row"><span class="hay-main">'+justPrefixes[1]+' / <span class="editable" contenteditable="true" style="font-weight:bold!important">'+(r_m2||'.........')+'</span></span><span class="hay-title">'+justTitles[1]+'</span></div>';
+  html+='<div class="hay-row"><span class="hay-main">'+justPrefixes[2]+' / <span class="editable" contenteditable="true" style="font-weight:bold!important">'+(r_m3||'.........')+'</span></span><span class="hay-title">'+justTitles[2]+'</span></div>';
+  html+='<div class="hay-row"><span class="hay-main">'+justPrefixes[3]+' / <span class="editable" contenteditable="true" style="font-weight:bold!important">'+(wakilName)+'</span></span><span class="hay-title">'+justTitles[3]+'</span></div>';
+  html+='<div class="hay-row"><span class="hay-main">'+justPrefixes[4]+' / <span class="editable" contenteditable="true" style="font-weight:bold!important">'+(aminName)+'</span></span><span class="hay-title">'+justTitles[4]+'</span></div>';
+  html+='</div>';
+  html+='<div class="center content-14" style="text-decoration:underline;text-underline-offset:5px;margin-top:12px;font-size:16pt">أصدرت الحكم الآتي:</div>';
+  if(hasDamm){
+    let other = dammDetails[0];
+    function cmp(a,b){
+      let sa = parseInt(toEn(String(a.sana||'')))||0;
+      let sb = parseInt(toEn(String(b.sana||'')))||0;
+      if(sa!==sb) return sa-sb;
+      let ra = parseInt(toEn(String(a.raqm||'')))||0;
+      let rb = parseInt(toEn(String(b.raqm||'')))||0;
+      return ra-rb;
+    }
+    let c1 = {raqm: getRaqm(cur)||raqmRaw, sana: getSana(cur)||sanaRaw, _full: cur};
+    let c2 = {raqm: getRaqm(other)||other.raqm, sana: getSana(other)||other.sana, _full: other};
+    let full1 = findCaseByRaqmSana(c1.raqm, c1.sana) || cur;
+    let full2 = findCaseByRaqmSana(c2.raqm, c2.sana) || other;
+    c1._full = full1; c2._full = full2;
+    let sorted = [c1,c2].sort(cmp);
+    let older = sorted[0], newer = sorted[1];
+    let r1 = toAr(older.raqm), s1 = toAr(older.sana);
+    let r2 = toAr(newer.raqm), s2 = toAr(newer.sana);
+    let isIlt = isIltimasCase(cur) || isIltimasCase(older._full) || isIltimasCase(newer._full);
+    let siaghDouble = isIlt ? 'في الالتماسين المقيدين بجدول العموم تحت رقمي' : 'في الاستئنافين المقيدين بجدول العموم تحت رقمي';
+    html+='<div class="content-14" style="margin-top:7px;white-space:nowrap">'+siaghDouble+' <span class="editable data-normal" contenteditable="true">'+(r1||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(s1||'....')+'</span> و <span class="editable data-normal" contenteditable="true">'+(r2||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(s2||'....')+'</span> ق</div>';
+    let olderMost = getMost(older._full)||'';
+    let olderDed = getDed(older._full)||'';
+    if(String(getRaqm(older._full))===String(getRaqm(cur))){ olderMost = most || olderMost; olderDed = ded || olderDed; }
+    html+='<div class="content-14" style="margin-top:10px"><span style="border-bottom:1.2px solid #000;padding-bottom:2px">المرفوع أولهما برقم <span class="editable data-normal" contenteditable="true">'+(r1||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(s1||'....')+'</span> ق من :-</span></div>';
+    html+='<div class="content-14" style="margin-top:8px">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(olderMost||'.........')+'</span>'+addrEditable(mostAddr)+'</div>';
+    html+='<div class="center content-14">ضــــــــد</div>';
+    html+='<div class="content-14">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(olderDed||'.........')+'</span>'+addrEditable(dedAddr)+'</div>';
+    let newerMost = getMost(newer._full)||'';
+    let newerDed = getDed(newer._full)||'';
+    if(String(getRaqm(newer._full))===String(getRaqm(cur))){ newerMost = most || newerMost; newerDed = ded || newerDed; }
+    html+='<div class="content-14" style="margin-top:12px"><span style="border-bottom:1.2px solid #000;padding-bottom:2px">والمرفوع ثانيهما برقم <span class="editable data-normal" contenteditable="true">'+(r2||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(s2||'....')+'</span> ق من :-</span></div>';
+    html+='<div class="content-14" style="margin-top:8px">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(newerMost||'.........')+'</span></div>';
+    html+='<div class="center content-14">ضــــــــد</div>';
+    html+='<div class="content-14">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(newerDed||'.........')+'</span></div>';
+  } else {
+    let isIltSingle = isIltimasCase(cur);
+    let siaghSingle = isIltSingle ? 'في الالتماس المقيد بجدول العموم تحت رقم' : 'في الاستئناف المقيد بجدول العموم تحت رقم';
+    html+='<div class="content-14" style="margin-top:7px">'+siaghSingle+' <span class="editable data-normal" contenteditable="true">'+(raqm||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(sana||'....')+'</span> ق</div>';
+    html+='<div class="content-14" style="margin-top:5px">المرفوع من :-</div>';
+    html+='<div class="content-14" style="margin-top:3px">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(most||'.........')+'</span>'+addrEditable(mostAddr)+'</div>';
+    html+='<div class="center content-14">ضــــــــد</div>';
+    html+='<div class="content-14">السيد / <span class="editable" contenteditable="true" style="font-weight:normal;min-width:200px">'+(ded||'.........')+'</span>'+addrEditable(dedAddr)+'</div>';
+  }
+  html+='<div class="center content-14" style="margin-top:12px">الموضوع</div>';
+  let isIltMawdou3 = false;
+  try{
+    if(typeof isIltimasCase === 'function' && isIltimasCase(cur)) isIltMawdou3 = true;
+    else if(typeof isIltSingle !== 'undefined' && isIltSingle) isIltMawdou3 = true;
+    else if(typeof isIlt !== 'undefined' && isIlt) isIltMawdou3 = true;
+  }catch(e){}
+  if(isIltMawdou3){
+    html+='<div class="content-14" style="text-align:center">التماس إعادة النظر في الحكم الصادر بجلسة <span class="editable data-normal" contenteditable="true">'+(tarAwal||'....')+'</span> في الدعوى رقم <span class="editable data-normal" contenteditable="true">'+(raqmJz||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(sanaJz||'....')+'</span> استئناف عالي القاهرة لشئون الأسرة</div>';
+  } else {
+    html+='<div class="content-14" style="text-align:center">استئناف الحكم الصادر بجلسة <span class="editable data-normal" contenteditable="true">'+(tarAwal||'....')+'</span> في الدعوى رقم <span class="editable data-normal" contenteditable="true">'+(raqmJz||'....')+'</span> لسنة <span class="editable data-normal" contenteditable="true">'+(sanaJz||'....')+'</span> أسرة <span class="editable data-normal" contenteditable="true">'+(mahkama||'....')+'</span></div>';
+  }
+  html+='<div class="center content-14" style="margin-top:10px">المحكمة</div>';
+  html+='<div class="center content-14">بعد الاطلاع على الأوراق ورأى النيابة والمداولة قانونا :-</div>';
+  html+='<div class="editable-box content-14" contenteditable="true" data-placeholder="اكتب الحيثيات هنا - يدعم النسخ واللصق" style="border:1px dashed #c9b896;background:#fffff0;padding:8px;min-height:120px;text-align:justify;font-weight:normal!important;white-space:pre-wrap;line-height:1.8">'+(haytheyat||'حيث إن وقائع التداعي...')+'</div>';
+  html+='<div class="center content-14" style="margin-top:12px">فلهذه الأسباب</div>';
+  html+='<div class="content-14" style="padding:4px 0"><div style="font-weight:bold;text-align:right">حكمت المحكمة :-</div><div class="editable-box content-14" contenteditable="true" data-placeholder="اكتب المنطوق هنا" style="border:1px dashed #c9b896;background:#fffff0;padding:8px;min-height:120px;text-align:right;font-weight:normal!important;white-space:pre-wrap;line-height:1.8;direction:rtl">'+(manteq||'بقبول الاستئناف شكلا\nوفي الموضوع ...')+'</div></div>';
+  if(hasHay2aThania){
+    let pre2=justifyLinesWithKashida(['برئاسة السيد الأستاذ المستشار','وعضوية السيد المستشار','وعضوية السيد المستشار']);
+    let justT = justifyLinesWithKashida(['رئيس المحكمة','الرئيس بالمحكمة','الرئيس بالمحكمة']);
+    html+='<div class="content-14" style="margin-top:14px;text-align:right">أما الهيئة التي تداولت ووقعت على المسودة هي :-</div><div class="hay-wrap content-14" style="margin:0 40px;width:calc(100% - 80px);box-sizing:border-box">';
+    html+='<div class="hay-row"><span class="hay-main">'+pre2[0]+' / <span class="editable data-normal" contenteditable="true" style="font-weight:bold!important;font-size:16pt">'+(r_rais2||".........")+'</span></span><span class="hay-title" style="font-size:16pt">'+justT[0]+'</span></div>';
+    html+='<div class="hay-row"><span class="hay-main">'+pre2[1]+' / <span class="editable data-normal" contenteditable="true" style="font-weight:bold!important">'+(r_m2_2||".........")+'</span></span><span class="hay-title">'+justT[1]+'</span></div>';
+    html+='<div class="hay-row"><span class="hay-main">'+pre2[2]+' / <span class="editable data-normal" contenteditable="true" style="font-weight:bold!important">'+(r_m3_2||".........")+'</span></span><span class="hay-title">'+justT[2]+'</span></div>';
+    html+='</div>';
+  }
+  html+='<div class="center content-14" style="margin-top:18px">صدر هذا الحكم وتلى علنا بجلسة اليوم '+(dayName||'')+' الموافق <span class="editable data-normal" contenteditable="true">'+(tarHokm||'....')+'</span></div>';
+  html+='<table style="width:100%;margin-top:30px;border:none;border-collapse:collapse;direction:rtl" dir="rtl"><tr style="border:none"><td style="text-align:right;font-weight:bold;font-size:14pt;border:none;width:50%;padding:8px 0">أمين السر</td><td style="text-align:left;font-weight:bold;font-size:14pt;border:none;width:50%;padding:8px 0">رئيس المحكمة</td></tr></table>';
+  document.getElementById('paper').innerHTML=html;
+ }catch(e){ console.error('buildPaper error', e); document.getElementById('paper').innerHTML='<div style="padding:20px;color:red">خطأ: '+e+'</div>'; }
+}
+function fillFromCase(x){
+ if(!x) return;
+ CURRENT_CASE=x; CURRENT_DAMM=getDammList(x);
+ try{
+  document.getElementById('f_raqm').value=getRaqm(x);
+  document.getElementById('f_sana').value=getSana(x);
+  document.getElementById('f_mostanef').value=getMost(x);
+  document.getElementById('f_ded').value=getDed(x);
+  document.getElementById('f_tar').value=getTarikhHokm(x);
+  let jz=getJoz2iData(x);
+  document.getElementById('f_mawdou3_tarikh').value=jz.tar||'';
+  document.getElementById('f_raqm_joz2i').value=jz.raqm||'';
+  document.getElementById('f_sana_joz2i').value=jz.sana||'';
+  document.getElementById('f_mahkama_1').value=jz.mahkama||'';
+  try{
+    let m = getManteqFromDB(x);
+    let h = getHaytheyatFromDB(x);
+    let fMan = document.getElementById('f_manteq');
+    let fHay = document.getElementById('f_haytheyat');
+    if(fMan){ fMan.value = m||''; }
+    if(fHay){ fHay.value = h||''; }
+  }catch(e){}
+
+  let hayAwal = null;
+  if(x.hay2aAwal && Array.isArray(x.hay2aAwal) && x.hay2aAwal.length>0) hayAwal = x.hay2aAwal;
+  else if(x.hay2a && Array.isArray(x.hay2a) && x.hay2a.length>0) hayAwal = x.hay2a;
+  else if(x.hay2aAwalText && String(x.hay2aAwalText).trim()) hayAwal = String(x.hay2aAwalText).split(/[-–—]/).map(s=>s.trim()).filter(Boolean);
+  else hayAwal = getHay2a(x);
+
+  let hayAkher = null;
+  if(x.hay2aAkher && Array.isArray(x.hay2aAkher) && x.hay2aAkher.length>0) hayAkher = x.hay2aAkher;
+  else if(x.hay2aAkherText && String(x.hay2aAkherText).trim()) hayAkher = String(x.hay2aAkherText).split(/[-–—]/).map(s=>s.trim()).filter(Boolean);
+  else hayAkher = x.hay2aAkher||[];
+
+  let hasAwal = hayAwal && hayAwal.length>0;
+  let hasAkher = hayAkher && hayAkher.length>0;
+
+  if(hasAwal){
+    let r1=hayAwal.map(c=>resolveMember(c));
+    document.getElementById('f_rais').value=r1[0]||'';
+    document.getElementById('f_member2').value=r1[1]||'';
+    document.getElementById('f_member3').value=r1[2]||'';
+    try{
+      document.getElementById('m_f_rais').value=r1[0]||'';
+      document.getElementById('m_f_member2').value=r1[1]||'';
+      document.getElementById('m_f_member3').value=r1[2]||'';
+    }catch(e){}
+  }
+
+  if(hasAkher){
+    let r2=hayAkher.map(c=>resolveMember(c));
+    document.getElementById('f_rais2').value=r2[0]||'';
+    document.getElementById('f_member2_2').value=r2[1]||'';
+    document.getElementById('f_member3_2').value=r2[2]||'';
+    document.getElementById('f_has_hay2a').checked=true;
+    try{
+      document.getElementById('m_f_rais2').value=r2[0]||'';
+      document.getElementById('m_f_member2_2').value=r2[1]||'';
+      document.getElementById('m_f_member3_2').value=r2[2]||'';
+      document.getElementById('m_hasHay2a').checked=true;
+    }catch(e){}
+  }
+
+ }catch(e){ console.log('fillFromCase hay2a error',e); }
+ buildPaper();
+}
+function searchRaqmSana(){
+ let raqmRaw=(document.getElementById('s_raqm')?.value||'').trim(); let sanaRaw=(document.getElementById('s_sana')?.value||'').trim();
+ let raqm=toEn(raqmRaw); let sana=toEn(sanaRaw);
+ if(!raqm&&!sana){alert('أدخل رقم وسنة');return;}
+ let all=ALL_LIST||[]; let found=null;
+ for(let x of all){ let r=toEn(getRaqm(x)), s=toEn(getSana(x)); if(raqm&&sana){ if(r===raqm&&s===sana){found=x;break;}} }
+ if(!found){ for(let x of all){ let r=toEn(getRaqm(x)); if(raqm&&r===raqm){found=x;break;}} }
+ if(found){
+  let jz=getJoz2iData(found); let th=getTarikhHokm(found);
+  let msg=document.getElementById('searchMsg'); if(msg){ msg.textContent='✓ '+toAr(getRaqm(found))+' / '+toAr(getSana(found))+' | جزئي '+toAr(jz.raqm||'')+'/'+toAr(jz.sana||'')+' | حكم '+toAr(th||''); msg.style.color='green'; }
+  fillFromCase(found);
+  let idx=all.indexOf(found); let sel=document.getElementById('caseSelect'); if(sel && idx>=0) sel.value=idx;
+ } else {
+  let msg=document.getElementById('searchMsg'); if(msg){ msg.textContent='✗ لا يوجد '+toAr(raqmRaw)+' لسنة '+toAr(sanaRaw); msg.style.color='red'; }
+ }
+}
+async function loadAll(){
+  try{
+    document.getElementById('dbStatus').textContent='جاري تحميل القاعدة...';
+    let db=await openDB();
+    if(!db) throw new Error('no db');
+    let stores=[...db.objectStoreNames];
+    if(stores.includes('d32store')){
+      try{
+        let tx=db.transaction('d32store','readonly');
+        let get=k=>new Promise(r=>{let q=tx.objectStore('d32store').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});
+        let cfg=await get('D32_DAIRA_CONFIG'); let cfg2=await get('D32_CONFIG'); let c=cfg||cfg2;
+        if(c){let o=typeof c==='string'?JSON.parse(c):c; ['A','B','C','D','E','F','G'].forEach(k=>{if(o[k]) MEMBERS[k]=o[k]; if(o.membersMap&&o.membersMap[k]) MEMBERS[k]=o.membersMap[k];}); if(o.members) Object.entries(o.members).forEach(([k,v])=>{if(/^[A-G]$/.test(k)){if(typeof v==='string') MEMBERS[k]=v; else if(v&&v.name) MEMBERS[k]=v.name;}});}
+      }catch(e){}
+    }
+    if(stores.includes('cases')){
+      try{ let tx=db.transaction('cases','readonly'); let r=tx.objectStore('cases').get('D32_V3'); let d=await new Promise(res=>{r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}); if(d){let a=typeof d==='string'?JSON.parse(d):d; if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; DATA_MOT=a;} }catch(e){}
+    }
+    if(stores.includes('ahkam')){
+      try{ let tx=db.transaction('ahkam','readonly'); let r=tx.objectStore('ahkam').get('D32_AHKAM'); let d=await new Promise(res=>{r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}); if(d){let a=typeof d==='string'?JSON.parse(d):d; if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; DATA=a;} }catch(e){}
+    }
+    document.getElementById('dbStatus').textContent='D32_DB جاهز: '+toAr(DATA_MOT.length)+' متداول + '+toAr(DATA.length)+' أحكام';
+    let ci=document.getElementById('countInfo'); if(ci) ci.textContent=toAr(DATA_MOT.length+DATA.length)+' قضية';
+    fillSelect(DATA_MOT.concat(DATA));
+    try{ fetchWakilAminFromDB(); }catch(e){}
+  }catch(e){
+    document.getElementById('dbStatus').textContent='يعمل بدون قاعدة - جاهز للكتابة اليدوية';
+    try{ fillSelect([]); }catch(e2){}
+  }
+  try{ buildPaper(); }catch(e){}
+}
+
+
+function buildSingleMantoqHtml(x, idx, dairaNumAr){
+  try{
+    var raqm = (typeof getRaqm === 'function' ? getRaqm(x) : x.raqm||'')||'';
+    var sana = (typeof getSana === 'function' ? getSana(x) : x.sana||'')||'';
+    try{ if(typeof toAr === 'function'){ raqm = toAr(raqm); sana = toAr(sana); } }catch(e){}
+    var manteqRaw = (typeof getManteqFromDB === 'function' ? getManteqFromDB(x) : (x.qar||x.mantouq||''))||'';
+    var manteq = manteqRaw||'[لا يوجد منطوق مخزن]';
+    var tarHokm = (typeof getTarikhHokm === 'function' ? getTarikhHokm(x) : x.tarikhHokm||'')||'';
+    try{ if(typeof toAr === 'function' && tarHokm) tarHokm = toAr(tarHokm); }catch(e){}
+    var dayName = '';
+    try{ if(typeof getDayName === 'function') dayName = getDayName(tarHokm); }catch(e){}
+    
+    // الهيئة الأولى
+    var hayAwal = [];
+    try{ if(typeof getHay2a === 'function') hayAwal = getHay2a(x)||[]; }catch(e){}
+    var hayNames = [];
+    try{ hayNames = hayAwal.map(function(c){ return (typeof resolveMember === 'function' ? resolveMember(c) : c)||c; }); }catch(e){ hayNames = hayAwal; }
+    var rais = hayNames[0]|| (window.WAKIL_NIYABA ? '' : '.........');
+    var m2 = hayNames[1]||'.........';
+    var m3 = hayNames[2]||'.........';
+    // لو مش موجودة، حاول من f_rais المدخلات
+    if(!rais || rais==='.........' ){
+      try{ rais = document.getElementById('f_rais')?.value||'.........'; }catch(e){}
+    }
+    var wakil = (window.WAKIL_NIYABA||document.getElementById('f_wakil')?.value||'.........');
+    var amin = (window.AMIN_SIR||document.getElementById('f_amin')?.value||'.........');
+    
+    // هيئة ثانية
+    var hayAkher = [];
+    try{ hayAkher = x.hay2aAkher||x.hay2aAkherText||[]; if(typeof hayAkher === 'string') hayAkher = hayAkher.split(/[-–—]/).map(function(s){return s.trim();}).filter(Boolean); }catch(e){}
+    var hayAkherNames = [];
+    try{ hayAkherNames = hayAkher.map(function(c){ return (typeof resolveMember === 'function' ? resolveMember(c) : c)||c; }); }catch(e){}
+    
+    var isIlt = false;
+    try{ if(typeof isIltimasCase === 'function') isIlt = isIltimasCase(x); }catch(e){}
+    var siagh = isIlt ? 'في الالتماس المقيد بجدول العموم تحت رقم' : 'في الاستئناف المقيد بجدول العموم تحت رقم';
+    
+    var html = '';
+    html += '<div class="center" style="font-size:14pt;margin-bottom:6px;font-weight:bold">محضر جلسة الدائرة ' + (dairaNumAr||'') + ' أحوال</div>';
+    html += '<div class="center" style="font-size:10pt;color:#555;margin-bottom:4px">م (' + (typeof toAr === 'function' ? toAr(idx+1) : idx+1) + ') - ' + (raqm||'....') + ' لسنة ' + (sana||'....') + ' ق</div>';
+    html += '<div class="center content-14" style="font-size:12pt">بالجلسة المنعقدة علنا اليوم بسراي محكمة الأسرة الكائن مقرها بالقاهرة الجديدة</div>';
+    html += '<div class="hay-wrap content-14" style="margin:6px 20px 0 20px;width:calc(100% - 40px);font-size:12pt">';
+    html += '<div class="hay-row"><span class="hay-main">برئاسة السيد الأستاذ المستشار / ' + (rais||'.........') + '</span><span class="hay-title">رئيس المحكمة</span></div>';
+    html += '<div class="hay-row"><span class="hay-main">وعضوية السيد المستشار / ' + (m2||'.........') + '</span><span class="hay-title">الرئيس بالمحكمة</span></div>';
+    html += '<div class="hay-row"><span class="hay-main">وعضوية السيد المستشار / ' + (m3||'.........') + '</span><span class="hay-title">الرئيس بالمحكمة</span></div>';
+    html += '<div class="hay-row"><span class="hay-main">وحضور السيد الأستاذ / ' + (wakil||'.........') + '</span><span class="hay-title">وكيل النيابة</span></div>';
+    html += '<div class="hay-row"><span class="hay-main">وحضور السيد / ' + (amin||'.........') + '</span><span class="hay-title">أمين السر</span></div>';
+    html += '</div>';
+    html += '<div class="center content-14" style="margin-top:8px">أصدرت الحكم الآتي:</div>';
+    html += '<div class="content-14" style="margin-top:4px">' + siagh + ' <span style="font-weight:bold">' + (raqm||'....') + '</span> لسنة <span style="font-weight:bold">' + (sana||'....') + ' ق</div>';
+    html += '<div class="content-14" style="margin-top:10px"><div style="font-weight:bold">حكمت المحكمة :-</div><div style="border:1px solid #999;padding:8px;min-height:60px;white-space:pre-wrap;text-align:right;font-weight:normal;background:#fffff0">' + manteq + '</div></div>';
+    if(hayAkherNames && hayAkherNames.length>0){
+      html += '<div class="content-14" style="margin-top:8px;text-align:right;font-size:11pt">أما الهيئة التي تداولت ووقعت على المسودة هي :-</div>';
+      html += '<div class="hay-wrap content-14" style="margin:4px 20px 0 20px;width:calc(100% - 40px);font-size:11pt">';
+      html += '<div class="hay-row"><span class="hay-main">برئاسة السيد الأستاذ المستشار / ' + (hayAkherNames[0]||'.........') + '</span><span class="hay-title">رئيس المحكمة</span></div>';
+      if(hayAkherNames[1]) html += '<div class="hay-row"><span class="hay-main">وعضوية السيد المستشار / ' + (hayAkherNames[1]||'.........') + '</span><span class="hay-title">الرئيس بالمحكمة</span></div>';
+      if(hayAkherNames[2]) html += '<div class="hay-row"><span class="hay-main">وعضوية السيد المستشار / ' + (hayAkherNames[2]||'.........') + '</span><span class="hay-title">الرئيس بالمحكمة</span></div>';
+      html += '</div>';
+    }
+    html += '<div class="center content-14" style="margin-top:10px;font-size:11pt">صدر هذا الحكم وتلى علنا بجلسة اليوم ' + (dayName||'') + ' الموافق <span style="font-weight:bold">' + (tarHokm||'....') + '</span></div>';
+    html += '<table style="width:100%;margin-top:12px;border:none;border-collapse:collapse;direction:rtl"><tr style="border:none"><td style="text-align:right;font-weight:bold;font-size:11pt;border:none;width:50%;padding:4px 0">أمين السر</td><td style="text-align:left;font-weight:bold;font-size:11pt;border:none;width:50%;padding:4px 0">رئيس المحكمة</td></tr></table>';
+    return html;
+  }catch(e){
+    console.error('buildSingleMantoqHtml error',e,x);
+    return '<div style="padding:10px;border:1px solid red">خطأ في القضية ' + (x.raqm||'') + ' / ' + (x.sana||'') + ': ' + e + '</div>';
+  }
+}
+
+function doPrintAllManatiq(){
+  var list = [];
+  // القائمة المعروضة حاليا
+  if(window.CURRENT_DATE_RESULTS && window.CURRENT_DATE_RESULTS.length>0) list = window.CURRENT_DATE_RESULTS;
+  else if(window.ALL_DATE_RESULTS && window.ALL_DATE_RESULTS.length>0) list = window.ALL_DATE_RESULTS;
+  else if(window.CURRENT_DATE_RESULTS === undefined && window.ALL_DATE_RESULTS === undefined){
+    // لو مفيش بحث بالتاريخ، خد كل القضايا المحملة
+    if(typeof ALL_LIST !== 'undefined' && ALL_LIST.length>0) list = ALL_LIST;
+  }
+  
+  if(!list || list.length===0){
+    alert('لا توجد قضايا معروضة في القائمة\nاختر تاريخ أولا من البحث بالتاريخ');
+    return;
+  }
+  
+  if(!confirm('سيتم طباعة ' + (typeof toAr === 'function' ? toAr(list.length) : list.length) + ' منطوق\nكل استئناف في صفحة منفصلة\nهل تريد المتابعة؟')){
+    return;
+  }
+  
+  var dairaNum = '';
+  try{ dairaNum = getDairaNumberForMantoq()||''; if(typeof toAr === 'function' && dairaNum) dairaNum = toAr(dairaNum); }catch(e){}
+  
+  var allHtml = '';
+  for(var i=0;i<list.length;i++){
+    var x = list[i];
+    var single = buildSingleMantoqHtml(x, i, dairaNum);
+    allHtml += '<div style="page-break-after:always; padding-bottom:20px; border-bottom:2px dashed #999; margin-bottom:20px">' + single + '</div>';
+  }
+  
+  var win = window.open('', '_blank', 'width=1000,height=800');
+  if(!win){ alert('المتصفح منع النافذة - اسمح بالنوافذ المنبثقة'); return; }
+  win.document.write('<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>طباعة كل المناطيق - ' + list.length + '</title><style>'
+    + '@page{size:A4;margin:15mm 12mm 15mm 12mm;}'
+    + 'body{font-family:Arial!important;direction:rtl;text-align:right;font-size:12pt!important;font-weight:bold!important;line-height:1.6;background:#fff;color:#000;margin:0;padding:15px 20px;}'
+    + '.center{text-align:center!important;font-weight:bold;margin:6px 0;}'
+    + '.hay-wrap{width:100%;margin:6px 20px 0 20px;width:calc(100% - 40px);}'
+    + '.hay-row{display:flex;justify-content:space-between;align-items:baseline;margin:4px 0;}'
+    + '.hay-main{white-space:nowrap;font-weight:bold}'
+    + '.hay-title{white-space:nowrap;flex-shrink:0;font-weight:bold}'
+    + '.content-14{font-size:12pt!important;font-weight:bold;line-height:1.6;}'
+    + '.editable,.editable-box{border:none!important;background:transparent!important;}'
+    + 'table{width:100%;border-collapse:collapse;} td{border:none;padding:4px 0;}'
+    + '@media print{body{padding:0!important} .no-print{display:none!important} div{page-break-inside:avoid} }'
+    + '</style></head><body>'
+    + '<div class="no-print" style="text-align:center;margin-bottom:15px;padding:10px;background:#e3f2fd;border-radius:8px">'
+    + '<h3 style="margin:0 0 8px 0">📚 طباعة كل المناطيق - ' + list.length + ' قضية</h3>'
+    + '<button onclick="window.print()" style="padding:10px 20px;font-size:14pt;background:#0f1f3a;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-left:8px">🖨 طباعة الكل</button>'
+    + '<button onclick="window.close()" style="padding:10px 20px;font-size:12pt;background:#ddd;border:none;border-radius:6px;cursor:pointer">إغلاق</button>'
+    + '</div>'
+    + allHtml
+    + '</body></html>');
+  win.document.close();
+  win.focus();
+}
+
+function doPrintMantoq(){
+  try{ buildPaper(); }catch(e){}
+  var paper = document.getElementById('paper');
+  if(!paper){ alert('لا توجد ورقة'); return; }
+  var paperHTML = paper.innerHTML;
+  var tempDiv = document.createElement('div');
+  tempDiv.innerHTML = paperHTML;
+  var children = tempDiv.children;
+  var wanted = [];
+  var state = 0;
+  for(var i=0;i<children.length;i++){
+    var el = children[i];
+    var t = (el.textContent||'').trim();
+    if(t.indexOf('بالجلسة المنعقدة علنا اليوم')>-1){ state=1; wanted.push(el.outerHTML); continue; }
+    if(state==1){
+      if(t.indexOf('المقيم')>-1) continue;
+      wanted.push(el.outerHTML);
+      if(t.indexOf('أصدرت الحكم الآتي')>-1){ state=2; continue; }
+      continue;
+    }
+    if(state==2){
+      if(t.indexOf('في الاستئناف')>-1 || t.indexOf('في الالتماس')>-1){
+        wanted.push(el.outerHTML);
+        state=3;
+        continue;
+      }
+      continue;
+    }
+    if(state==3){
+      if(t.indexOf('حكمت المحكمة')>-1){
+        wanted.push(el.outerHTML);
+        state=4;
+        continue;
+      }
+      if(t.indexOf('أما الهيئة التي تداولت')>-1){
+        wanted.push(el.outerHTML);
+        if(children[i+1]){ wanted.push(children[i+1].outerHTML); i++; }
+        continue;
+      }
+      if(t.indexOf('صدر هذا الحكم')>-1){
+        wanted.push(el.outerHTML);
+        state=5;
+        continue;
+      }
+    }
+    if(state==4){
+      if(t.indexOf('أما الهيئة التي تداولت')>-1){
+        wanted.push(el.outerHTML);
+        if(children[i+1]){ wanted.push(children[i+1].outerHTML); i++; }
+        continue;
+      }
+      if(t.indexOf('صدر هذا الحكم')>-1){
+        wanted.push(el.outerHTML);
+        state=5;
+        continue;
+      }
+    }
+    if(state==5){
+      if(t.indexOf('أمين السر')>-1 || el.tagName==='TABLE'){
+        wanted.push(el.outerHTML);
+        break;
+      }
+    }
+  }
+  var dairaNum = getDairaNumberForMantoq();
+  try{ if(typeof toAr === 'function') dairaNum = toAr(dairaNum); }catch(e){}
+  var headerMahdar = '';
+  if(dairaNum && dairaNum.toString().trim()!==''){
+    headerMahdar = '<div class="center" style="font-size:14pt;margin-bottom:14px;font-weight:bold">محضر جلسة الدائرة ' + (dairaNum||'') + ' أحوال</div>';
+  } else {
+    headerMahdar = '<div class="center" style="font-size:14pt;margin-bottom:14px;font-weight:bold">محضر جلسة الدائرة <span style="color:#b71c1c">[من القاعدة]</span> أحوال</div>';
+  }
+  var html = headerMahdar + '\n' + wanted.join('\n');
+  if(!html || html.trim().length<50){
+    alert('لم أتمكن من استخراج المنطوق - تأكد أن الورقة فيها حكم');
+    return;
+  }
+  var win = window.open('', '_blank', 'width=900,height=700');
+  if(!win){ alert('المتصفح منع النافذة - اسمح بالنوافذ المنبثقة'); return; }
+  win.document.write('<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>طباعة المنطوق</title><style>'
+    + '@page{size:A4;margin:20mm 12mm 18mm 12mm;}'
+    + 'body{font-family:Arial!important;direction:rtl;text-align:right;font-size:14pt!important;font-weight:bold!important;line-height:1.8;background:#fff;color:#000;margin:0;padding:20px 30px;}'
+    + '.center{text-align:center!important;font-weight:bold;margin:8px 0;}'
+    + '.hay-wrap{width:100%;margin:10px 20px 0 20px;width:calc(100% - 40px);}'
+    + '.hay-row{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0;}'
+    + '.hay-main{white-space:nowrap;font-weight:bold}'
+    + '.hay-title{white-space:nowrap;flex-shrink:0;font-weight:bold}'
+    + '.content-14{font-size:14pt!important;font-weight:bold;line-height:1.8;}'
+    + '.editable,.editable-box{border:none!important;background:transparent!important;font-weight:normal!important;}'
+    + 'table{width:100%;border-collapse:collapse;} td{border:none;padding:8px 0;font-size:14pt;font-weight:bold;}'
+    + '@media print{body{padding:0!important} .no-print{display:none!important}}'
+    + '</style></head><body>'
+    + '<div style="width:100%">'+html+'</div>'
+    + '<div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 20px;font-size:14pt;background:#0f1f3a;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨 طباعة</button> <button onclick="window.close()" style="padding:10px 20px;font-size:14pt;background:#ddd;border:none;border-radius:6px;cursor:pointer">إغلاق</button></div>'
+    + '</body></html>');
+  win.document.close();
+  win.focus();
+  setTimeout(function(){ try{ win.print(); }catch(e){} }, 500);
+}
+
+function doPrint(){ try{buildPaper();}catch(e){} setTimeout(()=>window.print(),300); }
+async function doSaveWord(){
+  try{ buildPaper(); }catch(e){}
+  var paper=document.getElementById('paper');
+  if(!paper){ alert('لا توجد ورقة'); return; }
+  var raqm = ''; var sana = '';
+  try{
+    var fRaqm = document.getElementById('f_raqm');
+    var fSana = document.getElementById('f_sana');
+    raqm = fRaqm ? fRaqm.value.trim() : '';
+    sana = fSana ? fSana.value.trim() : '';
+    // لو الحقول فاضية خد من القضية الحالية مباشرة
+    if(!raqm){
+      try{
+        if(typeof CURRENT_CASE !== 'undefined' && CURRENT_CASE){
+          if(typeof getRaqm === 'function') raqm = getRaqm(CURRENT_CASE)||'';
+          if(typeof getSana === 'function') sana = getSana(CURRENT_CASE)||sana;
+        }
+        if(!raqm && typeof CURRENT_CASE_SERIAL_DATA !== 'undefined' && CURRENT_CASE_SERIAL_DATA){
+          if(typeof getRaqm === 'function') raqm = getRaqm(CURRENT_CASE_SERIAL_DATA)||raqm;
+          if(typeof getSana === 'function') sana = getSana(CURRENT_CASE_SERIAL_DATA)||sana;
+        }
+        // من كل القضايا المحملة
+        if(!raqm && typeof ALL_LIST !== 'undefined' && ALL_LIST.length>0){
+          // اخر قضية تم اختيارها
+          let last = ALL_LIST[0];
+          if(last){ raqm = getRaqm(last)||raqm; sana = getSana(last)||sana; }
+        }
+      }catch(e2){}
+    }
+  }catch(e){}
+  function toEnNum(s){ return String(s).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace(/[^0-9]/g,'').trim() || String(s).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).trim(); }
+  function toEnClean(s){ return String(s).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }); }
+  var fileName = '';
+  var fileNameBase = '';
+  var raqmEn = toEnClean(raqm).trim().replace(/[^0-9]/g,'');
+  var sanaEn = toEnClean(sana).trim().replace(/[^0-9]/g,'');
+  var hasDammLocal = false;
+  var dammDetailsLocal = [];
+  try{ dammDetailsLocal = getJoinedCasesDetails(); hasDammLocal = dammDetailsLocal && dammDetailsLocal.length>0; }catch(e){}
+  if(raqmEn && sanaEn){
+    if(hasDammLocal){
+      try{
+        var other = dammDetailsLocal[0];
+        var r2 = (typeof getRaqm === 'function' ? getRaqm(other) : other.raqm)||'';
+        r2 = toEnClean(r2).trim().replace(/[^0-9]/g,'');
+        if(r2) fileNameBase = raqmEn + ' و ' + r2 + ' لسنة ' + sanaEn;
+        else fileNameBase = raqmEn + ' لسنة ' + sanaEn;
+      }catch(e){ fileNameBase = raqmEn + ' لسنة ' + sanaEn; }
+    } else {
+      fileNameBase = raqmEn + ' لسنة ' + sanaEn;
+    }
+  } else if(raqmEn){ fileNameBase = raqmEn; } else { fileNameBase = 'حكم'; }
+  // اسم الملف النهائي بالعربي: ٤٩٩٩ لسنة ١٤٣
+  var fileNameBaseAr = fileNameBase;
+  try{
+    if(typeof toAr === 'function'){
+      var raqmAr = toAr(raqmEn);
+      var sanaAr = toAr(sanaEn);
+      if(hasDammLocal){
+        try{
+          var other2 = dammDetailsLocal[0];
+          var r2c = (typeof getRaqm === 'function' ? getRaqm(other2) : other2.raqm)||'';
+          r2c = toEnClean(r2c).trim().replace(/[^0-9]/g,'');
+          if(r2c) fileNameBaseAr = raqmAr + ' و ' + toAr(r2c) + ' لسنة ' + sanaAr;
+          else fileNameBaseAr = raqmAr + ' لسنة ' + sanaAr;
+        }catch(e){ fileNameBaseAr = raqmAr + ' لسنة ' + sanaAr; }
+      } else {
+        fileNameBaseAr = raqmAr + ' لسنة ' + sanaAr;
+      }
+      if(!raqmEn && !sanaEn) fileNameBaseAr = fileNameBase;
+    }
+  }catch(e){ fileNameBaseAr = fileNameBase; }
+  fileName = fileNameBaseAr + '.doc';
+  var suggestedName = fileNameBaseAr;
+
+  var clone = paper.cloneNode(true);
+  clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+  clone.querySelectorAll('.hay-row').forEach(function(row){
+    var main = row.querySelector('.hay-main');
+    var title = row.querySelector('.hay-title');
+    if(main && title){
+      var table = document.createElement('table');
+      table.setAttribute('width','100%');
+      table.setAttribute('dir','rtl');
+      table.style.width='100%'; table.style.borderCollapse='collapse'; table.style.margin='4px 0';
+      table.style.width='100%'; table.style.borderCollapse='collapse'; table.style.margin='4px 0';
+      table.innerHTML = '<tr><td style="text-align:right;font-weight:bold;font-size:14pt;width:70%;direction:rtl;border:none">'+main.innerHTML+'</td><td style="text-align:left;font-weight:bold;font-size:14pt;width:30%;direction:ltr;border:none">'+title.innerHTML+'</td></tr>';
+      row.parentNode.replaceChild(table, row);
+    }
+  });
+  clone.querySelectorAll('.hay-wrap').forEach(function(w, idx){
+    w.style.width='calc(100% - 40px)'; w.style.margin='10px 20px 0 20px'; w.style.display='block';
+    if(idx==1){ w.style.margin='10px 40px 0 40px'; w.style.width='calc(100% - 80px)'; }
+  });
+  
+  var content = clone.innerHTML;
+  
+  var htmlDoc = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>"
+  + "<head><meta charset='utf-8'>"
+  + "<style>"
+  + "@page{size:A4;margin:20mm 15mm 20mm 15mm;mso-page-orientation:portrait;}"
+  + "body{direction:rtl;font-family:Arial;font-size:14pt;font-weight:bold;line-height:1.8;mso-bidi-font-family:Arial;}"
+  + ".center{text-align:center !important;font-weight:bold;margin:8px 0;width:100%;display:block;}"
+  + ".content-14{font-size:14pt;font-weight:bold;line-height:1.8;text-align:right !important;direction:rtl;}"
+  + ".editable{border:none;background:transparent;font-weight:normal;}"
+  + ".editable-box{border:none;background:transparent;text-align:right !important;direction:rtl;line-height:1.8;font-weight:normal;white-space:pre-wrap;}"
+  + "table{width:100%;border-collapse:collapse;direction:rtl;}"
+  + "td{vertical-align:top;border:none;}"
+  + "</style></head>"
+  + "<body dir='rtl' style='font-family:Arial;font-size:14pt;font-weight:bold;direction:rtl;'>"
+  + "<div style='font-family:Arial;direction:rtl;text-align:right;font-size:14pt;font-weight:bold;line-height:1.8;width:100%;'>"
+  + content
+  + "</div></body></html>";
+
+  var blob=new Blob(['\ufeff'+htmlDoc],{type:'application/msword;charset=utf-8'});
+var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=fileName; document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(url);},500);
+}
+
+document.getElementById('paper').innerHTML='<div style="padding:30px;text-align:center">الورقة جاهزة - جاري التحميل... لو استمرت اضغط تحديث</div>';
+try{ buildPaper(); }catch(e){}
+setTimeout(()=>{
+  try{ buildPaper(); }catch(e){}
+  loadDairaNum();
+  loadAll().catch(()=>{});
+}, 200);
+
+function openHay2aModal(){ try{ document.getElementById('m_f_rais').value=document.getElementById('f_rais').value||''; document.getElementById('m_f_member2').value=document.getElementById('f_member2').value||''; document.getElementById('m_f_member3').value=document.getElementById('f_member3').value||''; document.getElementById('m_f_rais2').value=document.getElementById('f_rais2').value||''; document.getElementById('m_f_member2_2').value=document.getElementById('f_member2_2').value||''; document.getElementById('m_f_member3_2').value=document.getElementById('f_member3_2').value||''; document.getElementById('m_f_wakil').value=document.getElementById('f_wakil').value||window.WAKIL_NIYABA||''; document.getElementById('m_f_amin').value=document.getElementById('f_amin').value||window.AMIN_SIR||''; let has=document.getElementById('f_has_hay2a')?document.getElementById('f_has_hay2a').checked:(document.getElementById('f_rais2').value.trim()!==''); let m=document.getElementById('m_hasHay2a'); if(m) m.checked=has; }catch(e){} let mod=document.getElementById('hay2aModal'); if(mod) mod.style.display='flex'; }
+function closeHay2aModal(){ let mod=document.getElementById('hay2aModal'); if(mod) mod.style.display='none'; }
+function syncHay2aFromModal(){ try{ document.getElementById('f_rais').value=document.getElementById('m_f_rais').value; document.getElementById('f_member2').value=document.getElementById('m_f_member2').value; document.getElementById('f_member3').value=document.getElementById('m_f_member3').value; document.getElementById('f_rais2').value=document.getElementById('m_f_rais2').value; document.getElementById('f_member2_2').value=document.getElementById('m_f_member2_2').value; document.getElementById('f_member3_2').value=document.getElementById('m_f_member3_2').value; if(document.getElementById('f_has_hay2a')) document.getElementById('f_has_hay2a').checked=document.getElementById('m_hasHay2a').checked; buildPaper(); }catch(e){} }
+function toggleHasHay2aModal(){ let chk=document.getElementById('m_hasHay2a').checked; if(document.getElementById('f_has_hay2a')) document.getElementById('f_has_hay2a').checked=chk; buildPaper(); }
+function syncWakilAminFromModal(){ try{ let w=document.getElementById('m_f_wakil')?.value||''; let a=document.getElementById('m_f_amin')?.value||''; if(w){ window.WAKIL_NIYABA=w; document.getElementById('f_wakil').value=w; } if(a){ window.AMIN_SIR=a; document.getElementById('f_amin').value=a; } buildPaper(); }catch(e){} }
+function saveHay2aModal(){ syncHay2aFromModal(); syncWakilAminFromModal(); closeHay2aModal(); }
+
+
+
+function getJoz2iData(x){
+  let o={tar:'',raqm:'',sana:'',mahkama:'',dayra:'',asra:''};
+  if(!x) return o;
+  if(x.raqmAwal) o.raqm=String(x.raqmAwal).trim();
+  if(x.sanaAwal) o.sana=String(x.sanaAwal).trim();
+  if(x.mahkama) o.mahkama=String(x.mahkama).trim();
+  if(x.tarikhHokmAwal) o.tar=String(x.tarikhHokmAwal).trim();
+  if(!o.tar && x.tarHokmAwal) o.tar=String(x.tarHokmAwal).trim();
+  if(x.dayra) o.dayra=String(x.dayra).trim();
+  if(x.asra) o.asra=String(x.asra).trim();
+  if((!o.raqm || !o.sana || !o.mahkama || !o.tar)){
+    try{
+      let raqm = String(x.raqm||'').trim() || (typeof getRaqm !== 'undefined' ? String(getRaqm(x)||'').trim() : '');
+      let sana = String(x.sana||'').trim() || (typeof getSana !== 'undefined' ? String(getSana(x)||'').trim() : '');
+      if(raqm && typeof DATA_MOT !== 'undefined'){
+        for(let i=0;i<DATA_MOT.length;i++){
+          let m = DATA_MOT[i];
+          if(String(m.raqm).trim()===raqm && String(m.sana).trim()===sana){
+            if(!o.raqm && m.raqmAwal) o.raqm = String(m.raqmAwal).trim();
+            if(!o.sana && m.sanaAwal) o.sana = String(m.sanaAwal).trim();
+            if(!o.mahkama && m.mahkama) o.mahkama = String(m.mahkama).trim();
+            if(!o.mahkama && m.mahkamaAwal) o.mahkama = String(m.mahkamaAwal).trim();
+            if(!o.tar && m.tarikhHokmAwal) o.tar = String(m.tarikhHokmAwal).trim();
+            if(!o.tar && m.tarHokmAwal) o.tar = String(m.tarHokmAwal).trim();
+            if(m.dayra) o.dayra = String(m.dayra).trim();
+            if(m.asra) o.asra = String(m.asra).trim();
+            if(m.mahkama1) o.mahkama = String(m.mahkama1).trim();
+            if(o.raqm && o.sana) break;
+          }
+        }
+      }
+    }catch(e){}
+  }
+  return o;
+}
+function isIltimasCase(x){
+  if(!x) return false;
+  try{
+    let txt = JSON.stringify(x||{});
+    if(txt.includes('التماس') || txt.includes('إلتماس') || txt.includes('التماس')) return true;
+    let fields = [x.no3||'', x.type||'', x.no3ElDa3wa||'', x.mawdou3||'', x.mawdoo3||'', x.mawdou3Text||'', x.title||'', x.qar||'', x.mantouq||''].join(' ');
+    if(fields.includes('التماس') || fields.includes('إلتماس')) return true;
+  }catch(e){}
+  return false;
+}
+function getTarikhHokm(x){if(!x) return ''; return x.tarikhHokm||x.tarHokm||x.tar||x.galsa||'';}
+
+function toArText(s){return String(s==null?"":s).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);}
+function getCodeAhkam(x){
+  let c = (x.code||x.memberCode||x.qadiCode||x.codeQadi||x.codeAhkam||'').toString().trim().toUpperCase();
+  if(c) return c;
+  try{
+    let raqm = String(x.raqm||x.raqmAwal||'').trim();
+    let sana = String(x.sana||x.sanaAwal||'').trim();
+    if(!raqm) { raqm = String(getRaqm(x)||'').trim(); sana = String(getSana(x)||'').trim(); }
+    if(raqm && typeof DATA_MOT !== 'undefined'){
+      for(let i=0;i<DATA_MOT.length;i++){
+        let m = DATA_MOT[i];
+        if(String(m.raqm).trim()===raqm && String(m.sana).trim()===sana){
+          if(m.code) return String(m.code).trim().toUpperCase();
+          if(m.memberCode) return String(m.memberCode).trim().toUpperCase();
+          if(m.qadiCode) return String(m.qadiCode).trim().toUpperCase();
+          if(m.codeAhkam) return String(m.codeAhkam).trim().toUpperCase();
+        }
+      }
+    }
+    if(typeof ALL_LIST !== 'undefined'){
+      for(let i=0;i<ALL_LIST.length;i++){
+        let m = ALL_LIST[i];
+        if(String(m.raqm||'').trim()===raqm && String(m.sana||'').trim()===sana && m.code){
+          return String(m.code).trim().toUpperCase();
+        }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+function getMemberNameFromCode(code){
+  code = String(code||'').trim().toUpperCase();
+  if(!code) return '';
+  if(typeof MEMBERS !== 'undefined' && MEMBERS[code]) return MEMBERS[code];
+  return code;
+}
+
+function getCodeOrderAhkam(code){code = String(code||'').trim().toUpperCase();const orderMap = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6};if(orderMap.hasOwnProperty(code)) return orderMap[code];if(!code) return 99;return 50 + code.charCodeAt(0);}
+function getQarAhkam(x){return x.qar||x.mantouq||x.qararHokm||'';}
+function isI3adaAhkam(qar){return String(qar||'').includes('إعادة للمرافعة');}
+function isTamhidyAhkam(qar){qar=String(qar||'');if(isI3adaAhkam(qar)) return false;return qar.includes('تحقيق')||qar.includes('استجواب')||qar.includes('خبراء')||qar.includes('خبير')||qar.includes('طب شرعي')||qar.includes('شرعي')||qar.includes('وقف');}
+function getCategoryAhkam(qar){if(isI3adaAhkam(qar)) return 2;if(isTamhidyAhkam(qar)) return 1;return 0;}
+function cleanDateAhkam(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function datesEqualAhkam(a,b){a=cleanDateAhkam(a);b=cleanDateAhkam(b);if(!a||!b)return false;var pa=a.split('/').map(Number),pb=b.split('/').map(Number);return pa[0]==pb[0]&&pa[1]==pb[1]&&pa[2]==pb[2];}
+function getDammListForAhkam(x){
+  if(x.dammList && Array.isArray(x.dammList) && x.dammList.length>0) return x.dammList;
+  var r = getRaqm(x), s = getSana(x);
+  for(var i=0;i<DATA_MOT.length;i++){var m = DATA_MOT[i];if(String(m.raqm).trim()==r && String(m.sana).trim()==s){if(m.dammList && m.dammList.length>0) return m.dammList;}}
+  if(x.raqmDisplay && x.raqmDisplay.indexOf('\n')>-1){var parts=x.raqmDisplay.split('\n').map(s=>s.trim()).filter(s=>s);if(parts.length>1){return parts.slice(1).map(p=>{var mm=p.match(/\d+/g);if(mm&&mm.length>=2) return {raqm:mm[0], sana:mm[1]};return null;}).filter(Boolean);}}
+  return [];
+}
+function getRaqumHtmlAhkam(x){var base=getRaqm(x)+' / '+getSana(x);var damm=getDammListForAhkam(x);if(!damm||!damm.length) return toArText(base);var all=[base].concat(damm.map(d=>{ if(typeof d==='string') return d; return (d.raqm||'')+' / '+(d.sana||''); }));return all.map((s,i)=>{ var txt = toArText(s); if(i==0) return '<div style="font-weight:bold">'+txt+'</div>'; return '<div style="border-top:1px dashed #999;margin-top:1px;padding-top:1px;color:#8B0000;font-size:9px">'+txt+'</div>'; }).join('');}
+function getTarikhForSearch(x){ let t=''; try{ t=getTarikhHokm(x)||''; }catch(e){} if(!t){ try{ let jz=getJoz2iData(x); t=jz.tar||''; }catch(e){} } if(!t && x.tarikh_hokm) t=x.tarikh_hokm; if(!t && x.tarikh) t=x.tarikh; if(!t && x.t_hokm) t=x.t_hokm; if(!t && x.tar) t=x.tar; if(!t && x.tarHokm) t=x.tarHokm; return String(t||'').trim(); }
+function clearDateSearch(){ let filterBox=document.getElementById('memberFilterBox'); if(filterBox) filterBox.style.display='none'; let sel=document.getElementById('filterByMember'); if(sel) sel.value='ALL'; window.ALL_DATE_RESULTS=null; let inp=document.getElementById('s_tarikh'); if(inp) inp.value=''; let list=document.getElementById('dateResultsList'); if(list) list.innerHTML='<div style="padding:20px;text-align:center;color:#888;font-size:13px">اختر تاريخ الحكم لعرض القضايا هنا<br>٣ أعمدة: م | رقم/سنة | كود</div>'; let cnt=document.getElementById('dateResultsCount'); if(cnt) cnt.textContent=''; let badge=document.getElementById('dateResultsBadge'); if(badge) badge.textContent=''; let msg=document.getElementById('searchMsg'); if(msg) msg.textContent=''; let side=document.getElementById('sideDateResults'); if(side) side.style.display='block'; let label=document.getElementById('sideDateLabel'); if(label) label.textContent=''; }
+async function fetchWakilAminFromDB(){
+  try{
+    let db = await openDB();
+    if(!db) return;
+    let stores = [...db.objectStoreNames];
+    if(stores.includes('d32store')){
+      try{
+        let tx = db.transaction('d32store','readonly');
+        let store = tx.objectStore('d32store');
+        let keysToTry = ['D32_DAIRA_INFO','D32_DAIRA_CONFIG','D32_CONFIG','DAIRA_32','CIRCUIT_32','D32_WAKIL','D32_AMIN','WAKIL_NIYABA','AMIN_SIR','D32_DAIRA_DATA','D32_SETTINGS'];
+        for(let k of keysToTry){
+          try{
+            let req = store.get(k);
+            let data = await new Promise(res=>{ req.onsuccess=()=>res(req.result); req.onerror=()=>res(null); });
+            if(data){
+              let o = typeof data==='string'?JSON.parse(data):data;
+              try{
+                let pd = o.dairaNumber || o.DAIRA_NUMBER || o.dairaNo;
+                if(pd){
+                  let dn = String(pd).replace(/[^0-9٠-٩]/g,'').trim();
+                  if(dn){ window.CURRENT_DAIRA = dn; window.DAIRA_NUMBER = dn; }
+                }
+              }catch(e){}
+              if(o.wakil || o.wakilNiyaba || o.WAKIL || o.wakil_niyaba || o.ra2isNiyaba || o.niyaba){
+                let w = o.wakil || o.wakilNiyaba || o.WAKIL || o.wakil_niyaba || o.ra2isNiyaba || o.niyaba;
+                if(typeof w==='string' && w.trim()){ window.WAKIL_NIYABA = w.trim(); try{ document.getElementById('f_wakil').value=w.trim(); }catch(e){} }
+              }
+              if(o.amin || o.aminSir || o.AMIN || o.amin_sir || o.aminsir){
+                let a = o.amin || o.aminSir || o.AMIN || o.amin_sir || o.aminsir;
+                if(typeof a==='string' && a.trim()){ window.AMIN_SIR = a.trim(); try{ document.getElementById('f_amin').value=a.trim(); }catch(e){} }
+              }
+              if(o.daira && typeof o.daira==='object'){
+                if(o.daira.wakil) { window.WAKIL_NIYABA = String(o.daira.wakil).trim(); try{ document.getElementById('f_wakil').value=window.WAKIL_NIYABA; }catch(e){} }
+                if(o.daira.amin) { window.AMIN_SIR = String(o.daira.amin).trim(); try{ document.getElementById('f_amin').value=window.AMIN_SIR; }catch(e){} }
+              }
+            }
+          }catch(e){}
+        }
+        try{
+          let allReq = store.getAll();
+          let allData = await new Promise(res=>{ allReq.onsuccess=()=>res(allReq.result); allReq.onerror=()=>res([]); });
+          for(let d of allData){
+            try{
+              let o = typeof d==='string'?JSON.parse(d):d;
+              if(!o || typeof o!=='object') continue;
+              if(o.wakilNiyaba && !window.WAKIL_NIYABA){ window.WAKIL_NIYABA = String(o.wakilNiyaba).trim(); try{ document.getElementById('f_wakil').value=window.WAKIL_NIYABA; }catch(e){} }
+              if(o.wakil && !window.WAKIL_NIYABA && typeof o.wakil==='string'){ window.WAKIL_NIYABA = String(o.wakil).trim(); try{ document.getElementById('f_wakil').value=window.WAKIL_NIYABA; }catch(e){} }
+              if(o.aminSir && !window.AMIN_SIR){ window.AMIN_SIR = String(o.aminSir).trim(); try{ document.getElementById('f_amin').value=window.AMIN_SIR; }catch(e){} }
+              if(o.amin && !window.AMIN_SIR && typeof o.amin==='string'){ window.AMIN_SIR = String(o.amin).trim(); try{ document.getElementById('f_amin').value=window.AMIN_SIR; }catch(e){} }
+            }catch(e){}
+          }
+        }catch(e){}
+      }catch(e){}
+    }
+    if(window.WAKIL_NIYABA || window.AMIN_SIR){
+      try{ buildPaper(); }catch(e){}
+    }
+  }catch(e){ console.log('fetchWakilAmin error',e); }
+}
+
+function searchByTarikh(){
+  fetchWakilAminFromDB();
+  let input=document.getElementById('s_tarikh');
+  let val=input?input.value:'';
+  if(!val){ alert('أدخل تاريخ الحكم أولا'); return; }
+  let target=cleanDateAhkam(val);
+  if(!target){ target=val.replace(/-/g,'/'); }
+  let source = (typeof DATA !== 'undefined' && DATA.length>0) ? DATA : ALL_LIST;
+  if(!source || !source.length){ alert('قاعدة البيانات غير محملة بعد - انتظر تحميل D32_DB'); return; }
+  let results=[];
+  let seenMap={};
+  function makeKey(raqm,sana,most,ded){return String(raqm).trim()+'|'+String(sana).trim()+'|'+String(most).trim()+'|'+String(ded).trim();}
+  source.forEach(function(x){
+    let t = getTarikhForSearch(x);
+    if(datesEqualAhkam(t,target)){
+      let k=makeKey(getRaqm(x),getSana(x),getMost(x),getDed(x));
+      if(!seenMap[k]){seenMap[k]=true; results.push(x);}
+    }
+  });
+  results.sort(function(a,b){
+    let ca=getCategoryAhkam(getQarAhkam(a)), cb=getCategoryAhkam(getQarAhkam(b));
+    if(ca!==cb) return ca-cb;
+    let codeA=getCodeOrderAhkam(getCodeAhkam(a)); let codeB=getCodeOrderAhkam(getCodeAhkam(b));
+    if(codeA!==codeB) return codeA-codeB;
+    let ra=parseInt(getRaqm(a))||0, rb=parseInt(getRaqm(b))||0;
+    if(ra!==rb) return ra-rb;
+    return String(getSana(a)).localeCompare(String(getSana(b)));
+  });
+  let listDiv=document.getElementById('dateResultsList');
+  let side=document.getElementById('sideDateResults');
+  let badge=document.getElementById('dateResultsBadge');
+  let sideLabel=document.getElementById('sideDateLabel');
+  let filterBox=document.getElementById('memberFilterBox');
+  if(filterBox) filterBox.style.display='block';
+  window.ALL_DATE_RESULTS = results.slice();
+  if(results.length===0){
+    if(listDiv) listDiv.innerHTML='<div style="padding:10px;color:#b71c1c;text-align:center;font-size:13px">لا يوجد أحكام<br><b>'+val+'</b></div>';
+    if(side) side.style.display='block';
+    if(badge) badge.textContent='0';
+    if(sideLabel) sideLabel.textContent=val;
+    return;
+  }
+  if(side) side.style.display='block';
+  if(badge) badge.textContent=toAr(results.length);
+  if(sideLabel) sideLabel.textContent=val;
+  let filterVal = (document.getElementById('filterByMember')?.value||'ALL').toUpperCase();
+  if(filterVal!=='ALL'){
+    results = results.filter(x=> getCodeAhkam(x)===filterVal);
+  }
+  let html='<div style="overflow:auto;max-height:60vh;border:1px solid #0f1f3a"><table style="width:290px;border-collapse:collapse;table-layout:fixed"><thead><tr style="background:#0f1f3a;color:#fff;position:sticky;top:0;z-index:2"><th style="padding:3px;border:1px solid #000;width:30px;background:#0f1f3a;color:#fff;font-size:12px">م</th><th style="padding:3px;border:1px solid #000;width:150px;background:#0f1f3a;color:#fff;font-size:12px">رقم/سنة</th><th style="padding:3px;border:1px solid #000;width:110px;background:#0f1f3a;color:#fff;font-size:12px">عضو</th></tr></thead><tbody>';
+  for(let i=0;i<results.length;i++){
+    let x=results[i];
+    let origIdx = window.ALL_DATE_RESULTS ? window.ALL_DATE_RESULTS.findIndex(y=> String(getRaqm(y)).trim()===String(getRaqm(x)).trim() && String(getSana(y)).trim()===String(getSana(x)).trim() && String(getMost(y)).trim()===String(getMost(x)).trim()) : i;
+    let serialToShow = origIdx>=0 ? origIdx+1 : i+1;
+    let raqmHtml = getRaqumHtmlAhkam(x);
+    let code = getCodeAhkam(x); let memberName = getMemberNameFromCode(code); if(!memberName) memberName = code||''; 
+    let bg=(i%2===0)?'#fff':'#f1f8e9';
+    html+='<tr style="background:'+bg+';cursor:pointer" onclick="selectFromDateListByCase('+i+')" onmouseover="this.style.background=\'#ffec99\'" onmouseout="this.style.background=\''+bg+'\'"><td style="padding:3px;border:1px solid #000;text-align:center;font-weight:bold;background:#FFE4B5;font-size:12px;width:30px">'+toAr(typeof serialToShow!=='undefined'?serialToShow:i+1)+'</td><td style="padding:3px;border:1px solid #000;text-align:center;line-height:1.2;cursor:pointer;font-weight:bold;font-size:12px;width:150px;word-wrap:break-word;white-space:normal" title="اضغط لعرض الحكم">'+raqmHtml+'</td><td style="padding:4px;border:1px solid #000;text-align:center;background:#fffbe6;font-weight:bold;color:#8B0000;font-size:13px;width:110px;white-space:nowrap;overflow:visible">'+toArText(memberName||code||'-')+'</td></tr>';
+  }
+  html+='</tbody></table></div><div style="margin-top:4px;padding:4px;background:#fffde7;border-radius:4px;font-size:9px;color:#333;text-align:center;border:1px solid #C9A227">إجمالي <b>'+toAr(results.length)+'</b></div>';
+  if(listDiv) listDiv.innerHTML=html;
+  window.CURRENT_DATE_RESULTS = results;
+}
+
+function filterByMemberChanged(){
+  let filterVal = (document.getElementById('filterByMember')?.value||'ALL').toUpperCase();
+  let source = window.ALL_DATE_RESULTS || window.CURRENT_DATE_RESULTS || [];
+  if(!source || !source.length) return;
+  let results = source.slice();
+  if(filterVal!=='ALL'){
+    results = results.filter(x=> getCodeAhkam(x)===filterVal);
+  }
+  let listDiv=document.getElementById('dateResultsList');
+  let badge=document.getElementById('dateResultsBadge');
+  if(badge) badge.textContent=toAr(results.length);
+  if(results.length===0){
+    if(listDiv) listDiv.innerHTML='<div style="padding:10px;color:#b71c1c;text-align:center;font-size:13px">لا يوجد أحكام بالكود '+filterVal+' في هذا التاريخ</div>';
+    window.CURRENT_DATE_RESULTS = [];
+    return;
+  }
+  let html='<div style="overflow:auto;max-height:60vh;border:1px solid #0f1f3a"><table style="width:290px;border-collapse:collapse;table-layout:fixed"><thead><tr style="background:#0f1f3a;color:#fff;position:sticky;top:0;z-index:2"><th style="padding:4px;border:1px solid #000;width:30px;background:#0f1f3a;color:#fff;font-size:12px">م</th><th style="padding:4px;border:1px solid #000;width:150px;background:#0f1f3a;color:#fff;font-size:12px">رقم/سنة</th><th style="padding:4px;border:1px solid #000;width:110px;background:#0f1f3a;color:#fff;font-size:12px">عضو</th></tr></thead><tbody>';
+  for(let i=0;i<results.length;i++){
+    let x=results[i];
+    let origIdx = source ? source.findIndex(y=> String(getRaqm(y)).trim()===String(getRaqm(x)).trim() && String(getSana(y)).trim()===String(getSana(x)).trim() && String(getMost(y)).trim()===String(getMost(x)).trim()) : i;
+    let serialToShow = origIdx>=0 ? origIdx+1 : i+1;
+    let raqmHtml = getRaqumHtmlAhkam(x);
+    let code = getCodeAhkam(x); let memberName = getMemberNameFromCode(code); if(!memberName) memberName = code||''; 
+    let bg=(i%2===0)?'#fff':'#f1f8e9';
+    html+='<tr style="background:'+bg+';cursor:pointer" onclick="selectFromDateListByCaseFiltered('+i+')" onmouseover="this.style.background=\'#ffec99\'" onmouseout="this.style.background=\''+bg+'\'"><td style="padding:4px;border:1px solid #000;text-align:center;font-weight:bold;background:#FFE4B5;font-size:12px;width:30px">'+toAr(serialToShow)+'</td><td style="padding:4px;border:1px solid #000;text-align:center;line-height:1.2;cursor:pointer;font-weight:bold;font-size:12px;width:150px;word-wrap:break-word;white-space:normal" title="اضغط لعرض الحكم">'+raqmHtml+'</td><td style="padding:4px;border:1px solid #000;text-align:center;background:#fffbe6;font-weight:bold;color:#8B0000;font-size:13px;width:110px;white-space:nowrap;overflow:visible">'+toArText(memberName||code||'-')+'</td></tr>';
+  }
+  html+='</tbody></table></div><div style="margin-top:4px;padding:4px;background:#fffde7;border-radius:4px;font-size:10px;color:#333;text-align:center;border:1px solid #C9A227">إجمالي <b>'+toAr(results.length)+'</b> '+(filterVal!=='ALL'?'بالكود '+filterVal:'')+'</div>';
+  if(listDiv) listDiv.innerHTML=html;
+  window.CURRENT_DATE_RESULTS = results;
+}
+function selectFromDateListByCaseFiltered(i){
+  if(!window.CURRENT_DATE_RESULTS || !window.CURRENT_DATE_RESULTS[i]) return;
+  let x = window.CURRENT_DATE_RESULTS[i];
+  let origSerial = getOriginalSerialForCase(x);
+  window.CURRENT_SERIAL = origSerial || (i+1);
+  window.CURRENT_CASE_SERIAL_DATA = x;
+  fillFromCase(x);
+}
+
+function getOriginalSerialForCase(x){
+  if(!window.ALL_DATE_RESULTS) return null;
+  let idx = window.ALL_DATE_RESULTS.findIndex(y=> String(getRaqm(y)).trim()===String(getRaqm(x)).trim() && String(getSana(y)).trim()===String(getSana(x)).trim() && String(getMost(y)).trim()===String(getMost(x)).trim());
+  return idx>=0 ? idx+1 : null;
+}
+function selectFromDateListByCase(i){
+  if(!window.CURRENT_DATE_RESULTS || !window.CURRENT_DATE_RESULTS[i]) return;
+  let x = window.CURRENT_DATE_RESULTS[i];
+  let origSerial = getOriginalSerialForCase(x);
+  window.CURRENT_SERIAL = origSerial || (i+1);
+  window.CURRENT_CASE_SERIAL_DATA = x;
+  fillFromCase(x);
+  let msg=document.getElementById('searchMsg');
+  if(msg){ msg.textContent='✓ تم تحميل '+toAr(getRaqm(x))+' / '+toAr(getSana(x))+' - '+toArText(getCodeAhkam(x)); msg.style.color='green'; }
+}
+
+</script>
+
+<div id="hay2aModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:10000;justify-content:center;align-items:center;padding:20px">
+<div style="background:#fff;padding:20px;border-radius:12px;width:95%;max-width:700px;max-height:90vh;overflow-y:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="margin:0">👥 إضافة الهيئة الأولى والثانية</h3><button class="btn btn-gray" onclick="closeHay2aModal()">✕ إغلاق</button></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="background:#e3f2fd;padding:12px;border-radius:8px;border:1px solid #1976d2">
+<h4 style="margin:0 0 8px 0;color:#0d47a1">الهيئة الأولى (التي أصدرت الحكم)</h4>
+<label>الرئيس</label><input id="m_f_rais" class="input" oninput="syncHay2aFromModal()">
+<label>العضو الثاني</label><input id="m_f_member2" class="input" oninput="syncHay2aFromModal()">
+<label>العضو الثالث</label><input id="m_f_member3" class="input" oninput="syncHay2aFromModal()">
+</div>
+<div style="background:#fff3e0;padding:12px;border-radius:8px;border:1px solid #ef6c00">
+<h4 style="margin:0 0 8px 0;color:#e65100">الهيئة الثانية (إن وجدت - التي تداولت ووقعت المسودة)</h4>
+<label>الرئيس</label><input id="m_f_rais2" class="input" oninput="syncHay2aFromModal()">
+<label>العضو الثاني</label><input id="m_f_member2_2" class="input" oninput="syncHay2aFromModal()">
+<label>العضو الثالث</label><input id="m_f_member3_2" class="input" oninput="syncHay2aFromModal()">
+<label style="margin-top:10px;display:block;border-top:1px solid #ccc;padding-top:8px">وكيل النيابة</label><input id="m_f_wakil" class="input" oninput="syncWakilAminFromModal()">
+<label>أمين السر</label><input id="m_f_amin" class="input" oninput="syncWakilAminFromModal()">
+<div style="margin-top:8px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="m_hasHay2a" onchange="toggleHasHay2aModal()"> يوجد هيئة ثانية</label></div>
+</div>
+</div>
+<div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+<button class="btn btn-gray" onclick="closeHay2aModal()">إغلاق</button>
+<button class="btn btn-navy" onclick="saveHay2aModal()">💾 حفظ وتحديث الورقة</button>
+</div>
+</div>
+</div>
+
+</body>
+</html>

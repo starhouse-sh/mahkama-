@@ -1,0 +1,149 @@
+ <!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>بيانات الدائرة - D32_DB فقط</title>
+<style>
+*{box-sizing:border-box;font-family:Tahoma}
+body{background:#0e1627;padding:10px;direction:rtl;margin:0}
+.card{background:#fff;border-radius:12px;padding:14px;max-width:700px;margin:auto;border:3px solid #C9A227}
+h2{background:#0A2342;color:#fff;padding:10px;border-radius:8px;text-align:center;font-size:16px}
+label{font-weight:bold;display:block;margin:5px 0 3px;font-size:13px}
+input,select{width:100%;padding:12px;border:2px solid #888;border-radius:8px;font-weight:bold;font-size:14px;margin-bottom:8px}
+.memberCard{background:#f8f9fa;border:2px solid #ddd;border-radius:10px;padding:10px;margin:8px 0}
+.memberCard.changed{border-color:#C9A227;background:#fff8e1}
+.codeBadge{background:#0A2342;color:#fff;padding:4px 10px;border-radius:20px;font-weight:bold;font-size:13px;display:inline-block}
+.btn{padding:12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;margin-top:10px;font-size:15px}
+.btn-save{background:#0A2342;color:#fff}
+.btn-clear{background:#b00020;color:#fff}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>⚙️ بيانات الدائرة - تعديل في أي وقت - D32_DB فقط</h2>
+
+<label>رقم الدائرة</label>
+<input id="dairaNumber" value="32">
+
+<label>انعقاد الدائرة</label>
+<select id="entag"><option>مدني مستأنف</option><option>مدني</option><option>أسرة مستأنف</option><option>عمال</option></select>
+
+<label>دور الانعقاد</label>
+<select id="dawr"><option>الأسبوع الأول</option><option selected>الأسبوع الثاني</option><option>الأسبوع الثالث</option><option>الأسبوع الرابع</option></select>
+
+<label>فترة الانعقاد</label>
+<select id="fatra"><option selected>صباحي</option><option>مسائي</option></select>
+
+<h3 style="background:#FFE4B5;padding:8px;border-radius:6px;margin:12px 0 6px">👨‍⚖️ الهيئة - الأسماء</h3>
+<div id="membersBox"></div>
+
+<label>وكيل النيابة</label>
+<input id="wakil" placeholder="اسم وكيل النيابة">
+
+<label>أمين السر</label>
+<input id="amin" placeholder="اسم أمين السر">
+
+<button class="btn btn-save" onclick="saveConfig()">💾 حفظ / تعديل بيانات الدائرة</button>
+<button class="btn btn-clear" onclick="clearConfig()">مسح بيانات الدائرة فقط</button>
+
+<div id="status" style="text-align:center;font-weight:bold;margin-top:10px;color:#0A2342"></div>
+<pre id="preview" style="background:#0f1f3a;color:#C9A227;padding:8px;border-radius:6px;font-size:10px;max-height:150px;overflow:auto;margin-top:10px"></pre>
+</div>
+
+<script>
+var ROLES=[
+  {code:'A',role:'رئيس الدائرة'},
+  {code:'B',role:'عضو يمين'},
+  {code:'C',role:'عضو يسار'},
+  {code:'D',role:'العضو الرابع'},
+  {code:'E',role:'العضو الخامس'},
+  {code:'F',role:'العضو السادس'},
+  {code:'G',role:'العضو السابع'},
+];
+
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+
+function build(){
+  var box=document.getElementById('membersBox');
+  var html='';
+  ROLES.forEach(function(r){
+    html+='<div class="memberCard" id="row_'+r.code+'"><div style="display:flex;justify-content:space-between;align-items:center"><span class="codeBadge">'+r.code+' - '+r.role+'</span><button onclick="document.getElementById(\'name_'+r.code+'\').value=\'\'" style="background:#ffcccc;border:1px solid red;border-radius:6px;padding:4px 8px;font-size:11px">مسح</button></div><label>اسم المستشار '+r.code+'</label><input id="name_'+r.code+'" placeholder="اكتب اسم المستشار '+r.code+' - '+r.role+'" oninput="document.getElementById(\'row_'+r.code+'\').classList.add(\'changed\')"></div>';
+  });
+  box.innerHTML=html;
+}
+
+async function getConfig(){
+  try{
+    let db=await openDB();
+    let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG'];
+    for(let k of keys){
+      let val=await new Promise(res=>{let tx=db.transaction('d32store','readonly');let rq=tx.objectStore('d32store').get(k);rq.onsuccess=()=>res(rq.result);});
+      if(val){ try{ var c=JSON.parse(val); if(c && c.dairaNumber) return c; }catch(e){} }
+    }
+  }catch(e){}
+  return null;
+}
+
+async function load(){
+  var cfg=await getConfig(); if(!cfg) return;
+  try{
+    document.getElementById('dairaNumber').value=cfg.dairaNumber||'32';
+    document.getElementById('entag').value=cfg.entag||'مدني مستأنف';
+    document.getElementById('dawr').value=cfg.dawr||'الأسبوع الثاني';
+    document.getElementById('fatra').value=cfg.fatra||'صباحي';
+    document.getElementById('wakil').value=cfg.wakil||'';
+    document.getElementById('amin').value=cfg.amin||'';
+    if(cfg.members) cfg.members.forEach(function(m){var el=document.getElementById('name_'+m.code); if(el) el.value=m.name||'';});
+    document.getElementById('preview').textContent=JSON.stringify(cfg,null,2);
+  }catch(e){}
+}
+
+async function saveConfig(){
+  var members=ROLES.map(function(r){return {code:r.code,role:r.role,name:document.getElementById('name_'+r.code).value.trim()};});
+  var cfg={
+    dairaNumber:document.getElementById('dairaNumber').value.trim()||'32',
+    entag:document.getElementById('entag').value,
+    dawr:document.getElementById('dawr').value,
+    fatra:document.getElementById('fatra').value,
+    rais:members.find(m=>m.code=='A')?.name||'',
+    ra2is:members.find(m=>m.code=='A')?.name||'',
+    members:members,
+    a3daa:members.filter(m=>m.code!='A'&&m.name).map(m=>m.name).join('\n'),
+    wakil:document.getElementById('wakil').value.trim(),
+    amin:document.getElementById('amin').value.trim(),
+    savedAt:new Date().toLocaleString('ar-EG')
+  };
+
+  try{
+    let db=await openDB();
+    let tx=db.transaction('d32store','readwrite');
+    let st=tx.objectStore('d32store');
+    st.put(JSON.stringify(cfg),'D32_DAIRA_CONFIG');
+    st.put(JSON.stringify(cfg),'D32_CIRCLE');
+    st.put(JSON.stringify(cfg),'D32_CONFIG');
+    tx.oncomplete=()=>{
+      document.getElementById('status').textContent='✅ تم الحفظ في D32_DB - الدائرة '+cfg.dairaNumber;
+      document.getElementById('preview').textContent=JSON.stringify(cfg,null,2);
+      alert('تم الحفظ بنجاح في D32_DB - كل القضايا موجودة زي ما هي');
+    };
+  }catch(e){
+    alert('خطأ حفظ D32_DB: '+e);
+  }
+}
+
+async function clearConfig(){
+  if(!confirm('مسح بيانات الدائرة فقط؟ مش هيمسح القضايا')) return;
+  let db=await openDB();
+  let tx=db.transaction('d32store','readwrite');
+  ['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG','D32_DAIRA_HISTORY','D32_DAIRA_NUMBER'].forEach(k=>tx.objectStore('d32store').delete(k));
+  tx.oncomplete=()=>{location.reload();}
+}
+
+build(); setTimeout(load,200);
+</script>
+</body>
+</html>

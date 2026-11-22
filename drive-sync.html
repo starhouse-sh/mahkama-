@@ -1,0 +1,328 @@
+<html lang="ar" dir="rtl"><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D32 متابعة - أحكام + متداول - V6 شغال</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;900&amp;display=swap" rel="stylesheet">
+<style>body{font-family:'Cairo',sans-serif}</style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.mx-auto{margin-left:auto;margin-right:auto}.mb-4{margin-bottom:1rem}.mt-1{margin-top:0.25rem}.mt-2{margin-top:0.5rem}.mt-3{margin-top:0.75rem}.flex{display:flex}.grid{display:grid}.max-h-64{max-height:16rem}.min-h-screen{min-height:100vh}.max-w-5xl{max-width:64rem}.flex-1{flex:1 1 0%}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.flex-wrap{flex-wrap:wrap}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.overflow-auto{overflow:auto}.rounded-2xl{border-radius:1rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-2{border-width:2px}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.border-amber-700\/50{border-color:rgb(180 83 9 / 0.5)}.border-emerald-600{--tw-border-opacity:1;border-color:rgb(5 150 105 / var(--tw-border-opacity, 1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85 / var(--tw-border-opacity, 1))}.bg-\[\#0a0f1e\]{--tw-bg-opacity:1;background-color:rgb(10 15 30 / var(--tw-bg-opacity, 1))}.bg-amber-900\/20{background-color:rgb(120 53 15 / 0.2)}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85 / var(--tw-bg-opacity, 1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-violet-600{--tw-gradient-from:#7c3aed var(--tw-gradient-from-position);--tw-gradient-to:rgb(124 58 237 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-indigo-700{--tw-gradient-to:#4338ca var(--tw-gradient-to-position)}.p-3{padding:0.75rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-8{padding-left:2rem;padding-right:2rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-\[10px\]{font-size:10px}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.leading-6{line-height:1.5rem}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-green-400{--tw-text-opacity:1;color:rgb(74 222 128 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.opacity-80{opacity:0.8}.hover\:bg-emerald-700:hover{--tw-bg-opacity:1;background-color:rgb(4 120 87 / var(--tw-bg-opacity, 1))}</style></head>
+<body class="bg-[#0a0f1e] text-white min-h-screen p-4">
+<div class="max-w-5xl mx-auto">
+  <div class="bg-gradient-to-r from-violet-600 to-indigo-700 rounded-2xl p-5 mb-4">
+    <h1 class="text-xl font-black">⚖️ D32 متابعة V6 - أحكام + متداول</h1>
+    <p class="text-xs opacity-80 mt-1">DB: D32_DB | ahkam:D32_AHKAM | cases:D32_V3 | Webhook: n8n Drive</p>
+  </div>
+
+  <div class="grid grid-cols-3 gap-3 mb-4">
+    <div class="bg-slate-800 rounded-xl p-4 text-center border-2 border-emerald-600"><div class="text-xs text-slate-400">الأحكام</div><div id="cAhkam" class="text-4xl font-black text-emerald-400 mt-1">0</div><div class="text-[10px] text-slate-500 mt-1">D32_AHKAM</div></div>
+    <div class="bg-slate-800 rounded-xl p-4 text-center border-2 border-amber-500"><div class="text-xs text-slate-400">المتداول</div><div id="cMot" class="text-4xl font-black text-amber-400 mt-1">0</div><div class="text-[10px] text-slate-500 mt-1">D32_V3</div></div>
+    <div class="bg-slate-800 rounded-xl p-4 text-center border border-slate-700"><div class="text-xs text-slate-400">الإجمالي</div><div id="cTotal" class="text-4xl font-black text-white mt-1">0</div><div id="lastSync" class="text-[10px] text-green-400 mt-2">-</div></div>
+  </div>
+
+  <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 mb-4">
+    <div class="flex flex-wrap gap-2">
+      <button onclick="loadCounts()" class="bg-slate-700 px-5 py-3 rounded-xl font-bold">🔄 تحديث العداد</button>
+      <button onclick="backupNow()" id="btnBack" class="bg-emerald-600 hover:bg-emerald-700 px-8 py-3 rounded-xl font-black flex-1">💾 نسخ الجدولين لـ Drive الآن</button>
+    </div>
+    <div id="log" class="mt-3 bg-black rounded-xl p-3 text-xs font-mono leading-6 max-h-64 overflow-auto border border-slate-700">جاهز... افتح هذه الصفحة من نفس مكان ملف الأحكام الأصلي<br>🔍 بفتح D32_DB...<br>✅ DB مفتوحة: D32_DB Stores: ahkam, cases, d32store<br>❌ خطأ قراءة أحكام: "undefined" is not valid JSON<br>📚 أحكام: 0<br>❌ خطأ متداول: "undefined" is not valid JSON<br>📋 متداول: 0<br><span class="text-emerald-400">✅ إجمالي: 0 أحكام + 0 متداول = 0</span><br></div>
+  </div>
+
+  <div class="bg-amber-900/20 border border-amber-700/50 rounded-xl p-3 text-xs leading-6">
+    <b class="text-amber-300">مهم:</b> حط الملف ده <b>جنب ملف الأحكام الأصلي</b> في نفس الفولدر، وافتحه من هناك. لو فتحته من التحميلات مش هيشوف الداتا. لازم نفس الفولدر ونفس المتصفح.
+  </div>
+</div>
+
+<script>
+const DB_NAME='D32_DB';
+const WEBHOOK='https://mmn108855.app.n8n.cloud/webhook/d32-backup';
+
+function log(t){ document.getElementById('log').innerHTML += t+"<br>"; document.getElementById('log').scrollTop=9999; }
+
+function openDB(){
+  return new Promise((res,rej)=>{
+    let r=indexedDB.open(DB_NAME,2);
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+
+async function loadCounts(){
+  log("🔍 بفتح D32_DB...");
+  try{
+    let db=await openDB();
+    log(`✅ DB مفتوحة: ${db.name} Stores: ${Array.from(db.objectStoreNames).join(', ')}`);
+    let tx=db.transaction(['ahkam','cases'],'readonly');
+    let rAhkam=tx.objectStore('ahkam').get('D32_AHKAM');
+    let rMot=tx.objectStore('cases').get('D32_V3');
+    let ahkam=[], mot=[];
+
+    await new Promise(done=>{
+      let c=0; function chk(){c++; if(c==2) done();}
+      rAhkam.onsuccess=()=>{ try{ let a=JSON.parse(rAhkam.result); if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; ahkam=a||[]; }catch(e){log("❌ خطأ قراءة أحكام: "+e.message);} log(`📚 أحكام: ${ahkam.length}`); chk(); };
+      rAhkam.onerror=()=>{ log("❌ فشل قراءة D32_AHKAM"); chk(); };
+      rMot.onsuccess=()=>{ try{ let a=JSON.parse(rMot.result); if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; mot=a||[]; }catch(e){log("❌ خطأ متداول: "+e.message);} log(`📋 متداول: ${mot.length}`); chk(); };
+      rMot.onerror=()=>{ log("❌ فشل قراءة D32_V3"); chk(); };
+    });
+
+    document.getElementById('cAhkam').innerText=ahkam.length;
+    document.getElementById('cMot').innerText=mot.length;
+    document.getElementById('cTotal').innerText=ahkam.length+mot.length;
+    window._ahkam=ahkam; window._mot=mot;
+    log(`<span class="text-emerald-400">✅ إجمالي: ${ahkam.length} أحكام + ${mot.length} متداول = ${ahkam.length+mot.length}</span>`);
+  }catch(e){ log("❌ خطأ عام: "+e.message); }
+}
+
+async function backupNow(){
+  let btn=document.getElementById('btnBack');
+  btn.disabled=true; btn.innerText="جاري الرفع...";
+  await loadCounts();
+  let ahkam=window._ahkam||[];
+  let mot=window._mot||[];
+  if(ahkam.length===0 && mot.length===0){ log("❌ لا توجد بيانات - تأكد أنك فاتح من نفس فولدر الأحكام"); btn.disabled=false; btn.innerText="💾 نسخ الجدولين لـ Drive الآن"; return; }
+
+  log(`📤 برفع ${ahkam.length} أحكام + ${mot.length} متداول لـ Drive...`);
+  try{
+    let payload={
+      source:'D32_V6_Manual_Backup',
+      timestamp:new Date().toISOString(),
+      stats:{ahkam:ahkam.length, motadawal:mot.length, total:ahkam.length+mot.length},
+      data:{ D32_AHKAM: ahkam, D32_V3: mot }
+    };
+    let res=await fetch(WEBHOOK,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    let txt=await res.text();
+    log(`📡 رد السيرفر: ${res.status} - ${txt.substring(0,200)}`);
+    if(res.ok){
+      log(`<span class="text-green-400 font-bold">✅ تم الرفع بنجاح لـ Drive! ${ahkam.length+mot.length} عنصر</span>`);
+      document.getElementById('lastSync').innerText="✅ آخر نسخ: "+new Date().toLocaleString('ar-EG');
+      localStorage.setItem('_D32_LAST_SYNC', new Date().toISOString());
+    }else{
+      log(`<span class="text-red-400">❌ فشل: ${res.status}</span>`);
+    }
+  }catch(e){
+    log(`<span class="text-red-400">❌ خطأ اتصال: ${e.message}</span>`);
+    log("جرب تفتح n8n وتتأكد أن الـ Workflow شغال Active");
+  }
+  btn.disabled=false; btn.innerText="💾 نسخ الجدولين لـ Drive الآن";
+}
+
+window.onload=loadCounts;
+</script>
+
+
+</body></html>

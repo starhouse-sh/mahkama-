@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>كشف - د 32 - </title>
+<style>
+*{box-sizing:border-box;font-family:Arial!important;font-weight:bold!important}
+html,body{margin:0;padding:0}
+body{font-family:Arial!important;font-weight:bold!important;margin:0;padding:8px;direction:rtl;background:#fff}
+.card{border:1px solid #000;padding:8px;margin-bottom:8px}
+.btn{padding:7px 12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px}
+.btn-navy{background:#0f1f3a;color:#fff}.btn-green{background:#0a7a42;color:#fff}.btn-blue{background:#2563eb;color:#fff}.btn-gold{background:#C9A227}
+#printArea{display:flex;flex-direction:column;min-height:0;padding:0 0 0 0;margin:0 15px}
+#headerBox{text-align:center;border-bottom:3px double #000;padding-bottom:6px}
+#header1{font-weight:bold!important;font-size:19px}
+#header2{font-weight:bold!important;font-size:18px;margin-top:4px}
+#out{display:flex;flex-direction:column;gap:16px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{border:1px solid #000;text-align:center;background:#e8e8e8!important;color:#000!important;font-size:12px;padding:3px;height:28px!important;font-weight:bold!important}
+td{border:1px solid #000;text-align:center;font-size:12px;padding:1px;background:#fff;font-weight:bold!important;vertical-align:middle}
+.col-m{width:34px!important;min-width:34px!important;max-width:34px!important}
+.col-m-print{background:#f0f0f0!important;color:#000!important;font-weight:bold}
+.col-code{width:38px!important;min-width:38px!important;max-width:38px!important;background:#fff!important;font-weight:bold;color:#000!important}
+.col-raqm{width:auto}
+.sep-row td{background:#e0f2f1!important;font-weight:bold;border:2px solid #000}
+.page-block{page-break-after:always;margin-bottom:10px}
+.page-block:last-child{page-break-after:auto}
+.columns-row{display:flex;flex-direction:row;gap:4px;align-items:flex-start;justify-content:flex-start;width:100%}
+.col-wrapper{flex:0 0 auto;display:flex;flex-direction:column}
+.inner-table{width:100%;table-layout:fixed}
+@media print{
+  .no-print{display:none!important}
+  @page{margin:6mm 10mm 1mm 10mm}
+  *{-webkit-print-color-adjust:exact!important; print-color-adjust:exact!important}
+  body{padding:8px!important}
+  #printArea{margin:0 15px!important;padding:0 0 0 0!important}
+  .page-block{page-break-after:always!important}
+  .page-block:last-child{page-break-after:auto!important}
+}
+</style>
+</head>
+<body>
+<div class="card no-print" style="background:#eee;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+تاريخ:
+<input id="d" type="number" style="width:50px" placeholder="يوم"> /
+<input id="m" type="number" style="width:50px" placeholder="شهر"> /
+<input id="y" type="number" style="width:70px" placeholder="سنة">
+<button class="btn btn-navy" id="btnS">بحث </button>
+<button class="btn btn-green" id="b1">نسخ</button>
+<button class="btn btn-blue" id="b2">ميكروفيلم</button>
+<button class="btn btn-gold" id="b3">مراجعه رسوم</button>
+<span id="dbg" style="color:red;font-weight:bold">جاري تحميل ...</span>
+</div>
+<div id="printArea">
+<div id="headerBox">
+<div id="header1">محكمة استئناف القاهرة - الدائرة <span id="dairaNo">٣٢</span> - استئناف عالي - </div>
+<div id="header2">كشف تسليم احكام <span id="typeSpan">لقسم النسخ</span> - جلسة <span id="dateSpan"></span></div>
+</div>
+<div id="out"><div style="text-align:center;padding:30px;color:#888">ادخل التاريخ واضغط بحث - </div></div>
+</div>
+<script>
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+var DAIRA='32';
+var DAIRA_NUM='32';
+async function loadDairaNum(){
+  try{
+    var db=await openDB();
+    var keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_DAIRA'];
+    for(var i=0;i<keys.length;i++){
+      var val=await new Promise(function(res){
+        var tx=db.transaction('d32store','readonly');
+        var rq=tx.objectStore('d32store').get(keys[i]);
+        rq.onsuccess=function(){res(rq.result);}; rq.onerror=function(){res(null);};
+      });
+      if(val){
+        try{
+          var c=(typeof val==='string')?JSON.parse(val):val;
+          var n=c.dairaNumber||c.daira||c.circle||c.number||'';
+          if(n){ DAIRA=String(n); DAIRA_NUM=String(n); break; }
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  var el=document.getElementById('dairaNo');
+  if(el) el.textContent=toAr(DAIRA);
+  return DAIRA;
+}
+function toAr(n){return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function toArText(s){return String(s||'').replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function clean(s){if(!s) return ''; s=String(s).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/-/g,'/'); var m=s.match(/\d+/g); if(!m||m.length<3) return ''; var d,mo,ye; if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2) ye='20'+ye;} return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function getRaqm(x){return (x.raqm||'').toString().trim();}
+function getSana(x){return (x.sana||'').toString().trim();}
+function getCode(x){return (x.code||'').toString().trim().toUpperCase();}
+function getQar(x){return x.qar||x.mantouq||'';}
+function isI3ada(q){return String(q).includes('إعادة للمرافعة');}
+function isTamhidy(q){q=String(q); if(isI3ada(q)) return false; return q.includes('تحقيق')||q.includes('استجواب')||q.includes('خبراء')||q.includes('خبير')||q.includes('شرعي')||q.includes('وقف');}
+function getCategory(q){if(isI3ada(q)) return 2; if(isTamhidy(q)) return 1; return 0;}
+function getCodeOrder(c){c=(c||'').toUpperCase().trim(); if(!c) return 999; return c.charCodeAt(0);}
+
+var DATA=[];
+async function loadAhkam(){
+  let db=await openDB();
+  let tx=db.transaction('ahkam','readonly');
+  let rq=tx.objectStore('ahkam').get('D32_AHKAM');
+  return new Promise(res=>{
+    rq.onsuccess=()=>{if(rq.result){try{let a=JSON.parse(rq.result); if(Array.isArray(a[1])) a=a[1]; DATA=a;}catch(e){}} document.getElementById('dbg').textContent='D32_DB: '+toAr(DATA.length)+' حكم'; res();};
+    rq.onerror=()=>res();
+  });
+}
+var CUR_ALL=[], CUR_QAT3I=[];
+document.getElementById('dairaNo').textContent=toAr(DAIRA);
+document.getElementById('y').value=new Date().getFullYear();
+
+async function doSearch(){
+await loadAhkam();
+var dd=document.getElementById('d').value;
+var mm=document.getElementById('m').value;
+var yy=document.getElementById('y').value;
+if(!dd||!mm||!yy){alert('ادخل اليوم والشهر والسنة');return;}
+var target=yy+'/'+String(mm).padStart(2,'0')+'/'+String(dd).padStart(2,'0');
+target=clean(target);
+var displayDate=yy+'/'+mm+'/'+dd;
+var filtered=[];
+for(var i=0;i<DATA.length;i++){
+var t=clean(DATA[i].tarHokm||DATA[i].tarikhHokm||'');
+if(t==target) filtered.push(DATA[i]);
+}
+filtered=filtered.filter(function(x){return!isI3ada(getQar(x));});
+// ==== منع التكرار ====
+var seen={}; var uniq=[];
+for(var i=0;i<filtered.length;i++){
+  var k=normalizeKey(getRaqm(filtered[i]), getSana(filtered[i]));
+  if(!k || k=='/' ) continue;
+  if(!seen[k]){ seen[k]=1; uniq.push(filtered[i]); }
+}
+filtered=uniq;
+// ==== نهاية منع التكرار ====
+filtered.sort(function(a,b){
+var ca=getCategory(getQar(a)), cb=getCategory(getQar(b));
+if(ca!=cb) return ca-cb;
+var oa=getCodeOrder(getCode(a)), ob=getCodeOrder(getCode(b));
+if(oa!=ob) return oa-ob;
+return (parseInt(getRaqm(a))||0)-(parseInt(getRaqm(b))||0);
+});
+CUR_ALL=filtered;
+CUR_QAT3I=filtered.filter(function(x){return getCategory(getQar(x))==0;});
+document.getElementById('dbg').textContent='الكلي: '+toAr(DATA.length)+' | معروض: '+toAr(filtered.length)+' - D32_DB';
+document.getElementById('dateSpan').textContent=toArText(displayDate);
+render(CUR_ALL,false);
+}
+
+function normalizeKey(raqm,sana){
+  return String(raqm||'').trim().replace(/\s+/g,'') + '/' + String(sana||'').trim().replace(/\s+/g,'');
+}
+function getRaqmCellHtml(d){
+  var baseRaqm = getRaqm(d);
+  var baseSana = getSana(d);
+  var base = (baseRaqm+' / '+baseSana).trim();
+  if(!base || base=='/' ) return '';
+  var dammList = d.dammList || d.damm_list || [];
+  if((!dammList || !dammList.length) && d.raqmDisplay && typeof d.raqmDisplay === 'string' && d.raqmDisplay.indexOf('<div')>-1){
+    return toArText(d.raqmDisplay);
+  }
+  if(!dammList || !dammList.length) return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center">'+toArText(base)+'</div>';
+  var seen={}; var baseKey = normalizeKey(baseRaqm, baseSana); seen[baseKey]=1;
+  var html = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">';
+  html += '<div>'+toArText(base)+'</div>';
+  dammList.forEach(function(it){
+    var r = (it.raqm||'').toString().trim();
+    var s = (it.sana||'').toString().trim();
+    if(!r) return;
+    var key = normalizeKey(r,s);
+    if(!key || key=='/' || seen[key]) return;
+    seen[key]=1;
+    var t = (r + (s ? ' / '+s : '')).trim();
+    html += '<div style="width:70px;max-width:80%;height:1px;background:#000;margin:3px auto;"></div>';
+    html += '<div>'+toArText(t)+'</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function render(list, onlyQat3i){
+if(list.length==0){document.getElementById('out').innerHTML='<div style="text-align:center;padding:20px">لا يوجد احكام في هذا التاريخ - D32_DB</div>';return;}
+var display=[];
+if(onlyQat3i){for(var i=0;i<list.length;i++) display.push({type:'data', data:list[i]});}
+else{
+var qat=[], tam=[];
+for(var i=0;i<list.length;i++){if(getCategory(getQar(list[i]))==0) qat.push(list[i]); else tam.push(list[i]);}
+for(var i=0;i<qat.length;i++) display.push({type:'data', data:qat[i]});
+if(qat.length>0 && tam.length>0) display.push({type:'sep'});
+for(var i=0;i<tam.length;i++) display.push({type:'data', data:tam[i]});
+}
+
+var ROWS_PER_COL = 25;
+var htmlAll = '';
+var idx = 0;
+var pageNum = 1;
+var totalPagesEstimate = Math.ceil(display.length / 75);
+if(display.length>75) totalPagesEstimate = Math.ceil(display.length / 100);
+
+while(idx < display.length){
+  var remaining = display.length - idx;
+  var cols, perPage, colWidth, rowH;
+  if(remaining > 75){
+    cols = 4;
+    perPage = ROWS_PER_COL * 4;
+    colWidth = '25%';
+    rowH = '34px';
+  }else{
+    cols = 3;
+    perPage = ROWS_PER_COL * 3;
+    colWidth = '33.333%';
+    rowH = '36px';
+  }
+  var pageSlice = display.slice(idx, idx+perPage);
+  
+  // === شرط الفاصل: لو الفاصل جه آخر العمود لوحده ينقل للعمود التالي ===
+  var colsData = [];
+  var ptr = 0;
+  for(var c=0;c<cols;c++){
+    var slice = pageSlice.slice(ptr, ptr+ROWS_PER_COL);
+    // لو الفاصل هو آخر عنصر في العمود ومفيش أرقام تحته، انقله للعمود التالي
+    if(slice.length>0 && slice[slice.length-1].type==='sep'){
+      // شيل الفاصل من العمود الحالي
+      slice = slice.slice(0, slice.length-1);
+      // لو الفاصل كان هو العنصر الوحيد اللي كان هيتاخد، ptr لا يتقدم بالفاصل
+      // الفاصل هيرجع للـ ptr التالي
+      colsData.push(slice);
+      ptr += slice.length; // لا نستهلك الفاصل الآن، سيستهلك في العمود التالي
+      // الفاصل سيبقى في pageSlice وسيأتي في العمود التالي كأول عنصر
+      // لذلك نعيد الفاصل إلى pageSlice logic عبر عدم تخطيه: نعيد ترتيب pageSlice؟
+      // أبسط: نحذف الفاصل من مكانه ونضعه في بداية الباقي
+      // نعيد بناء pageSlice للباقي
+      var before = pageSlice.slice(0, ptr);
+      var sep = [{type:'sep'}];
+      var after = pageSlice.slice(ptr+1);
+      // after يبدأ من بعد الفاصل الأصلي
+      // لكن ptr الحالي يشير بعد slice بدون الفاصل
+      // نعيد تركيب الباقي ليبدأ بالفاصل
+      // نحدّث pageSlice للصفحات التالية عبر تعديل idx لاحقا؟ أسهل نعالج بالـ ptr فقط
+      // سنضع الفاصل كأول عنصر للعمود التالي عن طريق إدراجه في pageSlice
+      pageSlice = before.concat(sep).concat(pageSlice.slice(ptr+1));
+      // الآن ptr يشير لبداية الفاصل في العمود التالي
+      continue;
+    }else{
+      colsData.push(slice);
+      ptr += slice.length;
+    }
+  }
+  // إعادة حساب pageSlice بعد التعديل للطباعة - نستخدم colsData
+  var isFirst = pageNum===1;
+  var pageHeader = '';
+  if(!isFirst){
+    var dateTxt = document.getElementById('dateSpan').textContent || '';
+    var typeTxt = document.getElementById('typeSpan').textContent || 'لقسم النسخ';
+    pageHeader = '<div style="text-align:center;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:6px">'
+      +'<div style="font-size:19px">تابع كشف تسليم احكام '+toArText(typeTxt)+' - جلسة '+toArText(dateTxt)+'</div>'
+      +'<div style="font-size:13px">صفحة '+toAr(pageNum)+' من '+toAr(totalPagesEstimate)+'</div></div>';
+  }
+  htmlAll += '<div class="page-block">';
+  htmlAll += pageHeader;
+  htmlAll += '<div class="columns-row">';
+  
+  var counterQat = 1;
+  var counterTam = 1;
+  var inTam = false;
+  // نحتاج نعرف هل بدأنا التمهيدي قبل الصفحة دي؟
+  // نحسب من بداية display حتى idx
+  for(var k=0;k<idx;k++){
+    if(display[k].type==='sep') inTam=true;
+    else if(inTam) counterTam++;
+    else counterQat++;
+  }
+  
+  for(var col=0; col<colsData.length; col++){
+    var colSlice = colsData[col];
+    if(colSlice.length===0) continue;
+    htmlAll += '<div class="col-wrapper" style="width:'+colWidth+'">';
+    htmlAll += '<table class="inner-table">';
+    htmlAll += '<tr><th class="col-m">م</th><th class="col-raqm">رقم الاستئناف</th><th class="col-code">عضو</th></tr>';
+    for(var r=0;r<colSlice.length;r++){
+      if(colSlice[r].type==='sep'){
+        htmlAll += '<tr class="sep-row"><td colspan="3" style="height:'+rowH+'">الاحكام التمهيدية</td></tr>';
+        inTam = true;
+        counterTam = 1; // يبدأ من 1 من جديد
+      }else{
+        var curNum = inTam ? counterTam : counterQat;
+        htmlAll += '<tr><td class="col-m col-m-print" style="height:'+rowH+'">'+toAr(curNum)+'</td><td class="col-raqm" style="height:'+rowH+'">'+getRaqmCellHtml(colSlice[r].data)+'</td><td class="col-code" style="height:'+rowH+'">'+toArText(getCode(colSlice[r].data))+'</td></tr>';
+        if(inTam) counterTam++; else counterQat++;
+      }
+    }
+    htmlAll += '</table></div>';
+  }
+  htmlAll += '</div></div>';
+  idx += ptr; // ptr هو عدد العناصر المستهلكة فعليا بعد معالجة الفاصل
+  pageNum++;
+}
+document.getElementById('out').innerHTML=htmlAll;
+}
+
+function doPrint(type){
+if(CUR_ALL.length==0){alert('ابحث اولا');return;}
+document.getElementById('typeSpan').textContent=type;
+if(type=='لمراجعة الرسوم'){
+render(CUR_QAT3I,true);
+setTimeout(function(){window.print(); setTimeout(function(){render(CUR_ALL,false); document.getElementById('typeSpan').textContent='لقسم النسخ';},300);},200);
+}else{
+render(CUR_ALL,false);
+window.print();
+}
+}
+
+document.getElementById('btnS').onclick=doSearch;
+document.getElementById('b1').onclick=function(){doPrint('لقسم النسخ');};
+document.getElementById('b2').onclick=function(){doPrint('لقسم الميكروفيلم');};
+document.getElementById('b3').onclick=function(){doPrint('لمراجعة الرسوم');};
+loadDairaNum();
+loadAhkam();
+</script>
+</body>
+</html>

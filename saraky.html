@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>أرشيف السركي - استخراج تلقائي</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+// نثبت الـ worker الصح لنفس الاصدار
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
+<style>
+*{box-sizing:border-box;font-family:Tahoma}
+body{background:#0f172a;padding:12px;direction:rtl}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;border:2px solid #000}
+.btn{padding:8px 14px;border:2px solid #000;border-radius:8px;font-weight:bold;cursor:pointer;margin:2px}
+.btn-green{background:#16a34a;color:#fff}.btn-navy{background:#0A2342;color:#fff}.btn-gold{background:#C9A227}
+.input{padding:8px;border:2px solid #000;border-radius:8px;font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1.5px solid #000;padding:6px;text-align:center;font-size:13px}
+th{background:#d1d5db}
+canvas{width:100%;border:2px solid #000;margin-top:10px;background:#fff}
+#log{white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>📁 أرشيف السركي - مستقل</h2>
+<p style="font-size:13px">اختار الـ PDF المكتوب كمبيوتر -> دوس استخراج -> هيطلع كل أرقام القضايا تلقائي</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+<input type="file" id="pdfFile" accept=".pdf" multiple class="input">
+<input id="month" placeholder="وصف السركي: يناير 2026" class="input" style="width:200px">
+<input id="receiver" placeholder="المستلم" class="input" style="width:150px">
+<button class="btn btn-green" id="btnExtract">📤 رفع واستخراج</button>
+</div>
+<div id="log" style="margin-top:10px;background:#000;color:#0f0;padding:8px;border-radius:8px;min-height:40px;font-family:monospace;font-size:12px">جاهز...</div>
+</div>
+
+<div class="card" style="background:#e0f2fe">
+<h3>🔍 بحث برقم القضية</h3>
+<div style="display:flex;gap:8px;margin-top:6px">
+<input id="qRaqm" placeholder="رقم" class="input" style="width:120px;text-align:center">
+<input id="qSana" placeholder="السنة" class="input" style="width:100px;text-align:center">
+<button class="btn btn-navy" onclick="searchNow()">بحث</button>
+<button class="btn btn-gold" onclick="loadAll()">تحديث الجدول</button>
+</div>
+<div id="results" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+<table>
+<thead><tr><th>م</th><th>الملف</th><th>الوصف</th><th>المستلم</th><th>عدد القضايا</th><th>القضايا</th><th>عرض</th><th>حذف</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="card" id="viewer" style="display:none">
+<div style="display:flex;justify-content:space-between"><b id="vTitle"></b><button class="btn" onclick="document.getElementById('viewer').style.display='none'">إغلاق</button></div>
+<canvas id="canvas"></canvas>
+<div style="text-align:center"><button class="btn btn-navy" onclick="prevPage()">السابق</button><span id="pageInfo" style="margin:0 10px;font-weight:bold"></span><button class="btn btn-navy" onclick="nextPage()">التالي</button></div>
+</div>
+
+<script>
+const DB_NAME='SARKI_ARCHIVE_DB_V2';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>{e.target.result.createObjectStore('sarki',{keyPath:'id',autoIncrement:true});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9]/g,'');}
+function toAr(s){return String(s||'').replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function logMsg(m){const el=document.getElementById('log'); el.textContent += '\n' + m; console.log(m);}
+
+async function extractCases(file){
+  logMsg('قراءة: '+file.name);
+  const arrayBuffer = await file.arrayBuffer();
+  const uint8 = new Uint8Array(arrayBuffer);
+  const pdf = await pdfjsLib.getDocument({data:[STRIPPED]
+  logMsg('عدد الصفحات: '+pdf.numPages);
+  let cases=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const text = content.items.map(i=>i.str).join(' ');
+    // Regex يقبل 123/2024 و 123 - 2024 و عربي
+    const regex = /([\d٠-٩]{1,5})\s*[\/\-]\s*([\d٠-٩]{4})/g;
+    let match;
+    while((match=regex.exec(text))!==null){
+      let raqm=toEn(match[1]), sana=toEn(match[2]);
+      if(sana.length===4 && +sana>=1990 && +sana<=2035 && +raqm>0){
+        cases.push({raqm,sana,page,raw:match[0]});
+      }
+    }
+    logMsg(' صفحة '+p+' -> لقيت '+cases.filter(c=>c.page===p).length+' قضية');
+  }
+  return {cases, pages: pdf.numPages, buffer: arrayBuffer};
+}
+
+document.getElementById('btnExtract').addEventListener('click', async ()=>{
+  const files=document.getElementById('pdfFile').files;
+  if(!files.length){ alert('اختار ملف PDF اول'); return; }
+  document.getElementById('log').textContent='بدأنا...';
+  for(let f of files){
+    try{
+      const {cases,pages,buffer}=await extractCases(f);
+      if(!cases.length){
+        logMsg('⚠️ لم يتم العثور على أرقام بشكل 123/2024 في الملف. تأكد انه مكتوب كمبيوتر مش صورة.');
+        continue;
+      }
+      const db=await openDB();
+      const tx=db.transaction('sarki','readwrite');
+      const rec={
+        name:f.name,
+        month:document.getElementById('month').value||f.name,
+        receiver:document.getElementById('receiver').value||'-',
+        date:new Date().toISOString(),
+        totalPages:pages,
+        cases:cases,
+        pdfData:buffer
+      };
+      await new Promise((res,rej)=>{let rq=tx.objectStore('sarki').add(rec); rq.onsuccess=()=>res(); rq.onerror=()=>rej(rq.error);});
+      logMsg('✅ تم حفظ '+f.name+' - '+cases.length+' قضية');
+    }catch(err){
+      logMsg('❌ خطأ في '+f.name+' : '+err.message);
+      console.error(err);
+      alert('خطأ: '+err.message+'\nافتح Console ب F12 شوف التفاصيل');
+    }
+  }
+  loadAll();
+});
+
+async function loadAll(){
+  const db=await openDB();
+  const all=await new Promise(res=>{let tx=db.transaction('sarki','readonly'); let r=tx.objectStore('sarki').getAll(); r.onsuccess=()=>res(r.result);});
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  all.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  all.forEach((rec,i)=>{
+    let preview=rec.cases.slice(0,8).map(c=> toAr(c.raqm+'/'+c.sana)).join(', ');
+    if(rec.cases.length>8) preview+='... +'+toAr(rec.cases.length-8);
+    let tr=document.createElement('tr');
+    tr.innerHTML=`<td>${toAr(i+1)}</td><td>${rec.name}</td><td>${rec.month}</td><td>${rec.receiver}</td><td>${toAr(rec.cases.length)}</td><td style="font-size:11px">${preview}</td><td><button class="btn btn-navy" onclick="openPdf(${rec.id})">عرض</button></td><td><button class="btn" onclick="delRec(${rec.id})">🗑</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function searchNow(){
+  const qR=toEn(document.getElementById('qRaqm').value.trim());
+  const qS=toEn(document.getElementById('qSana').value.trim());
+  const resDiv=document.getElementById('results');
+  if(!qR){ resDiv.innerHTML=''; return; }
+  const db=await openDB();
+  const all=await new Promise(res=>{let tx=db.transaction('sarki','readonly'); let r=tx.objectStore('sarki').getAll(); r.onsuccess=()=>res(r.result);});
+  let matches=[];
+  for(let rec of all) for(let c of rec.cases) if(c.raqm===qR && (!qS || c.sana===qS)) matches.push({rec,c});
+  if(!matches.length){ resDiv.innerHTML='<div style="background:#ffebee;border:2px solid red;padding:6px">مفيش نتيجة</div>'; return; }
+  let html=`<div style="background:#dcfce7;border:2px solid green;padding:6px">لقينا ${toAr(matches.length)} نتيجة</div>`;
+  matches.forEach(m=>{ html+=`<div style="border:1px solid #000;padding:6px;margin:4px 0;display:flex;justify-content:space-between;background:#fff"><span>${toAr(m.c.raqm+'/'+m.c.sana)} في ${m.rec.name} - ${m.rec.month} - صفحة ${toAr(m.c.page)}</span><button class="btn btn-gold" onclick="openPdf(${m.rec.id},${m.c.page})">فتح</button></div>`; });
+  resDiv.innerHTML=html;
+}
+
+let currentDoc=null, currentPage=1;
+async function openPdf(id, targetPage){
+  const db=await openDB();
+  const rec=await new Promise(res=>{let tx=db.transaction('sarki','readonly'); let r=tx.objectStore('sarki').get(id); r.onsuccess=()=>res(r.result);});
+  currentDoc=await pdfjsLib.getDocument({data:[STRIPPED]
+  currentPage=targetPage||1;
+  document.getElementById('viewer').style.display='block';
+  document.getElementById('vTitle').textContent=rec.name+' - '+rec.month;
+  renderPage();
+}
+async function renderPage(){
+  const page=await currentDoc.getPage(currentPage);
+  const canvas=document.getElementById('canvas');
+  const ctx=canvas.getContext('2d');
+  const vp=page.getViewport({scale:1.6});
+  canvas.width=vp.width; canvas.height=vp.height;
+  await page.render({canvasContext:ctx, viewport:vp}).promise;
+  document.getElementById('pageInfo').textContent='صفحة '+toAr(currentPage)+' من '+toAr(currentDoc.numPages);
+}
+function prevPage(){ if(currentPage>1){ currentPage--; renderPage(); } }
+function nextPage(){ if(currentDoc && currentPage<currentDoc.numPages){ currentPage++; renderPage(); } }
+async function delRec(id){ if(!confirm('حذف؟')) return; const db=await openDB(); let tx=db.transaction('sarki','readwrite'); tx.objectStore('sarki').delete(id); tx.oncomplete=()=>loadAll(); }
+
+loadAll();
+</script>
+</body>
+</html>

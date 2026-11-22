@@ -1,0 +1,23 @@
+<!DOCTYPE html><html dir="rtl" lang="ar"><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json"><meta charset="UTF-8"><title>قائمة الاستئنافات</title>
+<style>body{background:#0f172a;color:#fff;font-family:Tahoma;padding:10px} .box{background:#1e293b;padding:12px;border-radius:12px;margin:6px 0;display:flex;justify-content:space-between}
+button{padding:10px 18px;border-radius:8px;border:0;font-weight:bold;cursor:pointer} .add{background:#22c55e;width:100%;padding:15px;font-size:18px}
+</style></head><body>
+<h2>📚 مكتبة الاستئنافات - <span id="count">0</span> قضية</h2>
+<button class="add" onclick="location.href='scanner.html'">➕ إضافة عريضة جديدة (ورقتين)</button>
+<div id="list"></div>
+<script>
+function load(){
+ let docs=JSON.parse(localStorage.getItem('d32_docs')||'[]');
+ document.getElementById('count').innerText=docs.length;
+ document.getElementById('list').innerHTML=docs.map((d,i)=>`
+  <div class="box">
+   <div><b>${d.appealNo||'?'} لسنة ${d.appealYear||'?'} ق</b><br><small>${d.appellantName||''} ضد ${d.appelleeName||''}</small><br><small>جلسة: ${d.sessionDate||''} - ${d.caseType||''}</small></div>
+   <div><button onclick="del(${i})" style="background:#ef4444;color:#fff">حذف</button></div>
+  </div>
+ `).join('') || '<p style="text-align:center;color:#64748b">لسه مفيش عرائض</p>';
+}
+function del(i){ let docs=JSON.parse(localStorage.getItem('d32_docs')||'[]'); docs.splice(i,1); localStorage.setItem('d32_docs',JSON.stringify(docs)); load(); }
+load();
+</script></body></html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>تعلية الملف - 44 حكم قطعي - IDB FIXED</title>
+<style>
+*{box-sizing:border-box}body{font-family:Tahoma;background:#d6dce8;margin:0;padding:6px;direction:rtl}
+header{background:#0f1f3a;color:#fff;padding:8px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.date-box{display:flex;align-items:center;gap:6px;border:2px solid #000;border-radius:12px;padding:4px 10px;background:#fff;width:260px;direction:rtl}
+.date-box input{border:none;background:transparent;width:45px;text-align:center;font-weight:bold;font-size:15px;outline:none}
+.date-box input#y{width:70px}
+.date-sep{color:#000;font-weight:bold;font-size:18px}
+.wrap{display:flex;gap:6px;height:84vh;margin-top:6px}
+.col{background:#e8ecf4;border:2px solid #000;display:flex;flex-direction:column;overflow:hidden}
+.col-right{width:36%}.col-mid{width:36%}.col-left{width:28%}
+.col-head{background:#0f1f3a;color:#FFD700;text-align:center;padding:6px;font-weight:bold;font-size:12px}
+.list{overflow:auto;flex:1;background:#fff}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border:1px solid #000;padding:4px 2px;font-size:10px;text-align:center;word-wrap:break-word}
+th{background:#FFE4B5!important;position:sticky;top:0;z-index:5}
+tr.active td{background:#ffec99!important}
+.btns{display:flex;flex-wrap:wrap;gap:4px;padding:6px;overflow:auto;flex:1;align-content:flex-start;justify-content:flex-start}
+.btn-doc{padding:5px 3px;background:#c9d6f0;border:1px solid #000;border-radius:4px;font-size:9px;font-weight:bold;cursor:pointer;min-width:78px;max-width:88px;flex:1 1 30%;text-align:center;line-height:1.2}
+.btn-doc.on{background:#0f1f3a;color:#fff}
+.left-list{flex:1;overflow:auto;background:#fff;padding:6px}
+.left-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #000;margin-bottom:3px;padding:4px 6px;font-size:11px;font-weight:bold;background:#fffdf0}
+.btn{padding:6px 12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:12px}
+.btn-navy{background:#0f1f3a;color:#fff}.btn-red{background:#8B0000;color:#fff}.btn-green{background:#0a5a2a;color:#fff}.btn-gold{background:#C9A227;color:#000}
+.dropdown{position:relative;display:inline-block;flex:1 1 30%;min-width:80px}
+.dropdown-content{display:none;position:absolute;top:32px;right:0;background:#fff;border:2px solid #C9A227;border-radius:8px;z-index:9999;max-height:220px;overflow:auto;width:110px;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.dropdown-content button{display:block;width:100%;padding:8px;border:none;background:#fff;border-bottom:1px solid #eee;cursor:pointer;font-weight:bold;font-size:13px}
+.dropdown-content button:hover{background:#fef3c7}
+.dropdown.open .dropdown-content{display:block!important}
+#printAllArea{display:none}
+.print-page{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:5mm;padding:4mm;border:1px dashed #999;margin-bottom:5mm;min-height:270mm}
+.ta3leya-card{border:1.8px solid #000;padding:3mm;font-size:12px!important;font-weight:bold!important;line-height:1.5;background:#fff;break-inside:avoid;display:flex;flex-direction:column;min-height:85mm}
+.ta3leya-card .card-title{font-weight:bold;text-align:center;border-bottom:1.8px solid #000;padding-bottom:2mm;margin-bottom:2mm;font-size:12px!important;font-weight:bold!important}
+.ta3leya-card .card-list{font-size:12px!important;font-weight:bold!important;flex:1}
+.ta3leya-card .card-list div{margin-bottom:1.2mm}
+.ta3leya-card .card-footer{margin-top:2mm;padding:2mm;background:#0f1f3a;color:#FFD700;text-align:center;font-weight:bold;font-size:12px!important;border:1px solid #000}
+.ta3leya-card .card-amin{margin-top:3mm;padding-top:2mm;font-size:12px!important;font-weight:bold!important;text-align:right;border-top:1px solid #000}
+.ta3leya-card .card-sign-space{height:12mm}
+@media print{
+ header.noPrint, .topInputs, .col-right, .col-mid {display:none!important}
+ body {background:#fff!important;margin:0!important;padding:0!important}
+ .wrap{height:auto!important;display:block!important}
+ #printCol{
+   display:flex!important;
+   position:relative!important;
+   width:48%!important;
+   max-width:90mm!important;
+   border:1.5px solid #000!important;
+   background:#fff!important;
+   padding:2mm!important;
+   margin:0!important;
+   visibility:visible!important;
+ }
+ #printCol *{visibility:visible!important}
+ #printCol .col-head{display:block!important;background:#fff!important;color:#000!important;border-bottom:1.5px solid #000!important}
+ #printAllArea{display:none!important}
+ body.print-all header.noPrint, body.print-all .topInputs, body.print-all .col-right, body.print-all .col-mid {display:none!important}
+ body.print-all #printCol{display:none!important}
+ body.print-all #printAllArea{display:block!important;width:100%!important;position:relative!important}
+ body.print-all .print-page{page-break-after:always;border:none;display:grid!important}
+ body.print-all .print-page:last-child{page-break-after:auto}
+ body.print-all .ta3leya-card{font-size:12px!important;font-weight:bold!important}
+}
+</style>
+</head>
+<body>
+<header class="noPrint">
+<div>🏷 تعلية الملف - <span id="cnt">٠</span> - ٤٤ حكم قطعي - <span id="dbInfo" style="font-size:10px;background:#fff;color:#000;padding:3px 8px;border-radius:6px">جاري تحميل من D32_DB...</span></div>
+<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+<div class="date-box"><input id="d" placeholder="يوم" maxlength="2"><span class="date-sep">/</span><input id="m" placeholder="شهر" maxlength="2"><span class="date-sep">/</span><input id="y" placeholder="سنة" maxlength="4"></div>
+<button class="btn btn-navy" onclick="searchAhkam()">🔍 عرض القطعي A-G</button>
+<button class="btn btn-gold" onclick="loadFromDB()">🔄 تحديث من DB</button>
+<button class="btn btn-red" onclick="printSingle()">🖨 فردي</button>
+<button class="btn btn-green" onclick="printAllTa3leyat()">🖨 الكل (٦)</button>
+</div>
+</header>
+
+<div style="display:flex;gap:6px;margin-top:6px" class="noPrint topInputs">
+<input id="pRaqm" readonly style="width:70px;background:#ffff99;border:1px solid #000;padding:5px;text-align:center" placeholder="رقم">
+<input id="pSana" readonly style="width:50px;background:#ffff99;border:1px solid #000;padding:5px;text-align:center" placeholder="سنة">
+<input id="pEsm" readonly style="flex:1;background:#ffff99;border:1px solid #000;padding:5px;font-size:11px" placeholder="المستأنف">
+<input id="pCode" readonly style="width:50px;background:#ffcc99;border:1px solid #000;padding:5px;text-align:center;font-weight:bold" placeholder="كود">
+</div>
+
+<div class="wrap">
+<div class="col col-right">
+<div class="col-head">📋 الأحكام القطعية - <span id="tarikhHead">--</span></div>
+<div class="list">
+<table id="tblRight"><colgroup><col style="width:20px"><col style="width:60px"><col style="width:120px"><col style="width:20px"></colgroup>
+<thead><tr><th>م</th><th>رقم الاستئناف</th><th>المستأنف</th><th>كود</th></tr></thead>
+<tbody id="tbodyRight"><tr><td colspan="4">جاري التحميل من IndexedDB...</td></tr></tbody></table>
+</div>
+<div style="padding:4px;background:#ccc;font-size:12px;font-weight:bold" id="casesCount">العدد: ٠</div>
+</div>
+
+<div class="col col-mid">
+<div class="col-head">أزرار التعلية - 3 جنب بعض</div>
+<div class="noPrint" style="padding:5px;background:#FFE4B5;display:flex;gap:4px;border-bottom:2px solid #000">
+<button onclick="applyDefaultFardy()" style="flex:1;padding:5px;background:#0f1f3a;color:#FFD700;border:1px solid #000;font-weight:bold;font-size:10px">📋 افتراضي فردي</button>
+<button onclick="applyDefaultZawgy()" style="flex:1;padding:5px;background:#8B0000;color:#fff;border:1px solid #000;font-weight:bold;font-size:10px">📋 افتراضي زوجي</button>
+</div>
+<div class="btns" id="btns"></div>
+<div class="noPrint" style="padding:6px;background:#fff;border-top:2px solid #000">
+<div style="display:flex;gap:4px;margin-bottom:6px">
+<input id="customDoc" placeholder="إضافة مستند يدوي..." style="flex:1;padding:6px;border:1px solid #000;font-size:11px">
+<button onclick="addCustom()" style="padding:6px 10px;background:#0a7a42;color:#fff;border:none;font-weight:bold">+ إضافة</button>
+</div>
+<div style="display:flex;gap:6px">
+<button onclick="clearAll()" style="padding:4px 8px;background:#555;color:#fff;border:none;font-size:11px">مسح التعلية</button>
+<button onclick="saveCurrent()" style="padding:6px 12px;background:#0f1f3a;color:#fff;border:none;font-size:11px">💾 حفظ واللي بعده</button>
+</div>
+</div>
+</div>
+
+<div class="col col-left" id="printCol">
+<div class="col-head" id="leftHead">🏷 قائمة التعلية - ما بداخل الملف</div>
+<div style="background:#fff;padding:4mm;flex:1;overflow:auto;display:flex;flex-direction:column">
+<div style="text-align:center;font-weight:bold;border-bottom:2px solid #000;padding-bottom:3mm;margin-bottom:3mm;font-size:14px;line-height:1.6" id="ta3leyaHeader">
+<span id="prTitle">تعلية الاستئناف رقم ....</span>
+</div>
+<div style="font-weight:bold;margin-bottom:2mm;font-size:12px">الموجود بداخل الملف:</div>
+<div class="left-list" id="leftList" style="border:none;padding:0;flex:1"></div>
+<div style="margin-top:8px;padding:7px;background:#0f1f3a;color:#FFD700;text-align:center;font-weight:bold;border:1px solid #000;font-size:13px">
+إجمالي المستندات: <span id="docCounter">٠</span>
+</div>
+</div>
+</div>
+</div>
+
+<div id="printAllArea"></div>
+
+<script>
+const DB_NAME='D32_DB';
+var DATA=[], DATA_MOT=[];
+var DOCS=["أصل الحكم","الأصل الثاني للحكم","أصل المسودة","أصل عريضة الاستئناف","محاضر جلسات","رولات القضاه","الأصل المعلن","إعادة إعلان","إعلان إداري","إعلان بالحضور شخصيا","إعلان والإرشاد","إعلان بالإعادة للمرافعة","إعلان بحكم التحقيق","إعلان بحكم الاستجواب","إعلان بالحكم التمهيدي","حكم تمهيدي","مسودة حكم تمهيدي","محضر تحقيق","مذكرة نيابة","عريضة تجديد من الشطب","إعلان بالتجديد","عريضة تعجيل من الوقف","إعلان بالتعجيل","صحيفة تصحيح الشكل","إعلان بالتصحيح"];
+
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases')) db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam')) db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store')) db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function extractArray(raw){if(!raw) return [];try{let arr=typeof raw==='string'?JSON.parse(raw):raw;if(Array.isArray(arr)&&arr.length==2&&Array.isArray(arr[1])) arr=arr[1];if(Array.isArray(arr)) return arr;}catch(e){}return [];}
+async function idbGet(store,key){try{let db=await openDB();return await new Promise(rs=>{let tx=db.transaction(store,'readonly');let rq=tx.objectStore(store).get(key);rq.onsuccess=()=>rs(rq.result||null);rq.onerror=()=>rs(null);});}catch(e){return null;}}
+async function idbPut(store,key,val){try{let db=await openDB();return await new Promise(rs=>{let tx=db.transaction(store,'readwrite');tx.objectStore(store).put(val,key);tx.oncomplete=()=>rs(true);tx.onerror=()=>rs(false);});}catch(e){return false;}}
+
+async function loadFromDB(){
+ document.getElementById('dbInfo').textContent='جاري التحميل...';
+ let motRaw = await idbGet('cases','D32_V3');
+ if(!motRaw) motRaw = await idbGet('d32store','D32_V3');
+ if(!motRaw) motRaw = await idbGet('cases','D32_FINAL');
+ DATA_MOT = extractArray(motRaw);
+ 
+ let ahkRaw = await idbGet('ahkam','D32_AHKAM');
+ if(!ahkRaw) ahkRaw = await idbGet('d32store','D32_AHKAM');
+ if(!ahkRaw) ahkRaw = await idbGet('cases','D32_AHKAM');
+ DATA = extractArray(ahkRaw);
+
+ // fallback to localStorage if IDB empty (للتوافق)
+ if(DATA.length===0){
+   try{let ls=JSON.parse(localStorage.getItem('D32_AHKAM')||'[]'); if(Array.isArray(ls)&&ls.length) DATA=ls;}catch(e){}
+ }
+ if(DATA_MOT.length===0){
+   try{let ls2=JSON.parse(localStorage.getItem('D32_V3')||localStorage.getItem('D32_FINAL')||'[]'); if(Array.isArray(ls2)&&ls2.length) DATA_MOT=ls2;}catch(e){}
+ }
+
+ document.getElementById('dbInfo').textContent=`✅ ${DATA_MOT.length} متداول | ${DATA.length} أحكام`;
+ document.getElementById('cnt').textContent=toAr(DATA.length);
+ document.getElementById('tbodyRight').innerHTML='<tr><td colspan="4">ابحث عن تاريخ حكم... ('+DATA.length+' حكم موجود)</td></tr>';
+ console.log('Loaded from IDB:', DATA_MOT.length, DATA.length);
+}
+
+function toAr(n){return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function datesEqual(a,b){a=cleanDate(a);b=cleanDate(b);if(!a||!b)return false;var pa=a.split('/').map(Number),pb=b.split('/').map(Number);return pa[0]==pb[0]&&pa[1]==pb[1]&&pa[2]==pb[2];}
+function getTar(x){return x.tarHokm||x.tarikhHokm||x.tarHokmAwal||x.tar||x.galsaQadima||'';}
+function getRaqm(x){return (x.raqm||'').toString().trim();}
+function getSana(x){return (x.sana||'').toString().trim();}
+function getQar(x){return x.qar||x.mantouq||x.qarar||x.qararHokm||'';}
+function getCode(x){return (x.code||'').toString().trim().toUpperCase();}
+function getMost(x){return x.mostanef||x.most||'';}
+function isI3ada(qar){return String(qar||'').includes('إعادة للمرافعة');}
+function isTamhidy(qar){qar=String(qar||''); if(isI3ada(qar)) return false; return qar.includes('تحقيق')||qar.includes('استجواب')||qar.includes('خبراء')||qar.includes('خبير')||qar.includes('طب شرعي')||qar.includes('شرعي')||qar.includes('وقف');}
+function getCategory(qar){if(isI3ada(qar)) return 2; if(isTamhidy(qar)) return 1; return 0;}
+function getCodeOrder(code){code=(code||'').toUpperCase().trim(); if(!code) return 999; return code.charCodeAt(0);}
+
+var CURRENT_LIST=[], CUR=null, SELECTED=[], CUR_IDX=-1;
+
+function getDefaultFardy(){return ["أصل الحكم","الأصل الثاني للحكم","أصل المسودة","أصل عريضة الاستئناف","محاضر جلسات","رولات القضاه","الأصل المعلن","إعادة إعلان"];}
+function getDefaultZawgy(){return ["أصل الحكم","الأصل الثاني للحكم","أصل المسودة","أصل العريضة","عريضة الاستئناف المنضم","محاضر جلسات","رولات القضاه","الأصل المعلن","الأصل المعلن للاستئناف المنضم"];}
+
+function getJoinedInfo(ap){
+ if(!ap) return null;
+ var real=null;
+ try{
+   var r=getRaqm(ap), s=getSana(ap);
+   for(var k=0;k<DATA_MOT.length;k++){
+     if(String(DATA_MOT[k].raqm)==r && String(DATA_MOT[k].sana)==s){ real=DATA_MOT[k]; break; }
+   }
+ }catch(e){}
+ var src = real || ap;
+ if(src.dammList && src.dammList.length>0){
+   var first = src.dammList[0];
+   if(typeof first === 'object'){
+     return {raqm: first.raqm || first.raqmMon || first.monRaqm || '', sana: first.sana || first.sanaMon || src.sana || ''};
+   }else{
+     return {raqm: String(first), sana: src.sana || getSana(ap)};
+   }
+ }
+ if(src.monDam) {
+   if(typeof src.monDam === 'object') return {raqm: src.monDam.raqm||'', sana: src.monDam.sana||src.sana||''};
+   return {raqm: String(src.monDam), sana: src.sanaMon || src.sana || ''};
+ }
+ if(src.mondam) {
+   if(typeof src.mondam === 'object') return {raqm: src.mondam.raqm||'', sana: src.mondam.sana||src.sana||''};
+   return {raqm: String(src.mondam), sana: src.sanaMon || src.sana || ''};
+ }
+ if(src.raqmMonDam) return {raqm: String(src.raqmMonDam), sana: String(src.sanaMonDam||src.sana||'')};
+ if(src.raqmDamm) return {raqm: String(src.raqmDamm), sana: String(src.sanaDamm||src.sana||'')};
+ return null;
+}
+
+function getAminSirName(ap){
+ if(!ap) return '';
+ var real=null;
+ try{
+   var r=getRaqm(ap), s=getSana(ap);
+   for(var k=0;k<DATA_MOT.length;k++){
+     if(String(DATA_MOT[k].raqm)==r && String(DATA_MOT[k].sana)==s){ real=DATA_MOT[k]; break; }
+   }
+   if(!real){
+     for(var k2=0;k2<DATA.length;k2++){ if(String(DATA[k2].raqm)==r && String(DATA[k2].sana)==s){ real=DATA[k2]; break; } }
+   }
+ }catch(e){}
+ var src = real || ap;
+ return src.aminSir || src.amin_sir || src.amin || src.aminsir || src.secretary || src.ameen || src.ameenSir || ap.aminSir || ap.amin || '';
+}
+
+function isZawgyCase(ap){
+ if(!ap) return false;
+ var real=null;
+ try{
+   var r=getRaqm(ap), s=getSana(ap);
+   for(var k=0;k<DATA_MOT.length;k++){
+     if(String(DATA_MOT[k].raqm)==r && String(DATA_MOT[k].sana)==s){ real=DATA_MOT[k]; break; }
+   }
+ }catch(e){}
+ var src = real || ap;
+ var z = src.zawgy;
+ var damm = src.dammList || [];
+ var mon = src.monDam || src.mondam || src.raqmMonDam || src.raqmDamm;
+ if(damm && damm.length>0) return true;
+ if(mon) return true;
+ if(z==2 || z=="2") return true;
+ if(z==1 || z=="1") return false;
+ return false;
+}
+function applyDefaultFardy(){SELECTED=getDefaultFardy().slice(); renderLeft(); renderBtns(); document.getElementById('leftHead').textContent='🏷 قائمة التعلية - فردي';}
+function applyDefaultZawgy(){SELECTED=getDefaultZawgy().slice(); renderLeft(); renderBtns(); document.getElementById('leftHead').textContent='🏷 قائمة التعلية - زوجي (استئنافين)';}
+
+function searchAhkam(){
+ var yy=document.getElementById('y').value.trim(); var mm=document.getElementById('m').value.trim(); var dd=document.getElementById('d').value.trim();
+ if(!yy||!mm||!dd){alert('اكمل التاريخ');return;}
+ var target=cleanDate(yy+'/'+mm+'/'+dd);
+ var results=[], seen={};
+ // من الأحكام
+ for(var i=0;i<DATA.length;i++){var x=DATA[i]; if(datesEqual(getTar(x),target)){var k=(x.id||getRaqm(x)+getSana(x))+cleanDate(getTar(x)); if(!seen[k]){seen[k]=true; results.push(x);}}}
+ // من المتداول اللي ليه tarikhHokm أو tarHokm
+ for(var j=0;j<DATA_MOT.length;j++){var ap=DATA_MOT[j]; 
+   var tHokm = ap.tarikhHokm||ap.tarHokm||ap.tarHokmAwal||'';
+   var tQadima = ap.galsaQadima||'';
+   var isQat3y = ap.halat==='حكم' || ap.qarar && (ap.qarar.includes('رفض')||ap.qarar.includes('قبول')||ap.qarar.includes('إلزام')||ap.qarar.includes('قطعي'));
+   if(tHokm && datesEqual(tHokm,target)){
+     var k2=(ap.id||ap.raqm+ap.sana)+cleanDate(tHokm); if(!seen[k2]){seen[k2]=true; results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tHokm,tar:tHokm,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});}
+   }
+   // كمان لو القضية قطعية بتاريخ القادمة
+   if(tQadima && datesEqual(tQadima,target) && isQat3y){
+     var k3=(ap.id||ap.raqm+ap.sana)+cleanDate(tQadima)+'_qat3y'; if(!seen[k3]){seen[k3]=true; results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tQadima,tar:tQadima,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});}
+   }
+ }
+ // فلترة القطعي فقط (0 = قطعي)
+ results=results.filter(function(x){return getCategory(getQar(x))===0;});
+ results.sort(function(a,b){var ca=getCodeOrder(getCode(a)), cb=getCodeOrder(getCode(b)); if(ca!==cb) return ca-cb; return (parseInt(getRaqm(a))||0)-(parseInt(getRaqm(b))||0);});
+ CURRENT_LIST=results;
+ document.getElementById('tarikhHead').textContent=toAr(dd+'/'+mm+'/'+yy);
+ document.getElementById('cnt').textContent=toAr(results.length);
+ renderCases(results);
+ if(results.length>0){
+   setTimeout(function(){var firstRow=document.querySelector('#tbodyRight tr'); if(firstRow) selectCase(results[0],firstRow,0);},100);
+ } else {
+   document.getElementById('tbodyRight').innerHTML='<tr><td colspan="4" style="color:red">لا يوجد أحكام قطعية في '+toAr(dd+'/'+mm+'/'+yy)+' - موجود '+toAr(DATA.length)+' حكم إجمالي - جرب تاريخ تاني</td></tr>';
+ }
+}
+
+function renderCases(arr){
+ var tbody=document.getElementById('tbodyRight'); tbody.innerHTML='';
+ for(var i=0;i<arr.length;i++){var ap=arr[i];
+   var isZ = isZawgyCase(ap);
+   var joined = isZ ? getJoinedInfo(ap) : null;
+   var raqmCell = toAr(getRaqm(ap))+' / '+toAr(getSana(ap));
+   if(isZ && joined && joined.raqm){
+     raqmCell += '<br><span style="font-size:8px;color:#8B0000;font-weight:bold">+ '+toAr(joined.raqm)+' / '+toAr(joined.sana||getSana(ap))+'</span>';
+   }
+   var tr=document.createElement('tr'); tr.style.cursor='pointer';
+   tr.innerHTML='<td>'+toAr(i+1)+'</td><td>'+raqmCell+'</td><td style="text-align:right;font-size:9px">'+getMost(ap)+'</td><td style="background:#fffbe6;font-weight:bold;color:#8B0000;font-size:9px">'+getCode(ap)+'</td>';
+   tr.onclick=(function(a,el,idx){return function(){selectCase(a,el,idx);};})(ap,tr,i);
+   tbody.appendChild(tr);
+ }
+ document.getElementById('casesCount').textContent='العدد: '+toAr(arr.length);
+}
+
+function selectCase(ap,el,idx){
+ var rows=document.querySelectorAll('#tbodyRight tr'); for(var k=0;k<rows.length;k++){rows[k].classList.remove('active');}
+ if(el) el.classList.add('active');
+ CUR=ap; CUR_IDX=idx;
+ document.getElementById('pRaqm').value=toAr(ap.raqm); document.getElementById('pSana').value=toAr(ap.sana);
+ document.getElementById('pEsm').value=ap.mostanef||ap.most||''; document.getElementById('pCode').value=ap.code||'';
+ 
+ var isZ=isZawgyCase(ap);
+ var joined = isZ ? getJoinedInfo(ap) : null;
+ var prTitle = document.getElementById('prTitle');
+
+ if(isZ && joined && joined.raqm){
+   prTitle.textContent = 'تعلية الاستئنافين رقمي ' + toAr(ap.raqm) + ' و ' + toAr(joined.raqm) + ' لسنة ' + toAr(joined.sana||ap.sana);
+ }else if(isZ){
+   prTitle.textContent = 'تعلية الاستئنافين رقمي ' + toAr(ap.raqm) + ' لسنة ' + toAr(ap.sana);
+ }else{
+   prTitle.textContent = 'تعلية الاستئناف رقم ' + toAr(ap.raqm) + ' لسنة ' + toAr(ap.sana);
+ }
+
+ SELECTED=isZ? getDefaultZawgy() : getDefaultFardy();
+ // لو فيه تعلية محفوظة اعرضها
+ var saved=getSavedDocs(ap);
+ if(saved) SELECTED=saved;
+ document.getElementById('leftHead').textContent=isZ?'🏷 قائمة التعلية - زوجي (استئنافين)':'🏷 قائمة التعلية - فردي';
+ renderLeft(); renderBtns();
+}
+
+function renderBtns(){
+ var b=document.getElementById('btns'); b.innerHTML='';
+
+ var divH=document.createElement('div'); divH.className='dropdown'; divH.id='dropH';
+ divH.innerHTML='<button class="btn-doc" onclick="toggleDrop(event,\'dropH\')">▼ حوافظ مستندات</button><div class="dropdown-content"></div>'; b.appendChild(divH);
+ var contentH=divH.querySelector('.dropdown-content');
+ for(var i=1;i<=20;i++){var btn=document.createElement('button'); btn.textContent=toAr(i); btn.onclick=function(n){return function(e){e.stopPropagation(); addHafza(n);};}(i); contentH.appendChild(btn);}
+
+ var divM1=document.createElement('div'); divM1.className='dropdown'; divM1.id='dropM1';
+ divM1.innerHTML='<button class="btn-doc" style="background:#b6e2c3" onclick="toggleDrop(event,\'dropM1\')">▼ مذكرة دفاع مستأنف</button><div class="dropdown-content"></div>'; b.appendChild(divM1);
+ var contentM1=divM1.querySelector('.dropdown-content');
+ for(var j=1;j<=5;j++){var btn1=document.createElement('button'); btn1.textContent=toAr(j); btn1.onclick=function(n){return function(e){e.stopPropagation(); addMozkera("مذكرة دفاع المستأنف",n);};}(j); contentM1.appendChild(btn1);}
+
+ var divM2=document.createElement('div'); divM2.className='dropdown'; divM2.id='dropM2';
+ divM2.innerHTML='<button class="btn-doc" style="background:#f5c6a6" onclick="toggleDrop(event,\'dropM2\')">▼ مذكرة دفاع ضده</button><div class="dropdown-content"></div>'; b.appendChild(divM2);
+ var contentM2=divM2.querySelector('.dropdown-content');
+ for(var k=1;k<=5;k++){var btn2=document.createElement('button'); btn2.textContent=toAr(k); btn2.onclick=function(n){return function(e){e.stopPropagation(); addMozkera("مذكرة دفاع المستأنف ضده",n);};}(k); contentM2.appendChild(btn2);}
+
+ for(var x=0;x<DOCS.length;x++){var name=DOCS[x]; var on=false; for(var s=0;s<SELECTED.length;s++){if(SELECTED[s].indexOf(name)>-1) on=true;} var btnN=document.createElement('button'); btnN.className='btn-doc'+(on?' on':''); btnN.textContent=name; btnN.onclick=(function(n){return function(e){e.stopPropagation(); toggleDoc(n);};})(name); b.appendChild(btnN);}
+}
+function toggleDrop(e,id){
+ if(e) e.stopPropagation();
+ var el=document.getElementById(id);
+ var isOpen=el.classList.contains('open');
+ document.querySelectorAll('.dropdown').forEach(function(d){d.classList.remove('open');});
+ if(!isOpen) el.classList.add('open');
+}
+function addHafza(num){var txt=num==1?"حوافظ مستندات":"عدد "+toAr(num)+" حوافظ مستندات"; if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var dd=document.getElementById('dropH'); if(dd) dd.classList.remove('open'); renderLeft(); renderBtns();}
+function addMozkera(type,num){var txt=num==1?type:"عدد "+toAr(num)+" "+type; if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var d1=document.getElementById('dropM1'); if(d1) d1.classList.remove('open'); var d2=document.getElementById('dropM2'); if(d2) d2.classList.remove('open'); renderLeft(); renderBtns();}
+function toggleDoc(name){var idx=SELECTED.indexOf(name); if(idx==-1) SELECTED.push(name); else SELECTED.splice(idx,1); renderLeft(); renderBtns();}
+function addCustom(){var inp=document.getElementById('customDoc'); var v=inp.value.trim(); if(!v){alert('اكتب اسم المستند');return;} SELECTED.push(v); inp.value=''; renderLeft(); renderBtns();}
+function renderLeft(){var l=document.getElementById('leftList'); l.innerHTML=''; for(var i=0;i<SELECTED.length;i++){l.innerHTML+='<div class="left-item"><span>'+toAr(i+1)+'- '+SELECTED[i]+'</span><button class="noPrint" onclick="removeDoc('+i+')" style="background:#b00020;color:#fff;border:none;padding:2px 6px">X</button></div>';} document.getElementById('docCounter').textContent=toAr(SELECTED.length);}
+function removeDoc(i){SELECTED.splice(i,1); renderLeft(); renderBtns();}
+function clearAll(){SELECTED=[]; renderLeft(); renderBtns();}
+async function saveCurrent(){
+ if(!CUR){alert('اختار قضية');return;}
+ // حفظ في IDB
+ let db = await openDB();
+ let updated=false;
+ for(let k=0;k<DATA.length;k++){if(String(DATA[k].raqm)==String(CUR.raqm)&&String(DATA[k].sana)==String(CUR.sana)){DATA[k].mostanadatList=SELECTED.slice(); updated=true; break;}}
+ for(let k2=0;k2<DATA_MOT.length;k2++){if(String(DATA_MOT[k2].raqm)==String(CUR.raqm)&&String(DATA_MOT[k2].sana)==String(CUR.sana)){DATA_MOT[k2].mostanadatList=SELECTED.slice();}}
+ if(updated){
+   await idbPut('ahkam','D32_AHKAM',JSON.stringify(DATA));
+   await idbPut('cases','D32_V3',JSON.stringify(DATA_MOT));
+   await idbPut('d32store','D32_AHKAM',JSON.stringify(DATA));
+ }
+ // حفظ في localStorage أيضا للتوافق
+ try{localStorage.setItem('D32_AHKAM',JSON.stringify(DATA)); localStorage.setItem('D32_V3',JSON.stringify(DATA_MOT)); localStorage.setItem('D32_FINAL',JSON.stringify(DATA_MOT));}catch(e){}
+ if(CURRENT_LIST[CUR_IDX]) CURRENT_LIST[CUR_IDX].mostanadatList=SELECTED.slice();
+ if(CUR_IDX>-1 && CUR_IDX < CURRENT_LIST.length-1){var nextAp=CURRENT_LIST[CUR_IDX+1]; var rows=document.querySelectorAll('#tbodyRight tr'); var nextRow=rows[CUR_IDX+1]; if(nextRow){selectCase(nextAp,nextRow,CUR_IDX+1); nextRow.scrollIntoView({block:'nearest'});}}
+ else {alert('✅ اتحفظ - دي آخر قضية');}
+}
+
+function getSavedDocs(ap){
+ var real=null;
+ try{
+   var r=getRaqm(ap), s=getSana(ap);
+   for(var k=0;k<DATA_MOT.length;k++){
+     if(String(DATA_MOT[k].raqm)==r && String(DATA_MOT[k].sana)==s){ real=DATA_MOT[k]; break; }
+   }
+   if(!real){
+     for(var k2=0;k2<DATA.length;k2++){ if(String(DATA[k2].raqm)==r && String(DATA[k2].sana)==s){ real=DATA[k2]; break; } }
+   }
+ }catch(e){}
+ var src = real || ap;
+ if(src.mostanadatList && src.mostanadatList.length>0) return src.mostanadatList;
+ if(ap.mostanadatList && ap.mostanadatList.length>0) return ap.mostanadatList;
+ return null;
+}
+
+function printSingle(){
+ if(!CUR){alert('اختار قضية الأول');return;}
+ document.body.classList.remove('print-all');
+ window.print();
+}
+
+function printAllTa3leyat(){
+ if(!CURRENT_LIST || CURRENT_LIST.length==0){alert('اعمل بحث عن تاريخ الجلسة الأول'); return;}
+ var container = document.getElementById('printAllArea');
+ container.innerHTML = '';
+ var pageDiv = null;
+ var countPrinted = 0;
+ var savedList = [];
+ for(var i=0;i<CURRENT_LIST.length;i++){
+   var docs = getSavedDocs(CURRENT_LIST[i]);
+   if(docs && docs.length>0){
+     savedList.push({ap: CURRENT_LIST[i], docs: docs});
+   }
+ }
+ if(savedList.length==0){
+   alert('مفيش أي تعلية محفوظة في الجلسة دي.. احفظ التعلية الأول بالزر "حفظ واللي بعده"');
+   return;
+ }
+ for(var j=0;j<savedList.length;j++){
+   if(countPrinted%6==0){
+     pageDiv = document.createElement('div');
+     pageDiv.className='print-page';
+     container.appendChild(pageDiv);
+   }
+   var ap = savedList[j].ap;
+   var docs = savedList[j].docs;
+   var isZ = isZawgyCase(ap);
+   var joined = isZ ? getJoinedInfo(ap) : null;
+   var aminName = getAminSirName(ap) || '...................';
+   var titleText = '';
+   if(isZ && joined && joined.raqm){
+     titleText = 'تعلية الاستئنافين رقمي ' + toAr(getRaqm(ap)) + ' و ' + toAr(joined.raqm) + ' لسنة ' + toAr(joined.sana||getSana(ap));
+   }else if(isZ){
+     titleText = 'تعلية الاستئنافين رقمي ' + toAr(getRaqm(ap)) + ' لسنة ' + toAr(getSana(ap));
+   }else{
+     titleText = 'تعلية الاستئناف رقم ' + toAr(getRaqm(ap)) + ' لسنة ' + toAr(getSana(ap));
+   }
+   var listHtml = '';
+   for(var d=0; d<docs.length; d++){
+     listHtml += '<div>'+toAr(d+1)+'- '+docs[d]+'</div>';
+   }
+   var card = document.createElement('div');
+   card.className='ta3leya-card';
+   card.innerHTML = '<div class="card-title">'+titleText+'</div><div class="card-list">'+listHtml+'</div><div class="card-footer">إجمالي المستندات: '+toAr(docs.length)+'</div><div class="card-amin">أمين السر / '+aminName+'</div><div class="card-sign-space"></div>';
+   pageDiv.appendChild(card);
+   countPrinted++;
+ }
+ document.body.classList.add('print-all');
+ window.print();
+ setTimeout(function(){document.body.classList.remove('print-all');},500);
+}
+
+document.addEventListener('click',function(e){if(!e.target.closest('.dropdown')){document.querySelectorAll('.dropdown').forEach(function(d){d.classList.remove('open');});}});
+window.onload=async function(){
+  var now=new Date(); 
+  document.getElementById('y').value=now.getFullYear();
+  await loadFromDB();
+};
+</script>
+</body>
+</html>

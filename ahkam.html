@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<script>
+(function(){
+  const DB_NAME='D32_DB';
+  window.openDB=function(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+})();
+</script>
+<title>دائرة - رول الأحكام - مع زر تدقيق المحجوز</title>
+<style>
+*{box-sizing:border-box; -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important}body{font-family:Arial;background:#eef2f7;margin:0;padding:10px}header{background:#0f1f3a;color:#fff;padding:12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}.card{background:#fff;padding:12px;border-radius:10px;margin-top:10px;overflow:auto}.btn{padding:7px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:11px;font-family:Arial}.btn-navy{background:#0f1f3a;color:#fff}.btn-gray{background:#ddd}.btn-red{background:#8B0000;color:#fff}.btn-green{background:#0a7a42;color:#fff}.btn-gold{background:#C9A227;color:#000}.btn-orange{background:#FF8C00;color:#000}.input{padding:6px;border:1px solid #bbb;border-radius:6px;width:100%;font-family:Arial;background:#fff!important}.date-box{display:flex;align-items:center;gap:6px;border:2px solid #cbd5e1;border-radius:12px;padding:6px 12px;background:#f8fafc;width:280px;direction:rtl}.date-box input{border:none;background:transparent;width:50px;text-align:center;font-weight:bold;font-size:16px;outline:none;font-family:Arial}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:0}th,td{border:1px solid #000;padding:4px;font-size:11px;text-align:center;word-wrap:break-word;font-family:Arial;white-space:normal;min-height:50px}th{background:#FFE4B5!important;color:#000!important;height:40px;position:sticky;top:0;z-index:10}td.col-roll{background:#FFE4B5!important;font-weight:bold}td.raqm-cell{line-height:1.15!important;white-space:normal!important;padding:1px 3px!important;vertical-align:middle}td.raqm-cell div{line-height:1.3;padding:1px 0}tr{page-break-inside:avoid;break-inside:avoid;height:auto;min-height:50px}.row-selected td{background:#ffec99!important;outline:1px solid #FF8C00}#res{max-height:calc(100vh - 160px);overflow-y:auto;padding-top:0}#res thead th{position:sticky;top:0;z-index:20}#modalHokm{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none!important;z-index:9999;padding:4px}#modalHokm.show{display:flex!important}#modalBox{background:#f5f6fa;border-radius:10px;width:98vw;height:98vh;display:flex;flex-direction:column;margin:0 auto;overflow:hidden}#topBar{background:#0f1f3a;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;font-size:14px}#mainSplit{display:grid;grid-template-columns:1fr 130px;gap:12px;padding:12px;flex:1;overflow:hidden}.qatBox{background:#fff!important;border-radius:12px;padding:12px;border:1px solid #ddd;overflow:visible!important}.eraaBox{background:#fff;border-radius:12px;padding:10px;border:1px solid #ddd;display:flex;flex-direction:column;align-items:center}.sec{border:1px solid #bbb;border-radius:8px;padding:8px;margin-bottom:12px;background:#eeeeee!important;overflow:visible!important;position:relative}.sec textarea{background:#fff!important;margin-top:8px}.sec-head{padding:10px;border-radius:6px;color:#fff;font-weight:bold;text-align:center;font-size:13px}.bg-green{background:#16a34a}.bg-blue{background:#2563eb}.bg-red{background:#dc2626}.bg-orange{background:#f59e0b;color:#000}.qatGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.eraaCol{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%}.eraaBtn{width:100px!important;padding:10px 4px;border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;font-size:11px}#bottomBar{background:#facc15;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}#pop{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none!important;z-index:10000;align-items:center;justify-content:center}#pop.show{display:flex!important}#popBox{background:#fff;border-radius:12px;width:450px;max-width:90vw;overflow:hidden}#popHead{padding:10px;background:#0f1f3a;color:#fff;display:flex;justify-content:space-between}#popBody{padding:14px}#modalIdaa{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none!important;z-index:10001;padding:10px}#modalIdaa.show{display:block!important}#idaaBox{background:#fff;border-radius:10px;width:98vw;height:96vh;display:flex;flex-direction:column;overflow:hidden;margin:0 auto}#idaaHead{background:#0f1f3a;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center}#idaaTableWrap{flex:1;overflow:auto;padding:10px}
+#modalTadqeeq{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none!important;z-index:10002;padding:10px}#modalTadqeeq.show{display:block!important}#tadqeeqBox{background:#fff;border-radius:10px;width:98vw;height:96vh;display:flex;flex-direction:column;overflow:hidden;margin:0 auto}#tadqeeqHead{background:#8B0000;color:#fff;padding:10px;display:flex;justify-content:space-between;align-items:center}#tadqeeqWrap{flex:1;overflow:auto;padding:10px}
+#modalHay2a{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;z-index:10005;padding:20px;align-items:center;justify-content:center}#modalHay2a.show{display:flex!important}#hay2aBox{background:#fff;border-radius:12px;width:720px;max-width:95vw;overflow:hidden}#hay2aHead{background:#6A1B9A;color:#fff;padding:12px;display:flex;justify-content:space-between;font-weight:bold}#hay2aBody{padding:16px;max-height:80vh;overflow:auto}.hay2aSec{border:2px solid #6A1B9A;border-radius:10px;padding:12px;margin:10px 0;background:#f3e5f5}.hay2aSec.akhir{border-color:#0f1f3a;background:#e3f2fd}.hay2aInputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}.hay2aBtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.hay2aBtn{width:48px;height:38px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;background:#0f1f3a;color:#fff}.hay2aBtn:hover{background:#C9A227;color:#000}.hay2aInput{padding:10px;border:2px solid #6A1B9A;border-radius:8px;font-weight:bold;text-align:center}
+</style>
+</head>
+<body>
+<header>
+<div>⚖️ الأحكام - <span id="dairaNoHead"></span> | <b id="cnt"></b> <span id="info" style="background:#fff;color:#0f1f3a;padding:4px 8px;border-radius:6px;font-size:11px"></span></div>
+<div style="display:flex;gap:6px"><a href="index.html" class="btn btn-gray" style="text-decoration:none">🏠</a><button class="btn" style="background:#d50000;color:#fff" onclick="tadqeeqMahgoz()">🔍 تدقيق المحجوز</button><button class="btn btn-red" onclick="openTasdeedHokm()">📜 تسديد الأحكام</button></div>
+</header>
+<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;position:sticky;top:60px;z-index:40">
+<label style="font-weight:bold">تاريخ الحكم:</label>
+<div class="date-box"><input id="d" placeholder="يوم" maxlength="2"><span>/</span><input id="m" placeholder="شهر" maxlength="2"><span>/</span><input id="y" placeholder="سنة" maxlength="4" style="width:70px"></div>
+<button class="btn btn-navy" onclick="searchAhkam()">🔍 بحث</button><button class="btn btn-orange" onclick="openIdaa()">📥 الإيداع</button><button class="btn btn-gold" onclick="printAhkam()">🖨 طباعة</button>
+</div>
+<div id="res" class="card">ابحث عن تاريخ حكم... جاري التحميل من D32_DB - IDB فقط بدون localStorage</div>
+
+<div id="modalTadqeeq"><div id="tadqeeqBox"><div id="tadqeeqHead"><div>🔍 تدقيق المحجوز - قضايا محجوزة في المتداول ومش موجودة في الأحكام | متداول <span id="tadqeeqMot"></span> | أحكام <span id="tadqeeqAhkam"></span> | ناقص <span id="tadqeeqNaqes"></span></div><div style="display:flex;gap:6px"><button class="btn btn-gold" onclick="printTadqeeq()">🖨 طباعة القائمة</button><button class="btn btn-green" onclick="naqlMahgozLilAhkam()">➕ انقل الناقص للأحكام</button><button class="btn" style="background:#fff;color:#8B0000" onclick="closeTadqeeq()">✖️</button></div></div><div id="tadqeeqWrap"></div></div></div>
+
+<div id="modalIdaa"><div id="idaaBox"><div id="idaaHead"><div>📥 كشف الإيداع - جلسة <span id="idaaDateTitle"></span> | العدد <span id="idaaCount"></span> | دائرة <span id="idaaDaira"></span></div><div style="display:flex;gap:6px"><button class="btn btn-gold" onclick="printIdaa()">🖨 طباعة الإيداع</button><button class="btn" style="background:#fff;color:#8B0000" onclick="closeIdaa()">✖️</button></div></div><div id="idaaTableWrap"></div></div></div>
+
+<div id="modalHokm"><div id="modalBox"><div id="topBar"><button class="btn btn-gray" onclick="prevHokm()">⬅️</button><div id="currentInfo" style="flex:1;text-align:center"></div><button class="btn" style="background:#6A1B9A;color:#fff" onclick="openHay2a()">👥 الهيئة</button><button class="btn btn-gray" onclick="nextHokm()">➡️</button><button class="btn" style="background:#fff;color:#8B0000" onclick="closeHokm()">✖️</button></div>
+<div id="mainSplit"><div class="qatBox"><h3 style="text-align:center;margin:0 0 12px">⚖️ أحكام قطعية</h3><div class="qatGrid">
+<div class="sec">
+<select id="taaidSelect" class="input" style="background:#16a34a!important;color:#fff!important;font-weight:bold;text-align:center;padding:10px;border-radius:6px" onchange="if(this.value){setVal('taaidText',this.value); this.selectedIndex=0;}">
+<option value="" style="background:#fff;color:#000">▼ تأييد - اختر الحكم</option>
+<option value="رفض وتأييد">رفض وتأييد</option>
+<option value="عدم جواز نظر الاستئناف">عدم جواز نظر الاستئناف</option>
+<option value="عدم جواز نظر الاستئناف لسبق الفصل فيه">عدم جواز نظر الاستئناف لسبق الفصل</option>
+<option value="عدم قبول الاستئناف">عدم قبول الاستئناف</option>
+<option value="عدم قبول الاستئناف شكلاً">عدم قبول الاستئناف شكلاً</option>
+<option value="سقوط الحق فى الاستئناف">سقوط الحق فى الاستئناف</option>
+<option value="بطلان صحيفة الاستئناف">بطلان صحيفة الاستئناف</option>
+<option value="اعتبار الاستئناف كأن لم يكن">اعتبار الاستئناف كأن لم يكن</option>
+<option value="انقضاء الاستئناف بالتصالح">انقضاء الخصومة بالتصالح</option>
+<option value="عدم قبول الاستئناف المقابل شكلاً ورفض وتأييد">عدم قبول المقابل ورفض وتأييد</option>
+<option value="رفض الاستئناف الأصلي والمقابل وتأييد">رفض الأصلي والمقابل وتأييد</option>
+<option value="قبول الاستئناف شكلاً ورفضه موضوعاً وتأييد الحكم المستأنف">قبول شكلاً ورفض موضوعاً وتأييد</option>
+<option value="رفض وتأييد مع اعتبار المفروض نفقة عدة ">رفض وتأييد مع اعتبار المفروض نفقة عدة </option>
+<option value="رفض وتأييد مع إلزام المستأنف بالمصاريف">رفض وتأييد مع المصاريف</option>
+</select>
+<textarea id="taaidText" rows="4" class="input"></textarea><button class="btn btn-navy" style="width:100%;margin-top:6px" onclick="saveQat3i('تأييد')">💾 حفظ تأييد</button></div>
+<div class="sec">
+<select id="ta3dilSelect" class="input" style="background:#2563eb!important;color:#fff!important;font-weight:bold;text-align:center;padding:10px;border-radius:6px" onchange="if(this.value){setVal('ta3dilText',this.value); this.selectedIndex=0;}">
+<option value="" style="background:#fff;color:#000">▼ تعديل - اختر الحكم</option>
+<option value="إلغاء جزئي وتعديل الحكم المستأنف">إلغاء جزئي وتعديل</option>
+<option value="تعديل الحكم المستأنف والقضاء مجدداً">تعديل والقضاء مجدداً</option>
+<option value="تعديل الحكم المستأنف بزيادة المبلغ">تعديل بزيادة المبلغ</option>
+<option value="تعديل الحكم المستأنف بتخفيض المبلغ">تعديل بتخفيض المبلغ</option>
+<option value="تعديل الحكم المستأنف بإلزام">تعديل بإلزام</option>
+<option value="قبول الاستئناف شكلاً وفي الموضوع بتعديل الحكم المستأنف">قبول وتعديل</option>
+</select>
+<textarea id="ta3dilText" rows="4" class="input"></textarea><button class="btn" style="width:100%;margin-top:6px;background:#C9A227" onclick="saveQat3i('تعديل')">💾 حفظ تعديل</button></div></div><div class="qatGrid" style="margin-top:12px"><div class="sec">
+<select id="elghaaSelect" class="input" style="background:#dc2626!important;color:#fff!important;font-weight:bold;text-align:center;padding:10px;border-radius:6px" onchange="if(this.value){setVal('elghaaText',this.value); this.selectedIndex=0;}">
+<option value="" style="background:#fff;color:#000">▼ إلغاء - اختر الحكم</option>
+<option value="الغاء ورفض الدعوى">الغاء ورفض الدعوى</option>
+<option value="الغاء وعدم قبول الدعوى">الغاء وعدم قبول الدعوى</option>
+<option value="الغاء وعدم اختصاص واحالة">الغاء وعدم اختصاص واحالة</option>
+<option value="الغاء واعادة الى محكمة اول درجة">الغاء واعادة الى محكمة اول درجة</option>
+<option value="الغاء وبطلان الحكم المستأنف">الغاء وبطلان الحكم المستأنف</option>
+</select>
+<textarea id="elghaaText" rows="4" class="input"></textarea><button class="btn btn-red" style="width:100%;margin-top:6px" onclick="saveQat3i('إلغاء')">💾 حفظ إلغاء</button></div><div class="sec"><div class="sec-head bg-orange">⏳ مد أجل</div><input id="maddDate" type="date" class="input" style="margin-top:20px"><button class="btn btn-navy" style="width:100%;margin-top:20px" onclick="saveMadd()">💾 حفظ مد أجل</button></div></div></div><div class="eraaBox"><h3 style="text-align:center;margin:0 0 12px;font-size:14px">📋 الإجراءات</h3><div class="eraaCol"><button class="eraaBtn" style="background:#2563eb" onclick="openPop('تحقيق')">🔍 تحقيق</button><button class="eraaBtn" style="background:#0d9488" onclick="openPop('استجواب')">💬 استجواب</button><button class="eraaBtn" style="background:#4f46e5" onclick="openPop('إعادة للمرافعة')">🔄 إعادة للمرافعة</button><button class="eraaBtn" style="background:#7c3aed" onclick="openPop('خبراء')">👨🔬 خبراء</button><button class="eraaBtn" style="background:#db2777" onclick="openPop('طب شرعي')">🧬 طب شرعي</button><button class="eraaBtn" style="background:#475569" onclick="openPop('وقف تعليقي')">⏸️ وقف تعليقي</button></div></div></div><div id="bottomBar"><div id="lastSaved">آخر قضية: -</div><button class="btn btn-navy" id="editLastBtn" style="display:none" onclick="editLast()">✏️ تعديل</button></div></div></div>
+<div id="pop"><div id="popBox"><div id="popHead"><span id="popTitle"></span><button class="btn btn-gray" onclick="closePop()">✖️</button></div><div id="popBody"></div></div></div>
+
+<div id="modalHay2a">
+  <div id="hay2aBox">
+    <div id="hay2aHead">
+      <div>👥 تشكيل الهيئة - قضية <span id="hay2aCaseInfo"></span></div>
+      <button class="btn" style="background:#fff;color:#6A1B9A" onclick="closeHay2a()">✖️</button>
+    </div>
+    <div id="hay2aBody">
+      <div id="hay2aMembersInfo" style="background:#fff;padding:8px;border-radius:6px;border:1px dashed #6A1B9A;font-size:11px;margin-bottom:10px;text-align:center">جاري تحميل الأعضاء...</div>
+      <div class="hay2aSec">
+        <div style="font-weight:bold;text-align:center;color:#6A1B9A">أول هيئة</div>
+        <div class="hay2aInputs">
+          <input id="hay2aAwal1" class="hay2aInput" placeholder="العضو 1 - A" onchange="sortHay2aInputs('awal')">
+          <input id="hay2aAwal2" class="hay2aInput" placeholder="العضو 2 - B" onchange="sortHay2aInputs('awal')">
+          <input id="hay2aAwal3" class="hay2aInput" placeholder="العضو 3 - C" onchange="sortHay2aInputs('awal')">
+        </div>
+        <div class="hay2aBtns">
+          <button class="hay2aBtn" onclick="fillHay2a('awal','A')">A</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','B')">B</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','C')">C</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','D')">D</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','E')">E</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','F')">F</button>
+          <button class="hay2aBtn" onclick="fillHay2a('awal','G')">G</button>
+          <button class="btn btn-gray" style="height:38px" onclick="clearHay2a('awal')">مسح</button>
+        </div>
+      </div>
+      <div class="hay2aSec akhir">
+        <div style="font-weight:bold;text-align:center;color:#0f1f3a">هيئة آخر الحكم</div>
+        <div class="hay2aInputs">
+          <input id="hay2aAkher1" class="hay2aInput" placeholder="العضو 1 - A" onchange="sortHay2aInputs('akher')">
+          <input id="hay2aAkher2" class="hay2aInput" placeholder="العضو 2 - B" onchange="sortHay2aInputs('akher')">
+          <input id="hay2aAkher3" class="hay2aInput" placeholder="العضو 3 - C" onchange="sortHay2aInputs('akher')">
+        </div>
+        <div class="hay2aBtns">
+          <button class="hay2aBtn" onclick="fillHay2a('akher','A')">A</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','B')">B</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','C')">C</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','D')">D</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','E')">E</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','F')">F</button>
+          <button class="hay2aBtn" onclick="fillHay2a('akher','G')">G</button>
+          <button class="btn btn-gray" style="height:38px" onclick="clearHay2a('akher')">مسح</button>
+        </div>
+      </div>
+      <div style="background:#fff3cd;padding:6px;border-radius:6px;font-size:10px;text-align:center;border:1px solid #C9A227;margin-top:8px">⚠️ الترتيب إجباري حسب الكود A → G.. النظام هيرتبهم تلقائياً - يمكن ترك هيئة آخر الحكم فارغة ليكون الحكم بهيئة واحدة</div>
+      <button class="btn btn-green" style="width:100%;margin-top:12px;padding:12px;font-size:13px" onclick="saveHay2a()">💾 حفظ تشكيل الهيئة</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var DATA=[], DATA_MOT=[];
+var DAIRA_NO='';
+function toAr(n){return String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function toArText(s){return String(s).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+async function getDairaConfigFromDB(){
+  try{
+    let db=await openDB();
+    let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_DAIRA'];
+    for(let k of keys){
+      let val=await new Promise(res=>{
+        let tx=db.transaction('d32store','readonly');
+        let rq=tx.objectStore('d32store').get(k);
+        rq.onsuccess=()=>res(rq.result);
+        rq.onerror=()=>res(null);
+      });
+      if(!val) continue;
+      try{
+        let cfg=JSON.parse(val);
+        if(cfg){
+          var n=cfg.dairaNumber||cfg.daira||cfg.circle||cfg.number||'';
+          if(n) return String(n);
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+  return '';
+}
+async function loadAll(){DAIRA_NO = await getDairaConfigFromDB();document.getElementById('dairaNoHead').textContent=toAr(DAIRA_NO);let db=await openDB();let tx=db.transaction(['cases','ahkam','d32store'],'readonly');let r1=tx.objectStore('ahkam').get('D32_AHKAM');let r2=tx.objectStore('cases').get('D32_V3');r1.onsuccess=()=>{if(r1.result){try{let a=JSON.parse(r1.result);if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; DATA=a;}catch(e){}} document.getElementById('cnt').textContent=toAr(DATA.length)+' حكم'; document.getElementById('info').textContent='أحكام: '+toAr(DATA.length)+' | متداول: '+toAr(DATA_MOT.length); };r2.onsuccess=()=>{if(r2.result){try{let a=JSON.parse(r2.result);if(Array.isArray(a)&&Array.isArray(a[1])) a=a[1]; DATA_MOT=a;}catch(e){}} document.getElementById('info').textContent='أحكام: '+toAr(DATA.length)+' | متداول: '+toAr(DATA_MOT.length); }; }
+function saveAllAhkam(){ openDB().then(db=>{let tx=db.transaction(['ahkam','d32store'],'readwrite');tx.objectStore('ahkam').put(JSON.stringify(DATA),'D32_AHKAM');if(db.objectStoreNames.contains('d32store')) tx.objectStore('d32store').put(JSON.stringify(DATA),'D32_AHKAM');});}
+function saveAllMotadawal(){ openDB().then(db=>{let tx=db.transaction(['cases','d32store'],'readwrite');tx.objectStore('cases').put(JSON.stringify(DATA_MOT),'D32_V3');tx.objectStore('cases').put(JSON.stringify(DATA_MOT),'D32_FINAL');if(db.objectStoreNames.contains('d32store')) tx.objectStore('d32store').put(JSON.stringify(DATA_MOT),'D32_V3');});}
+var CURRENT_LIST=[],CUR_INDEX=0,LAST_INDEX=-1,CURRENT_PRINT_DATE='',MAIN_SELECTED=-1;
+function getRaqm(x){return (x.raqm||'').toString().trim();}
+function getSana(x){return (x.sana||'').toString().trim();}
+function getMost(x){return x.mostanef||x.most||'';}
+function getDed(x){return x.ded||'';}
+function getTar(x){return x.tarHokm||x.tarikhHokm||x.tar||'';}
+function getQar(x){return x.qar||x.mantouq||x.qararHokm||'';}
+function getCode(x){return (x.code||'').toString().trim().toUpperCase();}
+function getCodeOrder(code){code = String(code||'').trim().toUpperCase();const orderMap = {'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6};if(orderMap.hasOwnProperty(code)) return orderMap[code];if(!code) return 99;return 50 + code.charCodeAt(0);}
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function fixOldDatesInText(t){if(!t) return t;return String(t).replace(/[0-9٠-٩]{1,4}\/[0-9٠-٩]{1,2}\/[0-9٠-٩]{1,4}/g, function(m){var c=cleanDate(m);return c?c:m;});}
+function getQarFixed(x){var q=getQar(x);return fixOldDatesInText(q);}
+function getDammListForAhkam(x){
+  if(x.dammList && Array.isArray(x.dammList) && x.dammList.length>0) return x.dammList;
+  var r = getRaqm(x), s = getSana(x);
+  for(var i=0;i<DATA_MOT.length;i++){var m = DATA_MOT[i];if(String(m.raqm).trim()==r && String(m.sana).trim()==s){if(m.dammList && m.dammList.length>0) return m.dammList;}}
+  if(x.id){for(var j=0;j<DATA_MOT.length;j++){if(DATA_MOT[j].id==x.id && DATA_MOT[j].dammList && DATA_MOT[j].dammList.length>0) return DATA_MOT[j].dammList;}}
+  if(x.raqmDisplay && x.raqmDisplay.indexOf('\n')>-1){var parts=x.raqmDisplay.split('\n').map(s=>s.trim()).filter(s=>s);if(parts.length>1){return parts.slice(1).map(p=>{var mm=p.match(/\d+/g);if(mm&&mm.length>=2) return {raqm:mm[0], sana:mm[1]};return null;}).filter(Boolean);}}
+  return [];
+}
+function getRaqumHtmlAhkam(x){var base=getRaqm(x)+' / '+getSana(x);var damm=getDammListForAhkam(x);if(!damm||!damm.length) return toArText(base);var all=[base].concat(damm.map(d=>{ if(typeof d==='string') return d; return (d.raqm||'')+' / '+(d.sana||''); }));return all.map((s,i)=>{ var txt = toArText(s); if(i==0) return '<div style="font-weight:bold">'+txt+'</div>'; return '<div style="border-top:1px dashed #999;margin-top:2px;padding-top:2px;color:#8B0000">'+txt+'</div>'; }).join('');}
+function getRaqumTextForPrint(x){var base=getRaqm(x)+' / '+getSana(x);var damm=getDammListForAhkam(x);if(!damm||!damm.length) return base;return base+'\n'+damm.map(d=>{ if(typeof d==='string') return d; return (d.raqm||'')+' / '+(d.sana||''); }).join('\n');}
+function isI3ada(qar){return String(qar||'').includes('إعادة للمرافعة');}
+function isTamhidy(qar){qar=String(qar||'');if(isI3ada(qar)) return false;return qar.includes('تحقيق')||qar.includes('استجواب')||qar.includes('خبراء')||qar.includes('خبير')||qar.includes('طب شرعي')||qar.includes('شرعي')||qar.includes('وقف');}
+function getCategory(qar){if(isI3ada(qar)) return 2;if(isTamhidy(qar)) return 1;return 0;}
+function getNextSeqForDate(tDate, allData){tDate=cleanDate(tDate);if(!tDate) return 1;var max=0;allData.forEach(function(ap){var d=cleanDate(ap.galsaAsasia||ap.tar||ap.galsa||ap.galsaQadima||'');if(d!==tDate) return;var v = ap._seq!=null? ap._seq : (ap._manualOrder!=null? ap._manualOrder : (ap._sessionOrder!=null? ap._sessionOrder : (ap._fileIndex||0)));if(v>max) max=v;});return max+1;}
+function isHagzLilHokm(ap){
+  let qar = String(ap.qar||ap.qarar||ap.mantouq||ap.qararHokm||'').trim();
+  let sabiqa = String(ap.galsaSabiqa||'').trim();
+  let comb = qar + ' ' + sabiqa;
+  if(comb.includes('حجز') && comb.includes('حكم')) return true;
+  if(comb.includes('للحكم')) return true;
+  if(comb.includes('محجوز')) return true;
+  return false;
+}
+function getHagzDate(ap){return cleanDate(ap.galsaQadima||ap.galsaAsasia||ap.tar||ap.galsa||'');}
+var TADQEEQ_LIST=[];
+function tadqeeqMahgoz(){
+  if(!DATA_MOT.length){alert('المتداول فاضي - اعمل تحميل أولا');return;}
+  TADQEEQ_LIST=[];
+  let ahkamMap = {};
+  DATA.forEach(a=>{
+    let key = String(a.raqm).trim()+'/'+String(a.sana).trim();
+    ahkamMap[key] = true;
+  });
+  DATA_MOT.forEach(m=>{
+    if(!isHagzLilHokm(m)) return;
+    let raqm = String(m.raqm).trim();
+    let sana = String(m.sana).trim();
+    let key = raqm+'/'+sana;
+    let hagzDate = getHagzDate(m);
+    let qar = m.qar||m.qarar||m.mantouq||'';
+    let code = m.code||m.kod||m.kodKadi||m.member||m.ramz||'';
+    let galsaHagz = m.galsaQadima||m.galsaAsasia||m.tar||m.galsa||'';
+    let galsaSabiqa = m.galsaSabiqa||'';
+    let found = ahkamMap[key]? true : false;
+    if(!found){
+      TADQEEQ_LIST.push({raqm,sana,most:m.mostanef||m.most||'',ded:m.ded||'',hagzDate,galsaHagz,galsaSabiqa,code,qar,full:m});
+    }
+  });
+  let hagzInMot = DATA_MOT.filter(isHagzLilHokm);
+  document.getElementById('tadqeeqMot').textContent = toAr(DATA_MOT.length);
+  document.getElementById('tadqeeqAhkam').textContent = toAr(DATA.length);
+  document.getElementById('tadqeeqNaqes').textContent = toAr(TADQEEQ_LIST.length);
+  if(TADQEEQ_LIST.length===0){
+    document.getElementById('tadqeeqWrap').innerHTML = '<div style="padding:20px;text-align:center;color:green;font-size:16px;font-weight:bold">✅ مفيش قضايا محجوزة ناقصة - كل المحجوز في المتداول موجود في الأحكام<br><br>عدد المحجوز في المتداول: '+toAr(hagzInMot.length)+'<br>عدد الأحكام: '+toAr(DATA.length)+'</div>';
+  } else {
+    let h = '<div style="background:#ffebee;padding:10px;border-radius:6px;margin-bottom:10px;border:2px solid #d50000">⚠️ وجد '+toAr(TADQEEQ_LIST.length)+' قضية محجوزة للحكم في المتداول ومش موجودة في جدول الأحكام - المحجوز في المتداول: '+toAr(hagzInMot.length)+'</div>';
+    h += '<table><thead><tr><th style="width:35px">م</th><th style="width:90px">رقم/سنة</th><th style="width:35px">العضو/كود</th><th style="width:90px">جلسة الحجز</th><th style="width:90px">جلسة سابقة</th><th>المستأنف / ضده</th><th>قرار الحجز</th></tr></thead><tbody>';
+    TADQEEQ_LIST.forEach((x,i)=>{
+      h+='<tr><td>'+toAr(i+1)+'</td><td style="font-weight:bold">'+toArText(x.raqm+' / '+x.sana)+'</td><td style="background:#fffbe6;font-weight:bold;color:#8B0000">'+toArText(x.code||'-')+'</td><td style="background:#e3f2fd">'+toArText(x.galsaHagz||x.hagzDate||'-')+'</td><td>'+toArText(x.galsaSabiqa||'-')+'</td><td style="font-size:10px">'+toArText(x.most.substring(0,30))+'<br><b>ضد</b><br>'+toArText(x.ded.substring(0,30))+'</td><td style="color:#8B0000;font-size:10px">'+toArText(x.qar.substring(0,80))+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    document.getElementById('tadqeeqWrap').innerHTML = h;
+  }
+  document.getElementById('modalTadqeeq').classList.add('show');
+}
+function closeTadqeeq(){document.getElementById('modalTadqeeq').classList.remove('show');}
+function printTadqeeq(){
+if(!TADQEEQ_LIST.length){alert('لا يوجد قائمة');return;}
+  let w=window.open('','_blank');  let html='<html dir=rtl><head><meta charset=utf-8><title>قائمة المحجوز الناقص</title><style>@page{size:A4 landscape;margin:10mm}table{width:100%;border-collapse:collapse}th,td{border:1px solid #000;padding:5px;font-size:10px;text-align:center}th{background:#FFE4B5}</style></head><body>';
+  html+='<h3 style="text-align:center">قائمة القضايا المحجوزة للحكم في المتداول وغير موجودة في الأحكام - العدد '+TADQEEQ_LIST.length+'</h3>';
+  html+='<table><thead><tr><th>م</th><th>رقم/سنة</th><th>العضو/كود</th><th>جلسة الحجز للحكم</th><th>جلسة سابقة</th><th>المستأنف</th><th>ضده</th><th>قرار الحجز</th></tr></thead><tbody>';
+  TADQEEQ_LIST.forEach((x,i)=>{html+='<tr><td>'+(i+1)+'</td><td>'+x.raqm+' / '+x.sana+'</td><td>'+(x.code||'')+'</td><td>'+(x.galsaHagz||x.hagzDate||'')+'</td><td>'+(x.galsaSabiqa||'')+'</td><td>'+x.most+'</td><td>'+x.ded+'</td><td>'+x.qar+'</td></tr>';});
+  html+='</tbody></table><script>setTimeout(()=>window.print(),300)<\/script></body></html>';
+  w.document.write(html); w.document.close();
+}
+function naqlMahgozLilAhkam(){
+  if(!TADQEEQ_LIST.length){alert('لا يوجد ناقص');return;}
+  if(!confirm('هتنقل '+TADQEEQ_LIST.length+' قضية محجوزة من المتداول لجدول الأحكام؟')) return;
+  TADQEEQ_LIST.forEach(item=>{
+    let m = item.full;
+    let ahkamEntry = {id:m.id||Date.now()+Math.random(),raqm:m.raqm,sana:m.sana,mostanef:m.mostanef||m.most||'',most:m.most||m.mostanef||'',ded:m.ded||'',tar:item.hagzDate||m.galsaQadima||m.tar||'',tarHokm:item.hagzDate||m.galsaQadima||'',qar:m.qar||m.qarar||'',mantouq:m.qar||m.qarar||'',code:m.code||'',dammList:m.dammList||[],_seq:m._seq||1,galsaQadima:m.galsaQadima||'',galsaAsasia:m.galsaAsasia||''};
+    DATA.push(ahkamEntry);
+  });
+  TADQEEQ_LIST.forEach(item=>{DATA_MOT = DATA_MOT.filter(x=>!(String(x.raqm).trim()==item.raqm && String(x.sana).trim()==item.sana));});
+  saveAllAhkam();saveAllMotadawal();
+  document.getElementById('info').textContent='أحكام: '+toAr(DATA.length)+' | متداول: '+toAr(DATA_MOT.length);
+  document.getElementById('cnt').textContent=toAr(DATA.length)+' حكم';
+  alert('✅ تم نقل '+TADQEEQ_LIST.length+' قضية محجوزة للأحكام\nالآن: أحكام '+DATA.length+' | متداول '+DATA_MOT.length);
+  closeTadqeeq();
+}
+function searchAhkam(){
+  var yy=document.getElementById('y').value.trim(),mm=document.getElementById('m').value.trim(),dd=document.getElementById('d').value.trim();
+  if(!yy||!mm||!dd){alert('اكمل التاريخ');return;}
+  var target=cleanDate(yy+'/'+mm+'/'+dd);
+  CURRENT_PRINT_DATE=target;
+  var results=[];var seenMap={};
+  function makeKey(raqm,sana,most,ded){return String(raqm).trim()+'|'+String(sana).trim()+'|'+String(most).trim()+'|'+String(ded).trim();}
+  DATA.forEach(function(x){
+    if(datesEqual(getTar(x),target)){
+      var k=makeKey(getRaqm(x),getSana(x),getMost(x),getDed(x));
+      if(!seenMap[k]){seenMap[k]=true; results.push(x);}
+    }
+  });
+  results.sort(function(a,b){
+    var ca=getCategory(getQar(a)), cb=getCategory(getQar(b));
+    if(ca!==cb) return ca-cb;
+    var codeA=getCodeOrder(getCode(a));var codeB=getCodeOrder(getCode(b));
+    if(codeA!==codeB) return codeA-codeB;
+    var ra=parseInt(getRaqm(a))||0, rb=parseInt(getRaqm(b))||0;
+    if(ra!==rb) return ra-rb;
+    return String(getSana(a)).localeCompare(String(getSana(b)));
+  });
+  CURRENT_LIST=results;MAIN_SELECTED=-1;renderAhkam(CURRENT_LIST,target);
+}
+function datesEqual(a,b){a=cleanDate(a);b=cleanDate(b);if(!a||!b)return false;var pa=a.split('/').map(Number),pb=b.split('/').map(Number);return pa[0]==pb[0]&&pa[1]==pb[1]&&pa[2]==pb[2];}
+function fmt(d){return cleanDate(d);}
+function renderAhkam(list,label){
+  if(!list.length){var p=label.split('/');var txt=p[2]+' / '+p[1]+' / '+p[0];document.getElementById('res').innerHTML='❌ لا يوجد في '+toArText(txt);return;}
+  var h='<table><thead><tr><th style="width:30px">م.</th><th style="width:90px">رقم وسنة</th><th style="width:120px">المستأنف</th><th style="width:120px">ضده</th><th style="width:30px">عضو</th><th>القرار</th></tr></thead><tbody>';
+  var prevCat=null;var hasTamhidy = list.some(x=>getCategory(getQar(x))===1);
+  for(var i=0;i<list.length;i++){
+    var x=list[i];var c=getCode(x);var cat=getCategory(getQar(x));
+    if(prevCat===0 && cat===1){h+='<tr><td colspan=6 style="padding:10px;font-weight:bold;text-align:center;border:2px solid #000;background:#e0f2f1;font-size:13px">الأحكام التمهيدية (تحقيق - استجواب - خبراء - طب شرعي - وقف)</td></tr>';}
+    else if(prevCat===1 && cat===2){h+='<tr><td colspan=6 style="padding:10px;font-weight:bold;text-align:center;border:2px solid #000;background:#fce4ec;font-size:13px">إعادة للمرافعة</td></tr>';}
+    else if(prevCat===0 && cat===2 && hasTamhidy===false){h+='<tr><td colspan=6 style="padding:10px;font-weight:bold;text-align:center;border:2px solid #000;background:#fce4ec;font-size:13px">إعادة للمرافعة</td></tr>';}
+    var sel=(i==MAIN_SELECTED)?'row-selected':'';
+    h+='<tr id="row-'+i+'" class="'+sel+'" onclick="selectRow('+i+')" style="cursor:pointer"><td class="col-roll">'+toAr(i+1)+'</td><td class="raqm-cell">'+getRaqumHtmlAhkam(x)+'</td><td>'+getMost(x)+'</td><td>'+getDed(x)+'</td><td style="background:#fffbe6;font-weight:bold;color:#8B0000">'+toArText(c)+'</td><td>'+toArText(getQarFixed(x))+'</td></tr>';
+    prevCat=cat;
+  }
+  h+='</tbody></table>';document.getElementById('res').innerHTML=h;
+}
+function openIdaa(){if(!CURRENT_LIST.length){alert('ابحث أولا');return;}var p=CURRENT_PRINT_DATE.split('/');document.getElementById('idaaDateTitle').textContent=toArText(p[2]+' / '+p[1]+' / '+p[0]);document.getElementById('idaaCount').textContent=toAr(CURRENT_LIST.length);document.getElementById('idaaDaira').textContent=DAIRA_NO?toAr(DAIRA_NO):'';var h='<table style="table-layout:fixed"><colgroup><col style="width:30px"><col style="width:90px"><col style="width:30px"><col style="width:170px"><col><col style="width:150px"><col style="width:70px"></colgroup><thead><tr><th style="width:30px">م</th><th style="width:90px">رقم الاستئناف</th><th style="width:30px">عضو</th><th style="width:170px">الخصوم</th><th>القرار</th><th style="width:150px">رئيس المحكمة</th><th style="width:70px">أمين السر</th></tr></thead><tbody>';for(var i=0;i<CURRENT_LIST.length;i++){var x=CURRENT_LIST[i];var raqmHtml=getRaqumHtmlAhkam(x);var cell='<div style="min-height:80px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;line-height:1.5">'+getMost(x)+'<br><b>ضد</b><br>'+getDed(x)+'</div>';h+='<tr><td style="width:30px" class="col-roll">'+toAr(i+1)+'</td><td style="width:90px" class="raqm-cell">'+raqmHtml+'</td><td style="width:30px">'+toArText(getCode(x))+'</td><td style="width:170px">'+cell+'</td><td></td><td style="width:150px"></td><td style="width:70px"></td></tr>';}h+='</tbody></table>';document.getElementById('idaaTableWrap').innerHTML=h;document.getElementById('modalIdaa').classList.add('show');}
+function closeIdaa(){document.getElementById('modalIdaa').classList.remove('show');}
+function printIdaa(){
+  if(!CURRENT_LIST.length){alert('ابحث أولا');return;}
+  var p=CURRENT_PRINT_DATE.split('/');var dateTxt=toArText(p[2]+' / '+p[1]+' / '+p[0]);var dairaTxt = DAIRA_NO || '';var baseTitle='أحكام جلسة '+dateTxt+' دائرة '+toArText(dairaTxt)+' -';var ROWS_PER_PAGE = 8;var pages=[];for(var i=0;i<CURRENT_LIST.length;i+=ROWS_PER_PAGE) pages.push(CURRENT_LIST.slice(i,i+ROWS_PER_PAGE));var htmlPages='';for(var pg=0; pg<pages.length; pg++){var listPage=pages[pg];var titleText = pg===0? baseTitle : 'تابع ' + baseTitle;var isLastPage = pg===pages.length-1;var rows='';listPage.forEach(function(x,i){var globalIdx = pg*ROWS_PER_PAGE + i;var raqmTxt=getRaqumTextForPrint(x).split('\n').map(s=>toArText(s)).join('<br>');var cell='<div style="width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;line-height:1.4;font-size:14px"><div>'+toArText(getMost(x))+'</div><div style="font-weight:bold;margin:3px 0">ضد</div><div>'+toArText(getDed(x))+'</div></div>';rows+='<tr><td>'+toAr(globalIdx+1)+'</td><td style="line-height:1.2">'+raqmTxt+'</td><td>'+toArText(getCode(x))+'</td><td style="padding:2px">'+cell+'</td><td></td><td></td><td></td></tr>';});htmlPages+='<div class="print-page '+(isLastPage?'last':'')+'"><h3 class="main-title">'+titleText+'</h3><table><colgroup><col style="width:40px"><col style="width:95px"><col style="width:45px"><col style="width:180px"><col><col style="width:130px"><col style="width:70px"></colgroup><thead><tr><th>م</th><th>رقم الاستئناف</th><th>عضو</th><th>الخصوم</th><th>القرار</th><th>رئيس المحكمة</th><th>أمين السر</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}var w=window.open('','_blank');w.document.write('<html dir=rtl><head><meta charset=utf-8><title> </title><style>@page{size:A4; margin:10mm 10px 10mm 10px}*{box-sizing:border-box; -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important}body{margin:0; padding:0;}.print-page{width:100%; page-break-after:always;}.print-page.last{page-break-after:auto;}.main-title{text-align:center; font-size:24px!important; font-weight:bold; margin:0 0 10px 0;}table{width:100%; border-collapse:collapse; table-layout:fixed; border:2px solid #000;}thead tr{height:50px!important;}thead th{height:50px!important; background:#FFE4B5!important; font-size:16px!important; font-weight:bold; border:1px solid #000; text-align:center; vertical-align:middle;}tbody tr{height:112px!important; min-height:112px!important; max-height:112px!important;}tbody td{height:112px!important; border:1px solid #000; font-size:14px!important; text-align:center; vertical-align:middle; overflow:hidden; page-break-inside:avoid!important;}</style></head><body>'+htmlPages+'<script>setTimeout(()=>window.print(),300)<\/script></body></html>');w.document.close();
+}
+function selectRow(i){if(MAIN_SELECTED==i){document.querySelectorAll('#res tbody tr').forEach(tr=>tr.classList.remove('row-selected'));MAIN_SELECTED=-1;return;}MAIN_SELECTED=i;document.querySelectorAll('#res tbody tr').forEach(tr=>tr.classList.remove('row-selected'));var r=document.getElementById('row-'+i);if(r)r.classList.add('row-selected');}
+function printAhkam(){
+  if(!CURRENT_LIST.length){alert('ابحث أولا');return;}
+  var p=CURRENT_PRINT_DATE.split('/'); var dateTxt=toArText(p[2]+' / '+p[1]+' / '+p[0]); var dairaTxt=DAIRA_NO?toAr(DAIRA_NO):'';
+  var baseTitle='أحكام جلسة '+dateTxt+' - دائرة '+dairaTxt;
+  var css='@page{margin:10mm 5mm 5mm 5mm; size:A4}*{box-sizing:border-box; -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important}body{margin:0;padding-right:15px!important;padding-left:15px!important;background:#fff}h3{margin:0 0 12px 0;padding:0 15px;text-align:center;font-size:20px!important;font-weight:bold!important;line-height:1.6}table{width:calc(100% - 30px)!important;margin-right:15px!important;margin-left:15px!important;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #000;padding:4px;font-size:12px;text-align:center;overflow:hidden;word-wrap:break-word}th{background:#f8bbd0!important;height:40px;font-size:13px}tr{height:50px!important;min-height:50px!important}td{height:50px!important;min-height:50px!important;vertical-align:middle}';
+  var html='<html dir=rtl><head><meta charset=utf-8><title>'+baseTitle+'</title><style>'+css+'</style></head><body onload="setTimeout(function(){window.print();},500)"><h3>'+baseTitle+'</h3><table><colgroup><col style="width:30px"><col style="width:80px"><col style="width:130px"><col style="width:130px"><col style="width:30px"><col></colgroup><thead><tr><th style="width:30px">م</th><th style="width:80px">رقم وسنة</th><th style="width:130px">المستأنف</th><th style="width:130px">ضده</th><th style="width:30px">عضو</th><th>القرار</th></tr></thead><tbody>';
+  var prevCat=null;
+  for(var i=0;i<CURRENT_LIST.length;i++){
+    var x=CURRENT_LIST[i];var cat=getCategory(getQar(x));
+    if(prevCat===0 && cat===1){html+='<tr style="height:35px;min-height:35px;background:#e0f2f1!important"><td colspan=6 style="height:35px;min-height:35px;font-weight:bold;border:2px solid #000;background:#e0f2f1!important;text-align:center;font-size:13px">الأحكام التمهيدية (تحقيق - استجواب - خبراء - طب شرعي - وقف)</td></tr>';}
+    else if(prevCat===1 && cat===2){html+='<tr style="height:35px;min-height:35px;background:#fce4ec!important"><td colspan=6 style="height:35px;min-height:35px;font-weight:bold;border:2px solid #000;background:#fce4ec!important;text-align:center;font-size:13px">إعادة للمرافعة</td></tr>';}
+    else if(prevCat===0 && cat===2){html+='<tr style="height:35px;min-height:35px;background:#e0f2f1!important"><td colspan=6 style="height:35px;min-height:35px;font-weight:bold;border:2px solid #000;background:#e0f2f1!important;text-align:center">الأحكام التمهيدية</td></tr>';html+='<tr style="height:35px;min-height:35px;background:#fce4ec!important"><td colspan=6 style="height:35px;min-height:35px;font-weight:bold;border:2px solid #000;background:#fce4ec!important;text-align:center">إعادة للمرافعة</td></tr>';}
+    var raqmTxt=toArText(getRaqumTextForPrint(x));
+    html+='<tr style="height:50px;min-height:50px"><td style="width:30px;height:50px;min-height:50px">'+toAr(i+1)+'</td><td style="width:80px;height:50px;min-height:50px">'+raqmTxt+'</td><td style="width:100px;height:50px;min-height:50px">'+toArText(getMost(x))+'</td><td style="width:160px;height:50px;min-height:50px">'+toArText(getDed(x))+'</td><td style="width:30px;height:50px;min-height:50px">'+toArText(getCode(x))+'</td><td style="height:50px;min-height:50px">'+toArText(getQarFixed(x))+'</td></tr>';
+    prevCat=cat;
+  }
+  html+='</tbody></table></body></html>';
+  var w=window.open('','_blank'); w.document.write(html); w.document.close();
+}
+function openTasdeedHokm(){if(!CURRENT_LIST.length){alert('ابحث أولا');return;}if(MAIN_SELECTED>=0){CUR_INDEX=MAIN_SELECTED;}else{CUR_INDEX=0;}showHokm();document.getElementById('modalHokm').classList.add('show');}
+function closeHokm(){document.getElementById('modalHokm').classList.remove('show');}
+function showHokm(){var x=CURRENT_LIST[CUR_INDEX];document.getElementById('currentInfo').textContent='القضية الحالية: '+toArText(getRaqm(x)+' / '+getSana(x))+' - '+getMost(x)+' ('+toAr(CUR_INDEX+1)+'/'+toAr(CURRENT_LIST.length)+') عضو '+toArText(getCode(x));document.getElementById('taaidText').value='';document.getElementById('ta3dilText').value='';document.getElementById('elghaaText').value='';document.getElementById('maddDate').value='';}
+function prevHokm(){if(CUR_INDEX>0){CUR_INDEX--;MAIN_SELECTED=CUR_INDEX;showHokm();renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);}}
+function nextHokm(){if(CUR_INDEX<CURRENT_LIST.length-1){CUR_INDEX++;MAIN_SELECTED=CUR_INDEX;showHokm();renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);}}
+function setVal(id,v){document.getElementById(id).value=v;}
+function saveQat3i(type){var q='';if(type=='تأييد')q=document.getElementById('taaidText').value.trim();if(type=='تعديل')q=document.getElementById('ta3dilText').value.trim();if(type=='إلغاء')q=document.getElementById('elghaaText').value.trim();if(!q){alert('اكتب القرار');return;}var x=CURRENT_LIST[CUR_INDEX];x.qar=q;x.mantouq=q;updateData(x);document.getElementById('lastSaved').textContent='آخر قضية: '+toArText(getRaqm(x)+' / '+getSana(x))+' - '+q+' عضو '+toArText(getCode(x));LAST_INDEX=CUR_INDEX;alert('✅ '+type+' - عضو '+getCode(x));renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);nextHokm();}
+function saveMadd(){var d=document.getElementById('maddDate').value;if(!d){alert('اختر تاريخ');return;}var x=CURRENT_LIST[CUR_INDEX];var nd=fmt(d);x.qar='مد أجل لجلسة '+toArText(nd);x.mantouq=x.qar;updateData(x);document.getElementById('lastSaved').textContent='آخر قضية: '+toArText(getRaqm(x)+' / '+getSana(x))+' - '+x.qar;LAST_INDEX=CUR_INDEX;alert('✅ مد أجل');renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);nextHokm();}
+function updateData(x){for(var i=0;i<DATA.length;i++){if(DATA[i].id==x.id||(getRaqm(DATA[i])==getRaqm(x)&&getSana(DATA[i])==getSana(x))){DATA[i]=x;break;}}saveAllAhkam();}
+function openPop(type){
+  var html='';
+  if(type=='تحقيق'||type=='استجواب'||type=='إعادة للمرافعة'){html='<label>تاريخ الجلسة القادمة:</label><input id="popDate" type="date" class="input"><label>السبب:</label><input id="popSabb" class="input">';}
+  if(type=='خبراء'||type=='طب شرعي'){
+    var jehaOptions = '';
+    if(type=='خبراء'){jehaOptions = '<option value="مكتب خبراء وزارة العدل بالقاهرة">مكتب خبراء وزارة العدل بالقاهرة</option><option value="مكتب خبراء شمال القاهرة">مكتب خبراء شمال القاهرة</option><option value="مكتب خبراء جنوب القاهرة">مكتب خبراء جنوب القاهرة</option>';}
+    else{jehaOptions = '<option value="مصلحة الطب الشرعي بالقاهرة">مصلحة الطب الشرعي بالقاهرة</option><option value="قسم أبحاث التزييف والتزوير بمصلحة الطب الشرعي بالقاهرة">قسم أبحاث التزييف والتزوير بمصلحة الطب الشرعي بالقاهرة</option>';}
+    html='<label>النوع:</label><input class="input" value="'+type+'" disabled><label>الجهة:</label><select id="popJeha" class="input">'+jehaOptions+'</select><label>جلسة عدم السداد (قريبة):</label><input id="popDate1" type="date" class="input"><label>جلسة السداد (بعيدة):</label><input id="popDate2" type="date" class="input"><label>قيمة الأمانة:</label><input id="popAmana" class="input" placeholder="مثال 1000 جنيه">';
+  }
+  if(type=='وقف تعليقي'){html='<label>سبب الوقف:</label><input id="popSabb" class="input">';}
+  html+='<button class="btn btn-green" style="width:100%;margin-top:12px" onclick="savePop(\''+type+'\')">💾 حفظ وارجاع للرول</button>';
+  document.getElementById('popTitle').textContent=type;document.getElementById('popBody').innerHTML=html;document.getElementById('pop').classList.add('show');
+}
+function closePop(){document.getElementById('pop').classList.remove('show');}
+function savePop(type){ window._lastPopType = type;
+  var x=CURRENT_LIST[CUR_INDEX]; var origTar=CURRENT_PRINT_DATE; var tarGadid='',qarar='',halat='',qararTamhidi=''; var sabbEl=document.getElementById('popSabb'); var sabb=sabbEl?sabbEl.value.trim():'';
+  if(type=='تحقيق'){var d=document.getElementById('popDate').value;if(!d)return alert('تاريخ');tarGadid=fmt(d);qarar='تحقيق لجلسة '+toArText(tarGadid)+(sabb?' - '+sabb:'');halat='تحقيق';qararTamhidi=qarar;}
+  if(type=='استجواب'){var d=document.getElementById('popDate').value;if(!d)return alert('تاريخ');tarGadid=fmt(d);qarar='استجواب لجلسة '+toArText(tarGadid)+(sabb?' - '+sabb:'');halat='استجواب';qararTamhidi=qarar;}
+  if(type=='إعادة للمرافعة'){var d=document.getElementById('popDate').value;if(!d)return alert('تاريخ');tarGadid=fmt(d);qarar='إعادة للمرافعة لجلسة '+toArText(tarGadid)+(sabb?' - '+sabb:'');halat='متداول';qararTamhidi=qarar;}
+  if(type=='خبراء'){
+    var d1=document.getElementById('popDate1').value,d2=document.getElementById('popDate2').value,am=document.getElementById('popAmana').value,jeha=document.getElementById('popJeha').value;
+    if(!d1||!d2)return alert('حدد الجلستين');
+    window._tempFarDate=fmt(d2);window._tempAmanahValue=am||'';window._tempJeha=jeha||'مكتب خبراء وزارة العدل بالقاهرة';window._tempNo3='خبراء';
+    tarGadid=fmt(d1);qarar='حكم تمهيدي خبراء - عدم سداد '+toArText(tarGadid)+' سداد '+toArText(window._tempFarDate)+' أمانة '+am+' - '+jeha;halat='خبراء';qararTamhidi=qarar;
+  }
+  if(type=='طب شرعي'){
+    var d1=document.getElementById('popDate1').value,d2=document.getElementById('popDate2').value,am=document.getElementById('popAmana').value,jeha=document.getElementById('popJeha').value;
+    if(!d1||!d2)return alert('حدد الجلستين');
+    window._tempFarDate=fmt(d2);window._tempAmanahValue=am||'';window._tempJeha=jeha||'مصلحة الطب الشرعي بالقاهرة';window._tempNo3='طب شرعي';
+    tarGadid=fmt(d1);qarar='حكم تمهيدي طب شرعي - عدم سداد '+toArText(tarGadid)+' سداد '+toArText(window._tempFarDate)+' أمانة '+am+' - '+jeha;halat='طب شرعي';qararTamhidi=qarar;
+  }
+  if(type=='وقف تعليقي'){var s=document.getElementById('popSabb').value;qarar='وقف تعليقي - '+s;halat='وقف';x.qar=qarar;x.mantouq=qarar;x.tar=origTar;x.tarHokm=origTar;updateData(x);closePop();alert('✅ وقف تعليقي');renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);nextHokm();return;}
+  x.qar=qarar;x.mantouq=qarar;x.tar=origTar;x.tarHokm=origTar;updateData(x);
+  if(tarGadid){returnToMoutadawal(getRaqm(x),getSana(x),tarGadid,qararTamhidi,halat);}
+  closePop();alert('✅ '+type+' - رجعت للمتداول '+toArText(tarGadid));renderAhkam(CURRENT_LIST,CURRENT_PRINT_DATE);nextHokm();
+}
+function returnToMoutadawal(raqm,sana,tarikhGadid,qararTamhidi,halat){
+  tarikhGadid=cleanDate(tarikhGadid); if(!tarikhGadid) return false;
+  if(!halat){
+    if(qararTamhidi.includes('تحقيق')) halat='تحقيق'; else if(qararTamhidi.includes('استجواب')) halat='استجواب'; else if(qararTamhidi.includes('إعادة')) halat='متداول'; else if(qararTamhidi.includes('وقف')) halat='وقف'; else if(qararTamhidi.includes('خبراء')) halat='خبراء'; else if(qararTamhidi.includes('شرعي')) halat='طب شرعي'; else halat='متداول';
+  }
+  halat = String(halat).trim();
+  var onlyRaqm=String(raqm).split('/')[0].trim(); var onlySana=String(sana).split('/')[0].trim();
+  var mR=String(raqm).match(/\d+/g); if(mR&&mR.length>=1) onlyRaqm=mR[0]; if(String(raqm).includes('/')&&mR&&mR.length>=2) onlySana=mR[1];
+  var qararForJalsa = (halat==='تحقيق' || halat==='استجواب' || halat==='متداول')? '' : qararTamhidi;
+  var isTamhidyOrI3ada = (halat==='استجواب' || halat==='خبراء' || halat==='طب شرعي' || halat==='متداول');
+  var nextSeq = 1;
+  if(isTamhidyOrI3ada){ nextSeq = getNextSeqForDate(tarikhGadid, DATA_MOT); }
+  var motIndex=DATA_MOT.findIndex(m=>{var mr=String(m.raqm).split('/')[0].trim(); var ms=String(m.sana).split('/')[0].trim(); return mr===onlyRaqm && ms===onlySana;});
+  var hokmTamhidyDate = CURRENT_PRINT_DATE;
+  var amanahVal = window._tempAmanahValue||'';
+  var jehaSelected = window._tempJeha|| (halat==='طب شرعي'? 'مصلحة الطب الشرعي بالقاهرة' : 'مكتب خبراء وزارة العدل بالقاهرة');
+  var no3Selected = window._tempNo3|| halat;
+  // === إضافة جديدة فقط: تحديد قيمة السابقة ديناميك ===
+  var popType = String(window._lastPopType||'').trim();
+  var sabiqaValue = '';
+  if(halat==='تحقيق' || popType==='تحقيق' || qararTamhidi.includes('تحقيق')) sabiqaValue='تحقيق';
+  else if(halat==='استجواب' || popType==='استجواب' || qararTamhidi.includes('استجواب')) sabiqaValue='استجواب';
+  else if(popType.includes('إعادة') || qararTamhidi.includes('إعادة للمرافعة') || qararTamhidi.includes('إعادة')) sabiqaValue='إعادة للمرافعة';
+  if(motIndex<0){
+    var src=DATA.find(a=>String(a.raqm).split('/')[0].trim()===onlyRaqm); if(!src) src=DATA.find(a=>String(a.raqm).includes(onlyRaqm)); if(!src) return false;
+    var newMot={id:Date.now(),raqm:onlyRaqm,sana:onlySana,mostanef:src.mostanef||src.most||'',ded:src.ded||'',mof:src.mof||'',zawgy:1,code:'',tar:tarikhGadid,galsa:tarikhGadid,galsaAsasia:tarikhGadid,galsaQadima:tarikhGadid,galsaSabiqa:sabiqaValue,halat:halat,halet:halat,jalsat:[{tarikh:tarikhGadid,qarar:qararForJalsa,ta2gil:'',halat:halat,sababTa2gil: sabiqaValue ? 'مؤجل من '+sabiqaValue+' - '+qararTamhidi : '', muagalFrom: sabiqaValue||''}],dammList:src.dammList||[]};
+    if(isTamhidyOrI3ada){ newMot._seq=nextSeq; newMot._manualOrder=nextSeq; newMot._sessionOrder=nextSeq; newMot._fileIndex=nextSeq; newMot._updatedAt=Date.now(); newMot._forcedLast=false; }
+    if(halat==='خبراء'||halat==='طب شرعي'){
+      newMot.khobara={status:'new',no3:no3Selected,sentTo:jehaSelected,nearDate:tarikhGadid,farDate:window._tempFarDate||'',hokmTamhidyDate:hokmTamhidyDate,amanahValue:amanahVal,amanahPaid:false,amanahDate:'',receiptNo:'',sentDate:'',saderNo:'',saderAam:'',saderKhas:'',reportReceived:false,daira:DAIRA_NO||''};
+      if(window._tempFarDate){newMot.jalsat.push({tarikh:window._tempFarDate,qarar:'',ta2gil:'',halat:halat}); window._tempFarDate=null; window._tempAmanahValue=null; window._tempJeha=null; window._tempNo3=null;}
+    }
+    DATA_MOT.push(newMot);
+  }else{
+    var ap=DATA_MOT[motIndex]; if(!ap.jalsat) ap.jalsat=[]; ap.halat = halat; ap.halet = halat; ap.tar = tarikhGadid; ap.galsa = tarikhGadid; ap.galsaAsasia = tarikhGadid; ap.galsaQadima = tarikhGadid; if(sabiqaValue) ap.galsaSabiqa = sabiqaValue;
+    if(isTamhidyOrI3ada){ ap._seq=nextSeq; ap._manualOrder=nextSeq; ap._sessionOrder=nextSeq; ap._fileIndex=nextSeq; ap._updatedAt=Date.now(); ap._forcedLast=false; }
+    ap.jalsat = ap.jalsat.filter(j=>cleanDate(j.tarikh)!==tarikhGadid); ap.jalsat.push({tarikh:tarikhGadid,qarar:qararForJalsa,ta2gil:'',halat:halat,sababTa2gil: sabiqaValue ? 'مؤجل من '+sabiqaValue+' - '+qararTamhidi : '', muagalFrom: sabiqaValue||''});
+    if((halat==='خبراء'||halat==='طب شرعي')){
+      if(!ap.khobara) ap.khobara={};
+      ap.khobara.status = ap.khobara.status||'new';ap.khobara.no3 = no3Selected;ap.khobara.sentTo = jehaSelected;ap.khobara.nearDate = tarikhGadid;ap.khobara.farDate = window._tempFarDate|| ap.khobara.farDate||'';ap.khobara.hokmTamhidyDate = hokmTamhidyDate;ap.khobara.amanahValue = amanahVal || ap.khobara.amanahValue||'';
+      if(ap.khobara.saderNo==null) ap.khobara.saderNo='';if(ap.khobara.saderAam==null) ap.khobara.saderAam='';if(ap.khobara.saderKhas==null) ap.khobara.saderKhas='';
+      if(window._tempFarDate){ap.jalsat.push({tarikh:window._tempFarDate,qarar:'',ta2gil:'',halat:halat}); window._tempFarDate=null; window._tempAmanahValue=null; window._tempJeha=null; window._tempNo3=null;}
+    }
+  }
+  saveAllMotadawal(); document.getElementById('info').textContent='أحكام: '+toAr(DATA.length)+' | متداول: '+toAr(DATA_MOT.length)+(isTamhidyOrI3ada?' | تمهيدي رقم '+nextSeq:'');
+  if(isTamhidyOrI3ada){ setTimeout(function(){ alert('✅ تم ارجاع للمتداول برقم تسلسل ثابت '+nextSeq+' في جلسة '+toArText(tarikhGadid)+'\nنوع: '+halat+'\nجهة: '+(jehaSelected||'')+'\nتاريخ الحكم التمهيدي: '+toArText(hokmTamhidyDate)+'\nالأمانة: '+amanahVal); },100); }
+  return true;
+}
+function editLast(){if(LAST_INDEX>=0){CUR_INDEX=LAST_INDEX;MAIN_SELECTED=LAST_INDEX;showHokm();}}
+var DAIRA_MEMBERS_CACHE=null;
+async function getDairaMembers(){
+ if(DAIRA_MEMBERS_CACHE) return DAIRA_MEMBERS_CACHE;
+ DAIRA_MEMBERS_CACHE={};
+ try{
+   let db=await openDB();
+   let keys=['D32_DAIRA_CONFIG','D32_CONFIG','D32_DAIRA','D32_CIRCLE'];
+   for(let k of keys){
+     let val=await new Promise(r=>{let tx=db.transaction('d32store','readonly');let q=tx.objectStore('d32store').get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null);});
+     if(!val) continue;
+     try{
+       let cfg=JSON.parse(val);
+       if(cfg.members) cfg.members.forEach(m=>{let c=String(m.code||'').toUpperCase(); if(c) DAIRA_MEMBERS_CACHE[c]=m.name||m.esm||'';});
+       if(cfg.dairaMembers) Object.keys(cfg.dairaMembers).forEach(c=>{DAIRA_MEMBERS_CACHE[c.toUpperCase()]=cfg.dairaMembers[c];});
+       ['A','B','C','D','E','F','G'].forEach(c=>{if(cfg[c]) DAIRA_MEMBERS_CACHE[c]=cfg[c];});
+       if(Object.keys(DAIRA_MEMBERS_CACHE).length>0) break;
+     }catch(e){}
+   }
+ }catch(e){console.log(e);}
+ let info=document.getElementById('hay2aMembersInfo');
+ if(info){
+   if(Object.keys(DAIRA_MEMBERS_CACHE).length>0) info.textContent='👥 أعضاء الدائرة: '+Object.entries(DAIRA_MEMBERS_CACHE).map(([c,n])=>c+': '+n).join(' | ');
+   else info.textContent='⚠️ لم أجد أسماء الأعضاء - سيستخدم الكود';
+ }
+ return DAIRA_MEMBERS_CACHE;
+}
+function getCodeByMemberName(name){
+  name=String(name||'').trim();
+  if(!name) return '';
+  let up=name.toUpperCase();
+  if(['A','B','C','D','E','F','G'].includes(up) && up.length===1) return up;
+  if(DAIRA_MEMBERS_CACHE){
+    for(let c in DAIRA_MEMBERS_CACHE){
+      if(DAIRA_MEMBERS_CACHE[c]===name) return c.toUpperCase();
+    }
+    for(let c in DAIRA_MEMBERS_CACHE){
+      if(DAIRA_MEMBERS_CACHE[c] && DAIRA_MEMBERS_CACHE[c].trim()===name.trim()) return c.toUpperCase();
+    }
+  }
+  return '';
+}
+function sortHay2aInputs(t){
+  let ids=t==='awal'?['hay2aAwal1','hay2aAwal2','hay2aAwal3']:['hay2aAkher1','hay2aAkher2','hay2aAkher3'];
+  let items=ids.map(id=>{
+    let el=document.getElementById(id);
+    let name=el?el.value.trim():'';
+    if(!name) return null;
+    let code=getCodeByMemberName(name);
+    if(!code){
+      let first=name.charAt(0).toUpperCase();
+      if(['A','B','C','D','E','F','G'].includes(first)) code=first;
+      else if(['A','B','C','D','E','F','G'].includes(name.toUpperCase())) code=name.toUpperCase();
+    }
+    return {name, code:code||'', order: code? getCodeOrder(code) : 999};
+  }).filter(Boolean);
+  items.sort((a,b)=>a.order-b.order);
+  for(let i=0;i<3;i++){
+    let el=document.getElementById(ids[i]);
+    if(el) el.value = items[i]? items[i].name : '';
+  }
+}
+function fillHay2a(t,no){
+  no=String(no).toUpperCase();
+  getDairaMembers().then(m=>{
+    let name=m[no]||no;
+    let ids=t==='awal'?['hay2aAwal1','hay2aAwal2','hay2aAwal3']:['hay2aAkher1','hay2aAkher2','hay2aAkher3'];
+    for(let id of ids){
+      let el=document.getElementById(id);
+      if(el && el.value.trim()===name) return;
+    }
+    for(let id of ids){
+      let el=document.getElementById(id);
+      if(el &&!el.value.trim()){ el.value=name; sortHay2aInputs(t); return; }
+    }
+    let last=document.getElementById(ids[2]);
+    if(last) last.value=name;
+    sortHay2aInputs(t);
+  });
+}
+function clearHay2a(t){
+  let ids=t==='awal'?['hay2aAwal1','hay2aAwal2','hay2aAwal3']:['hay2aAkher1','hay2aAkher2','hay2aAkher3'];
+  ids.forEach(id=>{let el=document.getElementById(id); if(el) el.value='';});
+}
+async function openHay2a(){
+ if(!CURRENT_LIST.length){alert('ابحث أولا');return;}
+ let x=CURRENT_LIST[CUR_INDEX];
+ document.getElementById('hay2aCaseInfo').textContent=getRaqm(x)+' / '+getSana(x);
+ await getDairaMembers();
+ let awal=x.hay2aAwal||x.hay2a||[]; let akher=x.hay2aAkher||[];
+ if(typeof awal==='string') awal=awal.split(' - '); if(typeof akher==='string') akher=akher.split(' - ');
+ document.getElementById('hay2aAwal1').value=awal[0]||''; document.getElementById('hay2aAwal2').value=awal[1]||''; document.getElementById('hay2aAwal3').value=awal[2]||'';
+ document.getElementById('hay2aAkher1').value=akher[0]||''; document.getElementById('hay2aAkher2').value=akher[1]||''; document.getElementById('hay2aAkher3').value=akher[2]||'';
+ sortHay2aInputs('awal'); sortHay2aInputs('akher');
+ document.getElementById('modalHay2a').classList.add('show');
+}
+function closeHay2a(){document.getElementById('modalHay2a').classList.remove('show');}
+function saveHay2a(){
+ if(!CURRENT_LIST.length) return;
+ sortHay2aInputs('awal');
+ sortHay2aInputs('akher');
+ function isOrdered(t){
+   let ids=t==='awal'?['hay2aAwal1','hay2aAwal2','hay2aAwal3']:['hay2aAkher1','hay2aAkher2','hay2aAkher3'];
+   let codes=ids.map(id=>{
+     let el=document.getElementById(id);
+     let n=el?el.value.trim():'';
+     if(!n) return null;
+     return getCodeByMemberName(n);
+   }).filter(Boolean);
+   for(let i=1;i<codes.length;i++){
+     if(getCodeOrder(codes[i]) < getCodeOrder(codes[i-1])) return false;
+   }
+   return true;
+ }
+ let awal=[document.getElementById('hay2aAwal1').value.trim(),document.getElementById('hay2aAwal2').value.trim(),document.getElementById('hay2aAwal3').value.trim()].filter(Boolean);
+ let akher=[document.getElementById('hay2aAkher1').value.trim(),document.getElementById('hay2aAkher2').value.trim(),document.getElementById('hay2aAkher3').value.trim()].filter(Boolean);
+ if(!awal.length){
+   alert('⚠️ لازم تملى أول هيئة على الأقل');
+   return;
+ }
+ if(!isOrdered('awal') || (akher.length>0 &&!isOrdered('akher'))){
+   alert('⚠️ ترتيب الأعضاء لازم يكون حسب الكود A → G\nالنظام رتبهم تلقائياً');
+   sortHay2aInputs('awal');
+   sortHay2aInputs('akher');
+   return;
+ }
+ let x=CURRENT_LIST[CUR_INDEX];
+ x.hay2aAwal=awal;
+ x.hay2aAkher=akher;
+ x.hay2a=awal;
+ x.hay2aAwalText=awal.join(' - ');
+ x.hay2aAkherText=akher.join(' - ');
+ x.hay2aSingle = akher.length===0? true : false;
+ x._updatedAt=Date.now();
+ for(let i=0;i<DATA.length;i++){if(DATA[i].id==x.id || (getRaqm(DATA[i])==getRaqm(x) && getSana(DATA[i])==getSana(x))){DATA[i]=x; break;}}
+ saveAllAhkam();
+ let wasSingle = akher.length===0;
+ closeHay2a();
+ // انتقال تلقائي للقضية التالية بعد حفظ الهيئة
+ setTimeout(function(){
+   if(wasSingle){
+     alert('✅ تم حفظ الحكم بهيئة واحدة\nأول هيئة: '+awal.join(' - '));
+   }else{
+     alert('✅ تم حفظ الهيئة\nأول هيئة: '+awal.join(' - ')+'\nهيئة آخر الحكم: '+akher.join(' - '));
+   }
+   if(CUR_INDEX < CURRENT_LIST.length-1){
+     nextHokm();
+   }
+ },100);
+}
+window.onload=function(){document.getElementById('modalHokm').classList.remove('show');document.getElementById('modalIdaa').classList.remove('show');document.getElementById('pop').classList.remove('show');var h=document.getElementById('modalHay2a'); if(h) h.classList.remove('show');var el=document.getElementById('modalTadqeeq'); if(el) el.classList.remove('show');var now=new Date();document.getElementById('y').value=now.getFullYear();document.getElementById('d').focus(); loadAll();};
+</script>
+</body>
+</html>

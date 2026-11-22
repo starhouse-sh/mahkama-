@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>ضم - D32_DB فقط</title>
+<style>
+*{box-sizing:border-box;font-family:Tahoma}
+body{background:#0e1627;color:#fff;padding:10px}
+.card{background:#fff;color:#000;padding:12px;border-radius:10px;max-width:780px;margin:auto}
+input{padding:8px;border:2px solid #0A2342;border-radius:6px;width:90px;text-align:center;font-weight:bold}
+.btn{padding:10px 16px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin:2px}
+.btn-p{background:#4A1A8C;color:#fff}.btn-n{background:#0A2342;color:#fff}.btn-d{background:#16a34a;color:#fff}.btn-w{background:#f59e0b;color:#000}
+.row{display:flex;gap:8px;justify-content:center;align-items:center;margin:8px 0;flex-wrap:wrap}
+.ok{background:#d4edda;padding:8px;border-radius:6px;color:#155724;display:none;margin:8px 0}
+.err{background:#f8d7da;padding:8px;border-radius:6px;color:#721c24;display:none;margin:8px 0}
+.item{border-bottom:1px solid #ddd;padding:6px;font-size:12px}
+.info{background:#e0f2fe;padding:8px;border-radius:6px;font-size:12px;margin:8px 0;border:1px solid #7dd3fc}
+</style>
+</head>
+<body>
+<h3 style="text-align:center">🔗 ضم استئناف - D32_DB فقط</h3>
+<div class="card">
+<div class="info" id="storageInfo">جاري حساب المساحة من D32_DB...</div>
+<div class="row">الأصلي رقم <input id="or" type="number" placeholder="1210"> سنة <input id="os" type="number" placeholder="143"> | المنضم رقم <input id="dr" type="number" placeholder="8626"> سنة <input id="ds" type="number" placeholder="143"></div>
+<div class="row">
+<button class="btn btn-p" onclick="doMerge()">✅ ضم للكل</button>
+<button class="btn btn-n" onclick="load()">🔄 تحديث</button>
+<button class="btn btn-d" onclick="cleanSafe()">🧹 مسح القديم localStorage - D32_DB هيفضل</button>
+</div>
+<div id="ok" class="ok"></div><div id="err" class="err"></div>
+<div id="list" style="background:#f8f9fa;border:1px solid #ddd;border-radius:6px;max-height:500px;overflow:auto;padding:6px"></div>
+</div>
+<script>
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+var DATA=[], AHKAM=[];
+async function loadDB(){
+  let db=await openDB();
+  let tx=db.transaction(['cases','ahkam'],'readonly');
+  let r1=tx.objectStore('cases').get('D32_V3');
+  let r2=tx.objectStore('ahkam').get('D32_AHKAM');
+  return new Promise(res=>{
+    let c1=false,c2=false;
+    r1.onsuccess=()=>{if(r1.result){try{let a=JSON.parse(r1.result); if(Array.isArray(a[1])) a=a[1]; DATA=a;}catch(e){}} c1=true; if(c1&&c2) res();};
+    r2.onsuccess=()=>{if(r2.result){try{let a=JSON.parse(r2.result); if(Array.isArray(a[1])) a=a[1]; AHKAM=a;}catch(e){}} c2=true; if(c1&&c2) res();};
+    r1.onerror=()=>{c1=true; if(c1&&c2) res();}; r2.onerror=()=>{c2=true; if(c1&&c2) res();};
+  });
+}
+function getAllData(){ return DATA; }
+function getAllAhkam(){ return AHKAM; }
+async function updateInfo(){
+  let db=await openDB();
+  let tx=db.transaction(['cases','ahkam','d32store'],'readonly');
+  let r1=tx.objectStore('cases').get('D32_V3');
+  let r2=tx.objectStore('ahkam').get('D32_AHKAM');
+  r1.onsuccess=()=>{
+    let s1=r1.result? (r1.result.length/1024).toFixed(1):0;
+    let c1=0; try{c1=JSON.parse(r1.result).length;}catch(e){}
+    r2.onsuccess=()=>{
+      let s2=r2.result? (r2.result.length/1024).toFixed(1):0;
+      let c2=0; try{c2=JSON.parse(r2.result).length;}catch(e){}
+      let old=0; for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i); if(k&&k.startsWith('D32_')) old+= (localStorage.getItem(k)||'').length/1024;}
+      document.getElementById('storageInfo').innerHTML='D32_DB - متداول: '+c1+' قضية ('+s1+' KB) | أحكام: '+c2+' حكم ('+s2+' KB)<br>localStorage القديم: '+old.toFixed(1)+' KB (لازم يبقى 0)';
+    };
+  };
+}
+async function cleanSafe(){
+  if(!confirm('همسح كل مفاتيح D32_ من localStorage - D32_DB هيفضل سليم فيه '+DATA.length+' قضية و '+AHKAM.length+' حكم؟')) return;
+  let del=0; for(let i=localStorage.length-1;i>=0;i--){let k=localStorage.key(i); if(k&&k.startsWith('D32_')){localStorage.removeItem(k); del++;}}
+  document.getElementById('ok').textContent='✅ تم مسح '+del+' مفتاح قديم - الآن D32_DB فقط'; document.getElementById('ok').style.display='block';
+  updateInfo();
+}
+async function saveToDB(){
+  let db=await openDB();
+  let tx=db.transaction(['cases','ahkam'],'readwrite');
+  tx.objectStore('cases').put(JSON.stringify(DATA),'D32_V3');
+  tx.objectStore('cases').put(JSON.stringify(DATA),'D32_FINAL');
+  tx.objectStore('ahkam').put(JSON.stringify(AHKAM),'D32_AHKAM');
+  return new Promise(res=>{tx.oncomplete=()=>res();});
+}
+async function doMerge(){
+  try{
+    await loadDB();
+    var or=document.getElementById('or').value.trim(), os=document.getElementById('os').value.trim();
+    var dr=document.getElementById('dr').value.trim(), ds=document.getElementById('ds').value.trim();
+    var ok=document.getElementById('ok'), err=document.getElementById('err');
+    ok.style.display='none'; err.style.display='none';
+    if(!or||!os||!dr||!ds){err.textContent='اكتب الأربعة أرقام'; err.style.display='block'; return;}
+
+    var foundMot=0;
+    for(var i=0;i<DATA.length;i++){
+      if(String(DATA[i].raqm).trim()==or && String(DATA[i].sana).trim()==os){
+        if(!DATA[i].dammList) DATA[i].dammList=[];
+        if(!DATA[i].dammList.find(d=> String(d.raqm).trim()==dr && String(d.sana).trim()==ds)){
+          DATA[i].dammList.push({raqm:dr, sana:ds, id:0});
+        }
+        DATA[i].zawgy=2;
+        foundMot++;
+      }
+    }
+    if(foundMot==0){ err.textContent='الأصلي '+or+' / '+os+' مش موجود في المتداول'; err.style.display='block'; return; }
+
+    var foundAh=0;
+    for(var k=0;k<AHKAM.length;k++){
+      if(String(AHKAM[k].raqm).trim()==or && String(AHKAM[k].sana).trim()==os){
+        if(!AHKAM[k].dammList) AHKAM[k].dammList=[];
+        if(!AHKAM[k].dammList.find(d=> String(d.raqm).trim()==dr && String(d.sana).trim()==ds)){
+          AHKAM[k].dammList.push({raqm:dr, sana:ds});
+        }
+        AHKAM[k].raqmDisplay=or+' / '+os+'\n'+AHKAM[k].dammList.map(d=>d.raqm+' / '+d.sana).join('\n');
+        foundAh++;
+      }
+    }
+
+    await saveToDB();
+    ok.textContent='✅ تم الضم بنجاح في D32_DB: '+or+' / '+os+' انضم له '+dr+' / '+ds+' - عدل '+foundMot+' نسخة متداول و '+foundAh+' حكم';
+    ok.style.display='block';
+    updateInfo();
+    load();
+  }catch(e){
+    document.getElementById('err').textContent='خطأ: '+e.message;
+    document.getElementById('err').style.display='block';
+  }
+}
+async function load(){
+  await loadDB();
+  var html='';
+  DATA.filter(a=>a.dammList && a.dammList.length>0).forEach(ap=>{
+    html+='<div class="item"><b>'+ap.raqm+' / '+ap.sana+'</b> زوجي='+ap.zawgy+' | معاه: '+ap.dammList.map(d=>d.raqm+' / '+d.sana).join(' ، ')+'</div>';
+  });
+  if(!html) html='لا يوجد ضم - مثال: 1210 / 143 مع 8626 / 143 - D32_DB: '+DATA.length+' قضية';
+  document.getElementById('list').innerHTML=html;
+  updateInfo();
+}
+load();
+</script>
+</body>
+</html>

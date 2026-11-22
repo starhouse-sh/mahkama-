@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إعلان إداري - د٣٢ - ملء الصفحة</title>
+<style>
+*{box-sizing:border-box;font-family:Arial, sans-serif}
+body{margin:0;background:#f3f2ee}
+header{background:#111;color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.input{padding:8px 10px;border-radius:8px;border:1px solid #ccc;text-align:center;font-weight:bold}
+.btn{padding:8px 16px;border-radius:8px;border:none;font-weight:900;cursor:pointer}
+.btn-gold{background:#C9A227;color:#000}
+.btn-white{background:#fff;color:#000;border:1px solid #ddd}
+.paper{border:2.5px solid #000;background:#fff;padding:14px 16px;font-size:17.5px;min-height:780px;position:relative;display:flex;flex-direction:column}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;max-width:1600px;margin:auto}
+.hand-dots{font-size:8px!important;letter-spacing:2px}
+.paper-content{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.paper-footer{margin-top:auto;padding-top:10px;background:#fff;flex-shrink:0}
+.top-left{position:absolute;right:10px;top:8px;text-align:right;font-size:12px;line-height:1.3}
+.title-center{text-align:center;margin-top:2px;margin-bottom:6px}
+.moqim-block{display:flex;flex-direction:column;gap:40px;margin:10px 0;flex-shrink:0}
+.spacer{flex:1}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4 landscape; margin:0}
+  header,.no-print{display:none!important}
+  html,body{height:100%; overflow:hidden}
+  body{background:white!important; margin:3mm 5mm; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  .grid2{grid-template-columns:1fr 1fr!important; gap:8px!important; padding:0!important; height:200mm!important; overflow:hidden}
+  .paper{border:1.4px solid #000!important; height:194mm!important; max-height:194mm!important; min-height:194mm!important; padding:8px 10px!important; font-size:16px!important; overflow:hidden; display:flex!important; flex-direction:column!important}
+  .paper .top-left{font-size:10px!important}
+  .title-center div:first-child{font-size:19px!important}
+  .paper-content{flex:1!important; justify-content:space-between!important; gap:0!important}
+  .paper-footer{display:block!important; margin-top:auto!important; padding-top:6px!important; padding-bottom:30px!important; padding-left:30px!important; background:#fff!important; border-top:none!important; flex-shrink:0!important}
+  .hide-mohder{display:none!important}
+  a[href]:after{content:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+<div style="display:flex;gap:10px;align-items:center">
+<div style="width:32px;height:32px;background:#fff;color:#000;display:grid;place-items:center;font-weight:900;border-radius:6px"><span class="f-daira">٣٢</span></div>
+<b>د<span class="f-daira">٣٢</span> أسرة - إعلان إداري</b> <small style="opacity:.6;margin-right:10px" id="cnt">تحميل...</small>
+</div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input id="sRaqm" class="input" placeholder="رقم الاستئناف" style="width:130px" onkeydown="if(event.key==='Enter')doSearch()">
+<input id="sSana" class="input" placeholder="السنة" style="width:90px" onkeydown="if(event.key==='Enter')doSearch()">
+<button class="btn btn-gold" onclick="doSearch()">بحث</button>
+<button class="btn btn-white" onclick="window.print()">🖨 طباعة</button>
+</div>
+</header>
+
+<div class="no-print" id="status" style="max-width:1600px;margin:6px auto 0 auto;background:#fff;border:1px solid #ddd;padding:6px 10px;border-radius:8px;font-size:14px;display:none"></div>
+
+<div class="grid2">
+<div class="paper" id="paperR">
+<div class="top-left"><div>محكمة استئناف القاهرة</div><div>مأمورية القاهرة الجديدة</div><div>الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة</div></div>
+<div class="title-center">
+<div style="font-weight:900;font-size:23px;margin-top:26px">إعلان إداري</div>
+<div style="font-size:17px;margin-top:6px">في الاستئناف رقم <span class="f-raqm" style="font-weight:900">........</span> لسنة <span class="f-sana" style="font-weight:900">........</span> ق <span class="f-damm"></span></div>
+</div>
+<div class="paper-content" id="contentR">
+<div>
+<div style="font-size:16px;margin-bottom:12px">إنه في يوم <span class="hand-dots">................</span> الموافق <span class="hand-dots">................................</span> الساعة <span class="hand-dots">................</span> <span class="hide-mohder"></span></div>
+<div style="font-size:16px;margin-bottom:12px">بناء على طلب السيد الأستاذ / <b>أمين عام محكمة استئناف القاهرة</b></div>
+<div style="font-size:16px;margin-bottom:12px">أنا <span class="hand-dots" style="min-width:140px;display:inline-block;border-bottom:1px dotted #000">................................</span> محضر محكمة <span class="hand-dots" style="min-width:140px;display:inline-block;border-bottom:1px dotted #000">................................</span> قد انتقلت وأعلنت :-</div>
+<div style="font-size:18px;font-weight:900;margin-bottom:12px">١- السيد / <span class="f-most-only" style="font-weight:900">........</span></div>
+</div>
+<div class="moqim-block" style="font-size:16px">
+<div>المقيم / <span style="border-bottom:1px dotted #000;min-width:260px;display:inline-block;text-align:center"><span class="hand-dots">................................................................</span></span></div>
+<div>مخاطباً مع / <span style="border-bottom:1px dotted #000;min-width:240px;display:inline-block;text-align:center"><span class="hand-dots">................................................................</span></span></div>
+</div>
+<div>
+<div style="font-weight:900;text-decoration:underline;font-size:16px;margin-bottom:6px">الموضوع :-</div>
+<div style="text-align:justify;font-size:16px;line-height:1.9">
+إعلان بجلسة الاستئناف رقم <span class="f-raqm" style="font-weight:bold">........</span> لسنة <span class="f-sana" style="font-weight:bold">........</span> ق <span class="f-damm"></span> والمرفوعة من :-
+<div style="text-align:center;font-weight:900;font-size:17px;margin:8px 0"><span class="f-most">........</span> ضد <span class="f-ded">........</span></div>
+والمتداول أمام الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة – مأمورية القاهرة الجديدة.
+</div>
+</div>
+<div>
+<div style="border:1px solid #000;background:#fafafa;text-align:center;font-weight:bold;font-size:15px;padding:6px;margin:10px 0">وقد تحدد لنظره جلسة يوم <span class="f-day">........</span> الموافق <span class="f-galsa">..../..../........</span></div>
+<div style="text-align:justify;font-size:14px;line-height:1.7;border-top:1px solid #000;padding-top:8px">أنا المحضر سالف الذكر قد انتقلت إلى محل إقامة المعلن إليه وسلمته صورة من هذا الإعلان ونبهت عليه بالحضور إلى مقر محكمة استئناف القاهرة - مأمورية القاهرة الجديدة - الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة بجلسة يوم <span class="f-day" style="font-weight:bold">........</span> الموافق <span class="f-galsa" style="font-weight:bold">..../..../........</span> لسماع الحكم في الاستئناف المذكور مع حفظ كافة حقوق الطالب الأخرى.</div>
+</div>
+</div>
+<div class="paper-footer" style="padding-bottom:30px">
+<div style="font-size:14px">ولأجل العلم /</div>
+<div style="margin-top:12px; text-align:left; padding-left:30px"><div style="font-weight:900;font-size:15px">الأمين العام</div></div>
+</div>
+</div>
+
+<div class="paper" id="paperL">
+<div class="top-left"><div>محكمة استئناف القاهرة</div><div>مأمورية القاهرة الجديدة</div><div>الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة</div></div>
+<div class="title-center">
+<div style="font-weight:900;font-size:23px;margin-top:26px">إعلان إداري</div>
+<div style="font-size:17px;margin-top:6px">في الاستئناف رقم <span class="f-raqm" style="font-weight:900">........</span> لسنة <span class="f-sana" style="font-weight:900">........</span> ق <span class="f-damm"></span></div>
+</div>
+<div class="paper-content" id="contentL">
+<div>
+<div style="font-size:16px;margin-bottom:12px">إنه في يوم <span class="hand-dots">................</span> الموافق <span class="hand-dots">................................</span> الساعة <span class="hand-dots">................</span> <span class="hide-mohder"></span></div>
+<div style="font-size:16px;margin-bottom:12px">بناء على طلب السيد الأستاذ / <b>أمين عام محكمة استئناف القاهرة</b></div>
+<div style="font-size:16px;margin-bottom:12px">أنا <span class="hand-dots" style="min-width:140px;display:inline-block;border-bottom:1px dotted #000">................................</span> محضر محكمة <span class="hand-dots" style="min-width:140px;display:inline-block;border-bottom:1px dotted #000">................................</span> قد انتقلت وأعلنت :-</div>
+<div style="font-size:18px;font-weight:900;margin-bottom:12px">١- السيد / <span class="f-ded-only" style="font-weight:900">........</span></div>
+</div>
+<div class="moqim-block" style="font-size:16px">
+<div>المقيم / <span style="border-bottom:1px dotted #000;min-width:260px;display:inline-block;text-align:center"><span class="hand-dots">................................................................</span></span></div>
+<div>مخاطباً مع / <span style="border-bottom:1px dotted #000;min-width:240px;display:inline-block;text-align:center"><span class="hand-dots">................................................................</span></span></div>
+</div>
+<div>
+<div style="font-weight:900;text-decoration:underline;font-size:16px;margin-bottom:6px">الموضوع :-</div>
+<div style="text-align:justify;font-size:16px;line-height:1.9">
+إعلان بجلسة الاستئناف رقم <span class="f-raqm" style="font-weight:bold">........</span> لسنة <span class="f-sana" style="font-weight:bold">........</span> ق <span class="f-damm"></span> والمرفوعة من :-
+<div style="text-align:center;font-weight:900;font-size:17px;margin:8px 0"><span class="f-most">........</span> ضد <span class="f-ded">........</span></div>
+والمتداول أمام الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة – مأمورية القاهرة الجديدة.
+</div>
+</div>
+<div>
+<div style="border:1px solid #000;background:#fafafa;text-align:center;font-weight:bold;font-size:15px;padding:6px;margin:10px 0">وقد تحدد لنظره جلسة يوم <span class="f-day">........</span> الموافق <span class="f-galsa">..../..../........</span></div>
+<div style="text-align:justify;font-size:14px;line-height:1.7;border-top:1px solid #000;padding-top:8px">أنا المحضر سالف الذكر قد انتقلت إلى محل إقامة المعلن إليه وسلمته صورة من هذا الإعلان ونبهت عليه بالحضور إلى مقر محكمة استئناف القاهرة - مأمورية القاهرة الجديدة - الدائرة (<span class="f-daira">٣٢</span>) استئناف أسرة بجلسة يوم <span class="f-day" style="font-weight:bold">........</span> الموافق <span class="f-galsa" style="font-weight:bold">..../..../........</span> لسماع الحكم في الاستئناف المذكور مع حفظ كافة حقوق الطالب الأخرى.</div>
+</div>
+</div>
+<div class="paper-footer" style="padding-bottom:30px">
+<div style="font-size:14px">ولأجل العلم /</div>
+<div style="margin-top:12px; text-align:left; padding-left:30px"><div style="font-weight:900;font-size:15px">الأمين العام</div></div>
+</div>
+</div>
+</div>
+
+<script>
+let DATA=[];
+function toArabicNum(s){return String(s||"").replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function parseDate(s){if(!s)return null;let t=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim().split(/[\/\-\.]/);if(t.length===3){let d=parseInt(t[0],10),m=parseInt(t[1],10),y=parseInt(t[2],10);if(t[0].length===4){y=parseInt(t[0],10);m=parseInt(t[1],10);d=parseInt(t[2],10);}if(!isNaN(d)&&!isNaN(m)&&!isNaN(y)&&y>1000&&m>=1&&m<=12&&d>=1&&d<=31)return new Date(y,m-1,d);}let r=new Date(s);return isNaN(r.getTime())?null:r;}
+function dayName(s){
+  let d=parseDate(s);
+  if(!d) return "........";
+  let names=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  return names[d.getDay()];
+}
+
+function autoFit(){
+  document.querySelectorAll('.paper').forEach(paper=>{
+    paper.style.fontSize='';
+    const content = paper.querySelector('.paper-content');
+    if(content) content.style.justifyContent='space-between';
+    let tries=0;
+    while(paper.scrollHeight > paper.clientHeight + 10 && tries < 50){
+      let cur=parseFloat(getComputedStyle(paper).fontSize);
+      if(cur<=11) break;
+      paper.style.fontSize=(cur-0.5)+'px';
+      tries++;
+    }
+    if(paper.scrollHeight > paper.clientHeight){
+      if(content) content.style.justifyContent='space-around';
+    }
+  });
+}
+
+let DAIRA_CONFIG=null;
+async function loadDairaConfig(db){
+  // اقرأ رقم الدائرة كل مرة من جديد - عشان لو اتغير في صفحة البيانات يبان فورا
+  DAIRA_CONFIG=null;
+  try{
+    let db2 = db;
+    if(!db2){
+      db2 = await new Promise((res,rej)=>{let r=indexedDB.open("D32_DB",2); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
+    }
+    let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_DAIRA'];
+    let stores=['d32store','cases'];
+    for(let store of stores){
+      if(!db2.objectStoreNames.contains(store)) continue;
+      for(let k of keys){
+        let val=await new Promise(res=>{try{let tx=db2.transaction(store,"readonly");let rq=tx.objectStore(store).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>res(null);}catch(e){res(null)}});
+        if(val==null || val==="") continue;
+        let c=null;
+        try{ c = (typeof val==='string') ? JSON.parse(val) : val; }catch(e){ continue; }
+        if(c && (c.dairaNumber!=null && String(c.dairaNumber).trim()!=="" || c.daira!=null && String(c.daira).trim()!=="")){
+          DAIRA_CONFIG=c; return c;
+        }
+      }
+    }
+  }catch(e){ console.log('daira cfg err', e); }
+    try{ updateAllDairaDisplay(); }catch(e){}
+  return null;
+}
+
+function updateAllDairaDisplay(){
+  try{
+    let num = "32";
+    if(DAIRA_CONFIG && (DAIRA_CONFIG.dairaNumber||DAIRA_CONFIG.daira)){
+      num = String(DAIRA_CONFIG.dairaNumber||DAIRA_CONFIG.daira);
+    }
+    let arabic = toArabicNum(num);
+    document.querySelectorAll('.f-daira').forEach(el=>el.textContent=arabic);
+  }catch(e){ console.log(e); }
+}
+
+function getDairaNumber(fallbackCase){
+  if(DAIRA_CONFIG && (DAIRA_CONFIG.dairaNumber||DAIRA_CONFIG.daira)) return String(DAIRA_CONFIG.dairaNumber||DAIRA_CONFIG.daira);
+  if(fallbackCase) return String(fallbackCase);
+  return "32";
+}
+async function loadData(){
+ try{
+  const open=()=>new Promise((res,rej)=>{let r=indexedDB.open("D32_DB",2); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});
+  const db=await open();
+  await loadDairaConfig(db);
+  const getKey=(k)=>new Promise(r=>{let tx=db.transaction("cases","readonly");let rq=tx.objectStore("cases").get(k);rq.onsuccess=()=>{if(!rq.result)return r([]);try{let a=JSON.parse(rq.result);if(Array.isArray(a)&&a.length==2&&Array.isArray(a[1]))a=a[1];if(!Array.isArray(a))return r([]);return r(a);}catch{return r([])}};rq.onerror=()=>r([]);});
+  let v3=await getKey("D32_V3"), fin=await getKey("D32_FINAL");
+  let arr=fin.length>v3.length?fin:v3; if(!arr.length) arr=v3.length?v3:fin;
+  if(arr.length>0){
+    DATA=arr.map(o=>{
+      let ap=o.ap||o;
+      // محاولة جلب رقم الدائرة من أي حقل محتمل
+      let dairaVal = ap.daira || ap.dairaNo || ap.dayra || ap.dayrah || ap.circuit || ap.circuitNo || ap.noDaira || ap.raqmDaira || o.daira || o.dairaNo || "";
+      return{
+        raqm:String(ap.raqm||o.raqm||""),
+        sana:String(ap.sana||o.sana||""),
+        most:String(ap.mostanef||ap.most||o.most||""),
+        ded:String(ap.ded||o.ded||""),
+        galsaQadima:String(ap.galsaQadima||ap.galsa||o.galsa||""),
+        dammTo:ap.dammTo||o.dammTo||"",
+        daira:String(dairaVal||"٣٢")
+      };
+    }).filter(x=>x.raqm);
+  }
+ }catch(e){}
+ document.getElementById('cnt').textContent=toArabicNum(DATA.length)+" قضية";
+ updateAllDairaDisplay();
+}
+function fillPapers(obj){
+ fillPapers.__last = obj;
+ let raqm=obj.raqm||"........", sana=obj.sana||"........", most=obj.most||"........", ded=obj.ded||"........", galsa=obj.galsaQadima||"..../..../........", dname=dayName(galsa), dammText=obj.dammTo?`والمنضم إليه رقم ${toArabicNum(obj.dammTo)} لسنة ${toArabicNum(sana)} ق`:"";
+ let dairaNum = getDairaNumber(obj.daira || "32");
+ // لو الرقم إنجليزي حوله عربي
+ let dairaArabic = toArabicNum(dairaNum);
+ // لو فيه رقم الدائرة داخل قوسين نخليه عربي
+ document.querySelectorAll('.f-raqm').forEach(el=>el.textContent=toArabicNum(raqm));
+ document.querySelectorAll('.f-sana').forEach(el=>el.textContent=toArabicNum(sana));
+ document.querySelectorAll('.f-most').forEach(el=>el.textContent=most);
+ document.querySelectorAll('.f-ded').forEach(el=>el.textContent=ded);
+ document.querySelectorAll('.f-most-only').forEach(el=>el.textContent=most);
+ document.querySelectorAll('.f-ded-only').forEach(el=>el.textContent=ded);
+ document.querySelectorAll('.f-galsa').forEach(el=>el.textContent=toArabicNum(galsa));
+ document.querySelectorAll('.f-day').forEach(el=>el.textContent=dname);
+ document.querySelectorAll('.f-damm').forEach(el=>el.textContent=dammText);
+ document.querySelectorAll('.f-daira').forEach(el=>el.textContent=dairaArabic);
+ setTimeout(autoFit,80); setTimeout(autoFit,300);
+}
+async function doSearch(){
+ await loadDairaConfig(null);
+ updateAllDairaDisplay();
+ let r=document.getElementById('sRaqm').value.trim(), s=document.getElementById('sSana').value.trim(), st=document.getElementById('status');
+ if(!r){st.style.display='block';st.textContent='أدخل رقم الاستئناف';return;}
+ let found=DATA.find(x=> x.raqm===r && (s? x.sana===s : true)) || DATA.find(x=> x.raqm===r) || DATA.find(x=> x.raqm.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))===r.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+ if(found){fillPapers(found); st.style.display='block'; st.textContent=`✅ ${toArabicNum(found.raqm)}/${toArabicNum(found.sana)} - المستأنف: ${found.most} | ضده: ${found.ded} | الدائرة: ${toArabicNum(found.daira)} - جلسة يوم ${dayName(found.galsaQadima)} الموافق ${toArabicNum(found.galsaQadima)}`; st.style.background='#dcfce7';}
+ else{st.style.display='block'; st.textContent=`❌ غير موجود ${toArabicNum(r)}/${toArabicNum(s)}`; st.style.background='#fee2e2';}
+}
+window.onload=loadData;
+window.addEventListener('beforeprint', autoFit);
+window.addEventListener('resize', autoFit);
+</script>
+</body>
+</html>

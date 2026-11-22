@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<title>النتيجة القضائية - D32_DB فقط</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Tahoma;margin:0;padding:6px;direction:rtl;background:#fff;font-size:12px}
+.top{background:#f0f0f0;border:2px solid #000;padding:8px;border-radius:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.btn{padding:7px 12px;border:none;border-radius:5px;font-weight:bold;cursor:pointer}
+.btn-g{background:#0a7a42;color:#fff}.btn-n{background:#0f1f3a;color:#fff}.btn-o{background:#FF8C00;color:#000}.btn-r{background:#c0392b;color:#fff}
+input{border:1px solid #000;border-radius:4px;padding:4px;text-align:center;font-weight:bold;width:45px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.month{border:2px solid #000;border-radius:8px;overflow:hidden}
+.m-head{background:#0f1f3a;color:#fff;padding:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.m-body{padding:6px;background:#fffbe6;min-height:70px}
+.days{display:flex;gap:4px;flex-wrap:wrap}
+.days span{background:#fff;border:1px solid #000;border-radius:4px;padding:4px 6px;font-weight:bold;min-width:85px;text-align:center}
+.fromTo{display:flex;gap:4px;align-items:center}
+.fromTo input{width:40px!important;background:#fff;height:28px}
+.ex input{background:#ffe0e0!important}
+#modal{display:none;position:fixed;top:0;right:0;left:0;bottom:0;background:rgba(0,0,0,.6);z-index:99;padding:20px}
+.modalBox{background:#fff;border:2px solid #000;border-radius:8px;max-height:90vh;overflow:auto;padding:10px}
+.modalBox textarea{width:100%;height:300px;border:1px solid #000;padding:8px;font-family:Tahoma;direction:ltr}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="top">
+سنة <input id="year" type="number" value="2026" style="width:75px">
+الدائرة ٣٢ - D32_DB فقط
+<button class="btn btn-g" id="save">💾 حفظ الأجندة</button>
+<button class="btn btn-o" id="btnEdit">✏️ تعديل كل تواريخ السنة</button>
+<button class="btn btn-n" onclick="print()">طباعة</button>
+<span id="msg" style="color:green;font-weight:bold">جاري تحميل D32_DB...</span>
+</div>
+
+<div id="grid" class="grid"></div>
+
+<div id="modal">
+<div class="modalBox">
+<h3>تعديل كل تواريخ السنة - تقدر تعدل وتحذف وتضيف</h3>
+<p>كل تاريخ في سطر - الصيغة 2026/01/10</p>
+<textarea id="allEdit"></textarea>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn btn-g" onclick="saveFromModal()">تحديث كل تواريخ السنة</button>
+<button class="btn btn-r" onclick="closeModal()">إغلاق</button>
+</div>
+</div>
+</div>
+
+<script>
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+var MONTHS=['يناير','فبراير','مارس','ابريل','مايو','يونيو','يوليو','اغسطس','سبتمبر','اكتوبر','نوفمبر','ديسمبر'];
+var AGENDA={};
+
+async function loadAgenda(){
+  let db=await openDB();
+  let tx=db.transaction('d32store','readonly');
+  let rq=tx.objectStore('d32store').get('D32_NATIGA_V5');
+  return new Promise(res=>{
+    rq.onsuccess=()=>{if(rq.result){try{AGENDA=JSON.parse(rq.result);}catch(e){}} build(); document.getElementById('msg').textContent='تم تحميل '+Object.keys(AGENDA).length+' شهر من D32_DB'; setTimeout(()=>document.getElementById('msg').textContent='',2000); res();};
+    rq.onerror=()=>{build(); res();};
+  });
+}
+
+function fmt(y,m,d){return y+'/'+String(m).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+
+function build(){
+var html='';
+for(var m=0;m<12;m++){
+ var data=AGENDA[m]||{from:'',to:'',except:'',dates:[]};
+ var datesHtml='';
+ if(data.dates && data.dates.length>0){
+   for(var i=0;i<data.dates.length;i++) datesHtml+='<span>'+data.dates[i]+'</span>';
+ }else{
+   datesHtml='<span style="color:#999">لسه مفيش تواريخ</span>';
+ }
+ html+='<div class="month">'
+ +'<div class="m-head"><span>'+MONTHS[m]+'</span>'
+ +'<div class="fromTo">من <input id="from_'+m+'" value="'+(data.from||'')+'" type="number" oninput="gen('+m+')"> '
+ +'الى <input id="to_'+m+'" value="'+(data.to||'')+'" type="number" oninput="gen('+m+')"> '
+ +'<span class="ex">عدا <input id="ex_'+m+'" value="'+(data.except||'')+'" placeholder="يوم" type="number" oninput="gen('+m+')"></span></div></div>'
+ +'<div class="m-body"><div class="days" id="days_'+m+'">'+datesHtml+'</div></div></div>';
+}
+document.getElementById('grid').innerHTML=html;
+}
+
+function gen(m){
+var y=parseInt(document.getElementById('year').value)||2026;
+var f=document.getElementById('from_'+m).value;
+var t=document.getElementById('to_'+m).value;
+var ex=document.getElementById('ex_'+m).value;
+if(!f||!t) return;
+var from=parseInt(f), to=parseInt(t), except=ex?parseInt(ex):null;
+if(isNaN(from)||isNaN(to)) return;
+var dates=[];
+for(var d=from; d<=to; d++){
+ if(except!==null && d==except) continue;
+ var dim=new Date(y,m+1,0).getDate();
+ if(d>dim) continue;
+ dates.push(fmt(y,m+1,d));
+}
+var container=document.getElementById('days_'+m);
+container.innerHTML='';
+for(var i=0;i<dates.length;i++) container.innerHTML+='<span>'+dates[i]+'</span>';
+AGENDA[m]={from:from,to:to,except:except||'',dates:dates};
+}
+
+async function saveAllKeys(full,y){
+ let db=await openDB();
+ let tx=db.transaction('d32store','readwrite');
+ let st=tx.objectStore('d32store');
+ st.put(JSON.stringify(AGENDA),'D32_NATIGA_V5');
+ st.put(JSON.stringify(full),'D32_NATIGA_FULL');
+ st.put(JSON.stringify(y),'D32_NATIGA_YEAR');
+ st.put(JSON.stringify(full),'D32_NATIGA');
+ st.put(JSON.stringify(full),'D32_AGENDA_FULL');
+ st.put(JSON.stringify(AGENDA),'D32_AGENDA');
+ st.put(JSON.stringify(full),'NATIGA_FULL');
+ st.put(JSON.stringify(full),'NATIGA');
+ return new Promise(res=>{tx.oncomplete=()=>res();});
+}
+
+async function save(){
+var y=parseInt(document.getElementById('year').value);
+var full=[];
+for(var m=0;m<12;m++){
+ if(AGENDA[m]&&AGENDA[m].dates) full=full.concat(AGENDA[m].dates);
+}
+await saveAllKeys(full,y);
+document.getElementById('msg').textContent='تم حفظ '+full.length+' تاريخ في D32_DB - هيظهر في الجلسات';
+setTimeout(()=>document.getElementById('msg').textContent='',3000);
+}
+
+document.getElementById('btnEdit').onclick=function(){
+var full=[];
+for(var m=0;m<12;m++) if(AGENDA[m]&&AGENDA[m].dates) full=full.concat(AGENDA[m].dates);
+document.getElementById('allEdit').value=full.join('\n');
+document.getElementById('modal').style.display='block';
+}
+function closeModal(){document.getElementById('modal').style.display='none';}
+async function saveFromModal(){
+var txt=document.getElementById('allEdit').value.trim();
+var lines=txt.split('\n').map(s=>s.trim()).filter(s=>s);
+var y=parseInt(document.getElementById('year').value);
+var newAgenda={};
+for(var m=0;m<12;m++) newAgenda[m]={from:'',to:'',except:'',dates:[]};
+for(var i=0;i<lines.length;i++){
+ var parts=lines[i].split('/');
+ if(parts.length!=3) continue;
+ var yy=parseInt(parts[0]), mm=parseInt(parts[1]), dd=parseInt(parts[2]);
+ if(isNaN(mm)) continue;
+ var mi=mm-1;
+ if(!newAgenda[mi].dates) newAgenda[mi].dates=[];
+ newAgenda[mi].dates.push(lines[i]);
+}
+for(var m=0;m<12;m++){
+ if(newAgenda[m].dates.length>0){
+   var days=newAgenda[m].dates.map(d=>parseInt(d.split('/')[2]));
+   newAgenda[m].from=Math.min(...days);
+   newAgenda[m].to=Math.max(...days);
+   newAgenda[m].except='';
+ }
+}
+AGENDA=newAgenda;
+await saveAllKeys(lines,y);
+build();
+closeModal();
+document.getElementById('msg').textContent='تم تحديث كل تواريخ السنة في D32_DB - هتظهر في الجلسات';
+setTimeout(()=>document.getElementById('msg').textContent='',3000);
+}
+
+loadAgenda();
+document.getElementById('save').onclick=save;
+</script>
+</body>
+</html>

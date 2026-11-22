@@ -1,0 +1,442 @@
+<html dir="rtl" lang="ar"><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="utf-8"><title>د32 - الإحصائية الأسبوعية</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+@font-face{font-family:'Rail'; src: local('Rail'), local('Arial');}
+body{font-family:'Rail','Cairo',Arial,Tahoma,sans-serif; background:#ddd; margin:0}
+.controls{background:#0A2342;color:#fff;padding:12px;text-align:center;position:sticky;top:0;z-index:99;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.controls select,input{padding:6px 10px;font-weight:bold;border-radius:6px;border:none;font-size:14px}
+.btn{padding:8px 18px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.gold{background:#C9A227;color:#000}.white{background:#fff;color:#000}
+.page{background:#fff;border:2px solid #000;margin:16px auto;padding:12px;width:1000px;min-height:1100px;box-sizing:border-box}
+h2{margin:8px 0;text-align:center;font-size:18px}
+table{width:100%;border-collapse:collapse;direction:rtl;margin-top:12px}
+th,td{border:1px solid #000;text-align:center;padding:8px 4px;font-size:14px;font-weight:bold;height:28px}
+th{background:#e8e8e8}
+.shaded{background:#d6d6d6!important}
+.total-row{background:#eee!important;font-size:15px}
+.footer{display:flex;justify-content:space-between;margin-top:24px;font-size:14px;font-weight:bold}
+@media print{
+  body{background:#fff}
+  .controls{display:none!important}
+  .page{border:1.5px solid #000;box-shadow:none;width:190mm;min-height:260mm;margin:0 auto;padding:6mm}
+  @page{size:A4 portrait;margin:10mm}
+}
+</style></head><body>
+<div class="controls">
+  الشهر <select id="m"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select>
+  السنة <input id="y" type="number" value="2026" style="width:90px">
+  <button class="btn gold" onclick="calc()">📊 حساب الإحصائية الأسبوعية</button>
+  <button class="btn white" onclick="window.print()">🖨 طباعة</button>
+  <span id="info" style="color:#ffeb3b"></span>
+</div>
+<div id="out"></div>
+<script>
+const DB_NAME='D32_DB';
+function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function getMot(){
+  let db=await openDB();
+  let tx=db.transaction('cases','readonly');
+  let rq=tx.objectStore('cases').get('D32_V3');
+  return new Promise(r=>{
+    rq.onsuccess=()=>{if(rq.result){try{let a=JSON.parse(rq.result); if(Array.isArray(a[1])) a=a[1]; r(a); return;}catch(e){}} r([]);};
+    rq.onerror=()=>r([]);
+  });
+}
+async function getAhkam(){
+  let db=await openDB();
+  let tx=db.transaction('ahkam','readonly');
+  let rq=tx.objectStore('ahkam').get('D32_AHKAM');
+  return new Promise(r=>{
+    rq.onsuccess=()=>{if(rq.result){try{let a=JSON.parse(rq.result); if(Array.isArray(a[1])) a=a[1]; r(a); return;}catch(e){}} r([]);};
+    rq.onerror=()=>r([]);
+  });
+}
+async function getDairaInfo(){
+  var info={daira:'32', week:'', aminSir:''};
+  try{
+    let db=await openDB();
+    let tx=db.transaction('d32store','readonly');
+    let st=tx.objectStore('d32store');
+    let allKeys = await new Promise(res=>{let req=st.getAllKeys(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>res([]);});
+    let want=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_DAIRA_INFO','D32_CONFIG','D32_SETTINGS','معلومات الدائرة','بيانات الدائرة','D32_INFO','D32_DAIRA_DATA','D32_JUDGES','D32_AMIN','aminSir','amin','أمين السر','امين السر'];
+    let keys=[...new Set([...want,...allKeys])];
+    for(let k of keys){
+      let val=await new Promise(res=>{let rq=st.get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>res(null);});
+      if(!val) continue;
+      if(typeof val==='string' && /[أ-ي]/.test(val) && (k.toLowerCase().indexOf('amin')>=0 || k.indexOf('أمين')>=0 || k.indexOf('امين')>=0)){ info.aminSir=val; continue; }
+      try{
+        var obj = typeof val==='string'?JSON.parse(val):val;
+        if(!obj) continue;
+        if(typeof obj==='object'){
+          if(obj.aminSir) info.aminSir=obj.aminSir;
+          if(obj.amin) info.aminSir=obj.amin;
+          if(obj['أمين السر']) info.aminSir=obj['أمين السر'];
+          if(obj['امين السر']) info.aminSir=obj['امين السر'];
+          if(obj.dairaNumber) info.daira=obj.dairaNumber;
+          if(obj.daira) info.daira=obj.daira;
+          if(obj.week) info.week=obj.week;
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+  return info;
+}
+function toAr(n){ if(n===null||n===undefined||n==='') return ''; return String(n).replace(/[0-9]/g, d=>'٠١٢٣٤٥٦٧٨٩'[d]); }
+function toArDisplay(v){ if(v===null||v===undefined||v==='') return '٠'; if(v===0) return '٠'; return toAr(v); }
+function toEnNum(s){ return String(s||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)); }
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function parseDate(s){
+  if(!s) return null;
+  s=toEnNum(String(s).trim());
+  var m8 = s.match(/^\s*(\d{4})(\d{2})(\d{2})\s*$/);
+  if(m8) return {y:parseInt(m8[1]), m:parseInt(m8[2]), d:parseInt(m8[3]), day:parseInt(m8[3]), str:m8[1]+'/'+m8[2]+'/'+m8[3]};
+  s=s.replace(/-/g,'/').replace(/\\/g,'/').trim();
+  if(s.includes(' ')) s=s.split(' ')[0];
+  var clean = s.replace(/[^0-9\/]/g,'');
+  if(!clean.includes('/')) return null;
+  var p=clean.split('/').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));
+  if(p.length!=3) return null;
+  var y,m,d;
+  if(p[0]>1000){ y=p[0]; m=p[1]; d=p[2]; }
+  else if(p[2]>1000){ y=p[2]; m=p[1]; d=p[0]; }
+  else return null;
+  return {y:y,m:m,d:d,day:d,str:y+'/'+String(m).padStart(2,'0')+'/'+String(d).padStart(2,'0')};
+}
+function zawgyCountNormal(ap){
+  var z = ap.zawgy; if(z===undefined||z===null||z==='') z=ap.zawgyFardy; if(z===undefined||z===null||z==='') z=ap['زوجي']; if(z===undefined||z===null||String(z).trim()==='') return 1;
+  if(z===0||z==='0') return 0; var zs=toEnNum(String(z)).trim(); if(zs==='2') return 2; if(zs==='1') return 1; var nz=parseInt(zs); if(nz===2) return 2; if(nz===1) return 1; return 1;
+}
+function zawgyCountOne(ap){ return 1; }
+function contains(h,s){ if(!h) return false; h=String(h); for(var i=0;i<s.length;i++) if(h.includes(s[i])) return true; return false; }
+function getAllSessionDates(ap){
+  var cand=[];
+  var fields=[ap.galsaAsasia, ap.galsaAsasiya, ap.galsa];
+  fields.forEach(function(f){ if(f) cand.push(f); });
+  if(ap.jalsat && ap.jalsat.length){
+    ap.jalsat.forEach(function(j){ if(j.tarikh) cand.push(j.tarikh); if(j.ta2gil) cand.push(j.ta2gil); });
+  }
+  var dates=[]; var seen={};
+  cand.forEach(function(raw){
+    var cd=cleanDate(raw||'');
+    if(!cd) return;
+    if(seen[cd]) return;
+    seen[cd]=true;
+    var d=parseDate(cd);
+    if(d) dates.push(d);
+  });
+  return dates;
+}
+function getAsasiaDate(ap){
+  var all=getAllSessionDates(ap);
+  if(all.length) return all[0];
+  return null;
+}
+async function calc(){
+  var mSel=parseInt(document.getElementById('m').value), ySel=parseInt(document.getElementById('y').value);
+  var mot=await getMot(); var ahkam=await getAhkam(); var daira=await getDairaInfo();
+  var isSame=(d)=>d&&d.m===mSel&&d.y===ySel;
+
+  // === منطق المحجوز للحكم - الأسبوعية (مصحح per-date) ===
+  // الفحص يكون لتاريخ الجلسة نفسها (dateStr) مش للجلسة الأساسية بس:
+  // - لو قرار جلسة dateStr نفسها حجز للحكم -> يحسبها عادي (لا يتجاهل) حتى لو أساسيتها في شهر سابق
+  // - يتجاهل فقط: لو الحجز كان من جلسة سابقة و dateStr هي الجلسة القادمة الناتجة عن هذا الحجز
+  //   مثال 1342/143: أساسية 2026/10/05، جلسة 2026/11/01 قرارها حجز -> تتحسب في 1/11، مش تتجاهل
+  function isMahgozToIgnoreWeekly(ap, dateStr){
+    try{
+      var target = dateStr ? cleanDate(dateStr) : '';
+      function txtOf(j){
+        if(!j) return '';
+        return (j.qarar||'')+' '+(j.sababTa2gil||'')+' '+(j.halat||'')+' '+(ap.qararHokm||'')+' '+(ap.qarar||'');
+      }
+      function isMahgozTxt(txt){
+        if(!txt) return false;
+        if(txt.indexOf('إعادة للمرافعة')>=0 || txt.indexOf('اعادة للمرافعة')>=0 || txt.indexOf('اعاده للمرافعة')>=0) return false;
+        return txt.indexOf('حجز للحكم')>=0 || txt.indexOf('محجوز للحكم')>=0 || (txt.indexOf('حجز')>=0 && txt.indexOf('للحكم')>=0);
+      }
+      // 1) لو فيه جلسة بتاريخ dateStr نفسه - قرارها هو اللي يحدد
+      if(ap.jalsat && ap.jalsat.length && target){
+        for(var i=0;i<ap.jalsat.length;i++){
+          var jd = parseDate(ap.jalsat[i].tarikh||'');
+          if(jd && jd.str===target){
+            // قرار جلسة dateStr نفسها - لو حجز يتحسب، لو مش حجز يتحسب برضو (مش محجوز)
+            return false;
+          }
+        }
+        // 2) مفيش جلسة بتاريخ dateStr - القضية ظهرت عبر ta2gil / galsaQadima
+        // لو فيه جلسة سابقة تأجيلها = dateStr وقرارها حجز -> ده حجز من جلسة سابقة -> يتجاهل
+        for(var k=0;k<ap.jalsat.length;k++){
+          var jj=ap.jalsat[k];
+          var t2d = parseDate(jj.ta2gil||'');
+          if(t2d && t2d.str===target && isMahgozTxt(txtOf(jj))) return true;
+        }
+        // لو الجلسة القادمة = dateStr وآخر قرار حجز -> يتجاهل (نفس القاعدة)
+        var nextStr = cleanDate(ap.galsaQadima || '');
+        if(nextStr===target){
+          var lastTxt='';
+          for(var k2=ap.jalsat.length-1;k2>=0;k2--){ var c=txtOf(ap.jalsat[k2]); if(c.trim()){ lastTxt=c; break; } }
+          if(isMahgozTxt(lastTxt)) return true;
+        }
+        return false;
+      }
+      // 3) مفيش jalsat - اعتمد على qarar العام: لو الجلسة الأساسية = dateStr وحجز -> يتحسب
+      var basicStr = cleanDate(ap.galsaAsasia || ap.galsaAsasiya || ap['الجلسة الاساسية'] || ap.galsa || '');
+      if(basicStr===target){
+        var txtAll=(ap.qarar||'')+' '+(ap.qararHokm||'')+' '+(ap.sababTa2gil||'')+' '+(ap.halat||'');
+        if(isMahgozTxt(txtAll)) return false;
+        return false;
+      }
+      // لو الجلسة القادمة = dateStr والقرار حجز -> يتجاهل
+      var nextStr2 = cleanDate(ap.galsaQadima || '');
+      if(nextStr2===target){
+        var txtAll2=(ap.qarar||'')+' '+(ap.qararHokm||'')+' '+(ap.sababTa2gil||'')+' '+(ap.halat||'');
+        if(isMahgozTxt(txtAll2)) return true;
+      }
+      return false;
+    }catch(e){ return false; }
+  }
+
+  // الزوجي: منضم من نفس الجلسة = 1، منضم من جلسة سابقة = 2
+  function zawgyCountForP1(ap, dateStr){
+    try{
+      var dNorm = cleanDate(dateStr||'');
+      if(ap.dammTo || ap.damTo || ap.mondamList || ap.estenafatMondama){
+        var f1=['dammTo','damTo','mondamList','estenafatMondama'];
+        for(var i1=0;i1<f1.length;i1++){ if(ap[f1[i1]] && String(ap[f1[i1]]).trim()!=='') return 1; }
+      }
+      if(ap.mondam && ((Array.isArray(ap.mondam) && ap.mondam.length>0) || (typeof ap.mondam==='string' && ap.mondam.trim()!==''))) return 1;
+      var list = ap.dammList || ap.damm || null;
+      if(list && Array.isArray(list) && list.length>0){
+        var hasSameDate=false, hasSabiq=false;
+        for(var i2=0;i2<list.length;i2++){
+          var e=list[i2];
+          var dd = e && (e.dammDate||e.tarikh||e.date||'');
+          var ddN = dd ? cleanDate(String(dd)) : '';
+          if(ddN && dNorm && ddN===dNorm) hasSameDate=true;
+          else hasSabiq=true;
+        }
+        if(hasSameDate) return 1;
+        if(hasSabiq) return 2;
+      }
+    }catch(e){}
+    return zawgyCountNormal(ap);
+  }
+
+  // المحجوز للحكم فقط: أي منضم / زوجي يتحسب 2 حتى لو الضم في نفس الجلسة
+  function zawgyCountForMahgoz(ap, dateStr){
+    try{
+      if(ap.dammTo || ap.damTo || ap.mondamList || ap.estenafatMondama){
+        var f1=['dammTo','damTo','mondamList','estenafatMondama'];
+        for(var i1=0;i1<f1.length;i1++){ if(ap[f1[i1]] && String(ap[f1[i1]]).trim()!=='') return 2; }
+      }
+      if(ap.mondam && ((Array.isArray(ap.mondam) && ap.mondam.length>0) || (typeof ap.mondam==='string' && ap.mondam.trim()!==''))) return 2;
+      var list = ap.dammList || ap.damm || null;
+      if(list && Array.isArray(list) && list.length>0) return 2;
+    }catch(e){}
+    return zawgyCountNormal(ap);
+  }
+  function zawgyCountForAhkam(h){
+    try{
+      if(h.dammList && Array.isArray(h.dammList) && h.dammList.length>0) return 2;
+      if(h.damm && Array.isArray(h.damm) && h.damm.length>0) return 2;
+      if(typeof h.damm==='string' && h.damm.trim()!=='') return 2;
+      if(h.mondam && ((Array.isArray(h.mondam) && h.mondam.length>0) || (typeof h.mondam==='string' && h.mondam.trim()!==''))) return 2;
+      if(h.dammTo || h.damTo || h.mondamList || h.estenafatMondama){
+        var f1=['dammTo','damTo','mondamList','estenafatMondama','mondamat','mondamElaRaqm','raqmMondamEla'];
+        for(var i1=0;i1<f1.length;i1++){ if(h[f1[i1]] && String(h[f1[i1]]).trim()!=='') return 2; }
+      }
+      var z = h.zawgy; if(z===undefined||z===null||z==='') z=h.zawgyFardy; if(z===undefined||z===null||z==='') z=h['زوجي']; if(z===undefined||z===null||z==='') z=h['زوجى'];
+      if(z!==undefined && z!==null && String(z).trim()!==''){
+        var zs=toEnNum(String(z)).trim();
+        if(zs==='2' || parseInt(zs)===2) return 2;
+      }
+    }catch(e){}
+    return zawgyCountNormal(h);
+  }
+  function getAhkamDate(h){ return h.tarHokm||h.tarikhHokm||h.tarikh||''; }
+  function getAhkamNo3(h){ return h.mantouq||h.qar||h.no3Hokm||h.no3||''; }
+  // جمع الجلسات - منع تكرار نفس الرقم في نفس التاريخ + تجاهل المحجوز من جلسة سابقة فقط
+  var dateMapInner={};
+  mot.forEach(function(ap){
+    var allDates=getAllSessionDates(ap);
+    if(!allDates.length) return;
+    allDates.forEach(function(d){
+      if(!isSame(d)) return;
+      if(isMahgozToIgnoreWeekly(ap, d.str)) return; // تجاهل فقط حجز جلسة سابقة لهذا التاريخ نفسه
+      var key=d.str;
+      if(!dateMapInner[key]) dateMapInner[key]=new Map();
+      var raqm=String(ap.raqm||ap.id||'').trim();
+      var sana=String(ap.sana||ap['سنة الاستئناف']||'').trim();
+      var uniqKey=toEnNum(raqm)+'_'+toEnNum(sana);
+      if(!uniqKey || uniqKey=='_') uniqKey=String(ap.id||Math.random());
+      if(!dateMapInner[key].has(uniqKey)){
+        dateMapInner[key].set(uniqKey, ap);
+      }else{
+        // تكرار لنفس الرقم في نفس اليوم: فضّل السجل اللي عنده جلسة بتاريخ اليوم نفسه
+        var _old = dateMapInner[key].get(uniqKey);
+        var _oldHas=false, _newHas=false;
+        if(_old && _old.jalsat) for(var _oi=0; _oi<_old.jalsat.length; _oi++){ var _ojd=parseDate(_old.jalsat[_oi].tarikh||''); if(_ojd && _ojd.str===key){ _oldHas=true; break; } }
+        if(ap.jalsat) for(var _ni=0; _ni<ap.jalsat.length; _ni++){ var _njd=parseDate(ap.jalsat[_ni].tarikh||''); if(_njd && _njd.str===key){ _newHas=true; break; } }
+        if(!_oldHas && _newHas) dateMapInner[key].set(uniqKey, ap);
+      }
+    });
+  });
+  var dateMap={};
+  Object.keys(dateMapInner).forEach(function(k){
+    dateMap[k]=Array.from(dateMapInner[k].values());
+  });
+
+  var sortedDates=Object.keys(dateMap).sort(function(a,b){ var da=parseDate(a), db=parseDate(b); return (da.y*10000+da.m*100+da.d)-(db.y*10000+db.m*100+db.d); });
+  var rows=[];
+  var totals={rol:0,mahgoz:0,shatb:0,waqf:0,ehala:0,motadawal:0};
+  sortedDates.forEach(function(dateStr){
+    var cases=dateMap[dateStr];
+    var rol=0; var mahgoz=0, shatb=0, waqf=0, ehala=0;
+    cases.forEach(function(ap){
+      rol+=zawgyCountForP1(ap, dateStr);
+      var found=null;
+      if(ap.jalsat){
+        for(var i=0;i<ap.jalsat.length;i++){
+          var jd=parseDate(ap.jalsat[i].tarikh||'');
+          if(jd && jd.str===dateStr){ found=ap.jalsat[i]; break; }
+        }
+      }
+      // لو مفيش جلسة بتاريخ dateStr لكن الجلسة الأساسية = dateStr، استخدم قرار القضية العام كمصدر للقرار
+      if(!found){
+        var basicStr2 = cleanDate(ap.galsaAsasia || ap.galsaAsasiya || ap['الجلسة الاساسية'] || ap.galsa || '');
+        if(basicStr2===dateStr){
+          found={qarar:(ap.qarar||''), sababTa2gil:(ap.sababTa2gil||''), halat:(ap.halat||ap.qararHokm||''), tarikh:dateStr, ta2gil:(ap.galsaQadima||'')};
+        }else{
+          return;
+        }
+      }
+      var qararRaw=(found.qarar||'').toString();
+      var sababRaw=(found.sababTa2gil||'').toString();
+      var halatRaw=(found.halat||ap.halat||'').toString();
+      var combined=(qararRaw+' '+sababRaw+' '+halatRaw).trim();
+      if(!combined) return;
+      var cntNorm=zawgyCountForP1(ap, dateStr);
+      var cntOne=zawgyCountForP1(ap, dateStr);
+      var cntMahgoz=zawgyCountForMahgoz(ap, dateStr);
+      if(combined.includes('شطب') && (combined.includes('مجدد') || combined.includes('مجددة') || combined.includes('تجديد'))){
+        var tajdidDateStr = found.ta2gil || ap.galsaQadima || '';
+        var tajdidDate = parseDate(tajdidDateStr||'');
+        if(tajdidDate){
+          var tajdidObj=new Date(tajdidDate.y, tajdidDate.m-1, tajdidDate.d); tajdidObj.setHours(0,0,0,0);
+          var todayT=new Date(); todayT.setHours(0,0,0,0);
+          if(tajdidObj > todayT){
+            return;
+          }
+        } else {
+          if(contains(combined,['لجلسة قادمة','لجلسة','قادمة'])){
+            return;
+          }
+        }
+        return;
+      }
+      if(combined.includes('شطب')){
+        var shatbDateStr = found.tarikh || ap.galsaAsasia || '';
+        var shatbDateClean = cleanDate(shatbDateStr||'');
+        var tableDateClean = cleanDate(dateStr||'');
+        if(shatbDateClean && tableDateClean && shatbDateClean === tableDateClean){
+          shatb+=cntOne; return;
+        } else if(!shatbDateClean){
+          shatb+=cntOne; return;
+        } else {
+          return;
+        }
+      }
+            if(contains(combined,['حجز للحكم','محجوز للحكم'])){
+        if(!combined.includes('إعادة للمرافعة') && !combined.includes('اعادة للمرافعة')){
+          mahgoz+=cntMahgoz; return;
+        }
+      }
+      if(contains(combined,['إحالة','احالة'])){ ehala+=cntNorm; return; }
+      if(contains(combined,['وقف جزائي','وقف','إيقاف','ايقاف'])){
+        if(!contains(combined,['حجز للحكم','محجوز'])){ waqf+=cntNorm; return; }
+      }
+    });
+    var motadawal = rol - (mahgoz+shatb+waqf+ehala);
+    if(motadawal<0) motadawal=0;
+    rows.push({date:dateStr, rol:rol, mahgoz:mahgoz, shatb:shatb, waqf:waqf, ehala:ehala, motadawal:motadawal});
+    totals.rol+=rol; totals.mahgoz+=mahgoz; totals.shatb+=shatb; totals.waqf+=waqf; totals.ehala+=ehala; totals.motadawal+=motadawal;
+  });
+  var codes=['A','B','C','D','E','F','G'];
+  // عدم تكرار الأحكام: نفس رقم/سنة/تاريخ حكم/منطوق = مرة واحدة فقط (يمنع 24586/142 المكرر)
+  var ahkamUnique = (function(){
+    var seenA={}; var out=[];
+    ahkam.forEach(function(h){
+      var r = String(h.raqm||h.raqmEst||h.raqmQadya||h['رقم الاستئناف']||'').trim();
+      var sn = String(h.sana||h['سنة الاستئناف']||h.sanaEst||'').trim();
+      var dt = String(getAhkamDate(h)||'').trim();
+      var no3 = String(getAhkamNo3(h)||'').trim();
+      if(!r && !sn){ out.push(h); return; }
+      var k = toEnNum(r)+'_'+toEnNum(sn)+'_'+toEnNum(cleanDate(dt))+'_'+no3.replace(/\s+/g,' ');
+      if(seenA[k]) return;
+      seenA[k]=true; out.push(h);
+    });
+    return out;
+  })();
+  var members={}; codes.forEach(c=>members[c]={qat:0,tam:0,eada:0});
+  ahkamUnique.forEach(function(h){
+    var d=parseDate(h.tarHokm||h.tarikhHokm||h.tarikh||'');
+    if(!isSame(d)) return;
+    var code=(h.code||h.qadyCode||'').toString().trim().toUpperCase().replace(/[^A-G]/g,'');
+    if(!code){ var m=(h.code||'').toString().toUpperCase().match(/[A-G]/); if(m) code=m[0]; }
+    if(!codes.includes(code)) return;
+    var no3=(h.mantouq||h.qar||h.no3Hokm||h.no3||'').toString();
+    var cnt=zawgyCountForAhkam(h);
+    if(contains(no3,['إعادة للمرافعة','اعادة للمرافعة'])){ members[code].eada+=cnt; return; }
+    var isQ=contains(no3,['تأييد','تاييد','تعديل','إلغاء','الغاء','رفض','قبول','عدم جواز','سقوط','انقضاء','ترك','شطب','وقف','عدم اختصاص','اختصاص','بطلان','انعدام','صورية']);
+    var isT=contains(no3,['تحقيق','استجواب','خبير','خبراء','طب شرعي','للتقرير','ندب']);
+    if(isQ) members[code].qat+=cnt;
+    else if(isT) members[code].tam+=cnt;
+    else if(no3.trim()!==''&&!contains(no3,['تأجيل','للإعلان','للاعلان','للمستندات','للمذكرات','للمفردات','لإعادة','لاعادة','للمد'])) members[code].qat+=cnt;
+  });
+  var monthNames=['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var monthName=monthNames[mSel]||mSel;
+  var dairaNum=(daira.daira||'32').toString().replace(/[^0-9]/g,'')||'32';
+  var aminName=(daira.aminSir||'').trim();
+  var html='';
+  html+='<div class="page"><div style="display:flex;justify-content:space-between"><div>وزارة العدل<br>محكمة استئناف القاهرة<br>الدائرة / '+toAr(dairaNum)+' أحوال</div><div style="text-align:left"></div></div>';
+  html+='<h2>الإحصائية الأسبوعية - شهر '+toAr(mSel)+' / '+toAr(ySel)+'</h2>';
+  html+='<table><tr class="shaded"><th style="width:160px">التاريخ</th><th>الرول</th><th>المتداول</th><th>حجز الحكم</th><th>شطب</th><th>وقف</th><th>إحالة</th></tr>';
+  rows.forEach(function(r){
+    html+='<tr><td style="width:160px">'+toAr(r.date)+'</td><td>'+toArDisplay(r.rol)+'</td><td>'+toArDisplay(r.motadawal)+'</td><td>'+toArDisplay(r.mahgoz)+'</td><td>'+toArDisplay(r.shatb)+'</td><td>'+toArDisplay(r.waqf)+'</td><td>'+toArDisplay(r.ehala)+'</td></tr>';
+  });
+  if(rows.length===0){
+    html+='<tr><td colspan="7">لا توجد جلسات في هذا الشهر</td></tr>';
+  }
+  html+='<tr class="total-row"><td>الإجمالي</td><td>'+toArDisplay(totals.rol)+'</td><td>'+toArDisplay(totals.motadawal)+'</td><td>'+toArDisplay(totals.mahgoz)+'</td><td>'+toArDisplay(totals.shatb)+'</td><td>'+toArDisplay(totals.waqf)+'</td><td>'+toArDisplay(totals.ehala)+'</td></tr></table>';
+  html+='<h2 style="margin-top:32px">إحصائية الأعضاء</h2>';
+  html+='<table style="width:400px;margin:12px auto"><tr class="shaded"><th style="width:70px">عضو</th><th style="width:70px">قطعي</th><th style="width:70px">تمهيدي</th><th style="width:70px">إعادة المرافعة</th></tr>';
+  var hasAny = codes.some(c=>members[c].qat||members[c].tam||members[c].eada);
+  if(!hasAny){
+    codes.forEach(function(c){
+      html+='<tr><td style="width:70px">'+c+'</td><td style="width:70px">٠</td><td style="width:70px">٠</td><td style="width:70px">٠</td></tr>';
+    });
+  } else {
+    codes.forEach(function(c){
+      var m=members[c];
+      if(m.qat===0 && m.tam===0 && m.eada===0){
+        html+='<tr><td style="width:70px">'+c+'</td><td style="width:70px">٠</td><td style="width:70px">٠</td><td style="width:70px">٠</td></tr>';
+      } else {
+        html+='<tr><td style="width:70px">'+c+'</td><td>'+toArDisplay(m.qat)+'</td><td>'+toArDisplay(m.tam)+'</td><td>'+toArDisplay(m.eada)+'</td></tr>';
+      }
+    });
+  }
+  var totalQat=codes.reduce((s,c)=>s+members[c].qat,0);
+  var totalTam=codes.reduce((s,c)=>s+members[c].tam,0);
+  var totalEada=codes.reduce((s,c)=>s+members[c].eada,0);
+  html+='<tr class="total-row"><td style="width:70px">الإجمالي</td><td style="width:70px">'+toArDisplay(totalQat)+'</td><td style="width:70px">'+toArDisplay(totalTam)+'</td><td style="width:70px">'+toArDisplay(totalEada)+'</td></tr></table>';
+  html+='</div>';
+  document.getElementById('out').innerHTML=html;
+  document.getElementById('info').textContent=' تواريخ: '+toAr(rows.length)+' - إجمالي الرول: '+toAr(totals.rol);
+}
+document.getElementById('m').value=new Date().getMonth()+1;
+document.getElementById('y').value=new Date().getFullYear();
+calc();
+</script>
+</body></html>

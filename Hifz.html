@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>د32 - الحفظ الشامل - V100 FINAL CLEAN - بدون أخطاء</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma,Arial}
+body{background:#0e1627;direction:rtl;padding:8px;min-height:100vh}
+header{background:#0f1f3a;color:#FFD700;padding:12px 16px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:2px solid #C9A227;flex-wrap:wrap;gap:8px}
+.card{background:#fff;padding:12px;border-radius:12px;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.btn{padding:9px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;margin:2px;transition:.15s}
+.btn:hover{filter:brightness(1.1)}.btn-navy{background:#0A2342;color:#fff}.btn-gold{background:#C9A227;color:#000}.btn-green{background:#0a7a42;color:#fff}.btn-red{background:#b00020;color:#fff}.btn-dark{background:#333;color:#fff}.btn-blue{background:#1976d2;color:#fff}
+.input{padding:8px;border:2px solid #888;border-radius:8px;font-weight:bold;min-width:80px;background:#fff}
+.table-wrap{overflow:auto;border:1px solid #999;border-radius:8px;background:#fff;margin-top:10px;max-height:55vh}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{position:sticky;top:0;background:#0A2342;color:#fff;padding:8px 4px;font-size:11px;border:1px solid #000;z-index:2}
+td{padding:5px;font-size:11px;text-align:center;border:1px solid #ccc;vertical-align:middle;overflow:hidden}
+td input.raqmInput{width:85px;padding:6px;border:2px solid #0A2342;border-radius:6px;text-align:center;font-weight:bold;font-size:13px}
+tr.filled{background:#e8f5e9}tr.notfound{background:#f8d7da}tr.notQat3i{background:#fff3cd}
+.badge{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:bold;display:inline-block}
+.filter-bar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;padding:12px;background:#f8f9fa;border-radius:10px;border:1px solid #ddd}
+.rabta-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin-top:10px}
+.rabta-card{border:2px solid #0A2342;border-radius:10px;padding:10px;background:#fff}
+.rabta-card.hasImage{border-color:#0a7a42;background:#f0fff0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;z-index:9999;align-items:center;justify-content:center;padding:10px}
+.modalBox{background:#fff;padding:14px;border-radius:12px;max-width:95vw;max-height:92vh;overflow:auto;border:3px solid #0A2342;width:700px}
+.modalBox.imgBox{width:auto;max-width:90vw}
+.modalBox img{max-width:100%;height:auto;border:2px solid #000}
+.resultGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.resultItem{background:#f8f9fa;border:1px solid #ddd;border-radius:8px;padding:8px}
+.resultItem b{display:block;color:#0A2342;font-size:11px;margin-bottom:3px}
+.resultItem span{font-size:13px;font-weight:bold}
+.statusSent{background:#d4edda;color:#155724;padding:8px;border-radius:8px;border:2px solid #0a7a42;text-align:center;font-weight:bold;margin-top:10px}
+.statusNotSent{background:#f8d7da;color:#721c24;padding:8px;border-radius:8px;border:2px solid #b00020;text-align:center;font-weight:bold;margin-top:10px}
+.tabs{display:flex;gap:6px;margin-top:8px}
+.tabBtn{padding:10px 16px;border:none;border-radius:8px 8px 0 0;font-weight:bold;cursor:pointer;background:#ddd;color:#000}
+.tabBtn.active{background:#fff;color:#0A2342;border:2px solid #0A2342;border-bottom:none}
+.tabContent{display:none}.tabContent.active{display:block}
+.livePreview{background:#f0f8ff;border:2px solid #1976D2;border-radius:8px;padding:10px;margin-top:8px;display:none}
+.warn-modal-box{width:480px;max-width:95vw;border-color:#b00020}
+.warn-icon{font-size:42px;text-align:center;margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+<div><h1>📦 د32 - الحفظ الشامل - V100</h1><div style="font-size:11px;color:#fff">بدون أخطاء - 6 نسخ احتياطية في IndexedDB - بدون localStorage - DB_VER=2</div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn" style="background:#fff;color:#0A2342" onclick="location.href='index.html'">🏠 الرئيسية</button>
+<button class="btn btn-gold" onclick="exportRabtat()">💾 تصدير</button>
+<button class="btn btn-blue" onclick="document.getElementById('importFile').click()">📥 استيراد</button>
+<input type="file" id="importFile" style="display:none" accept=".json" onchange="importRabtat(event)">
+<button class="btn btn-blue" onclick="openSearchModal()">🔍 استعلام</button>
+<button class="btn btn-green" onclick="recoverRabtat()">♻ استرجاع الربط</button>
+</div>
+</header>
+
+<div class="tabs">
+<button class="tabBtn active" id="tabBtn0" onclick="switchTab(0)">📦 إنشاء الربط</button>
+<button class="tabBtn" id="tabBtn1" onclick="switchTab(1)">📚 الربط المحفوظة</button>
+<button class="tabBtn" id="tabBtn2" onclick="switchTab(2)">🔍 جلب جماعي</button>
+</div>
+
+<div class="card tabContent active" id="tab0">
+<div class="filter-bar">
+<div><b>السنة</b><br><select id="sanaSel" class="input" style="min-width:100px" onchange="updateRabtaNo()"></select></div>
+<div><b>رقم الرابطة</b><br><input id="rabtaNo" type="number" class="input" style="width:80px;text-align:center" value="1" min="1"></div>
+<div><b>تاريخ الرابطة</b><br><input id="tarikhRabta" type="date" class="input" style="width:150px"></div>
+<div><b>عدد الصفوف</b><br><select id="rowsCount" class="input" style="width:80px"><option value="19" selected>19</option><option value="20">20</option><option value="38">38</option><option value="50">50</option><option value="100">100</option></select></div>
+<button class="btn btn-navy" onclick="generateRows()">🔄 إنشاء جدول</button>
+<button class="btn btn-green" onclick="saveRabta()">💾 حفظ</button>
+<button class="btn btn-dark" onclick="newRabta()">➕ جديدة</button>
+<button class="btn btn-gold" onclick="printRabta()">🖨 طباعة شبرا</button>
+<div id="log" style="font-weight:bold;color:#0A2342"></div>
+</div>
+
+<div style="margin-top:10px;background:#fffbe6;border:2px solid #C9A227;border-radius:10px;padding:10px">
+<h4>➕ إضافة سريعة</h4>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:6px">
+<div><b>السنة</b><br><select id="quickSana" class="input" style="width:90px" onchange="onQuickSanaChange()"></select></div>
+<div><b>رقم</b><br><input id="quickRaqm" class="input" style="width:110px" placeholder="رقم" oninput="onQuickRaqmInput()"></div>
+<button class="btn btn-blue" onclick="quickAdd()">➕ إضافة</button>
+<span id="quickLog" style="font-size:11px;font-weight:bold"></span>
+</div>
+<div id="livePreview" class="livePreview">
+<div><b>📋 البيانات:</b> <span id="prevRaqm"></span></div>
+<div style="margin-top:6px;line-height:1.8;font-size:12px">
+<div>👤 <b>المستأنف:</b> <span id="prevMost"></span></div>
+<div>👤 <b>ضده:</b> <span id="prevDed"></span></div>
+<div>📅 <b>تاريخ الحكم:</b> <span id="prevTar"></span> | ⚖ <b>النوع:</b> <span id="prevNoa"></span></div>
+<div id="prevRelated" style="margin-top:6px"></div>
+</div>
+</div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><b id="tableTitle">رابطة 1 - سنة 143</b><span id="filledCount" style="background:#0a7a42;color:#fff;padding:4px 10px;border-radius:12px;font-size:12px">0 / 19</span></div>
+<div class="table-wrap"><table id="rabtaTable">
+<thead><tr><th style="width:30px">م</th><th style="width:95px">رقم الاستئناف</th><th style="width:110px">رقم/سنة</th><th style="width:160px">المستأنف</th><th style="width:160px">ضده</th><th style="width:90px">تاريخ الحكم</th><th style="width:90px">نوع الحكم</th><th style="width:90px">الحالة</th><th style="width:35px">✖</th></tr></thead>
+<tbody id="rabtaBody"></tbody>
+</table></div>
+</div>
+
+<div class="card tabContent" id="tab1">
+<h3>📚 الربط المحفوظة - كل الربط هنا</h3>
+<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+<button class="btn btn-dark" onclick="loadRabtat()">🔄 تحديث الربط</button>
+<button class="btn btn-green" onclick="recoverRabtat()">♻ استرجاع تلقائي للربط الضايعة</button>
+<button class="btn btn-gold" onclick="rebuildIndex()">🔧 إعادة بناء الفهرس</button>
+<span id="rabtatInfo" style="font-size:11px;color:#0A2342"></span>
+<span id="recoveryLog" style="font-size:11px;background:#fff3cd;padding:4px 8px;border:1px solid #000;border-radius:4px"></span>
+</div>
+<div class="rabta-list" id="rabtatList"></div>
+</div>
+
+<div class="card tabContent" id="tab2">
+<div class="filter-bar">
+<div><b>من شهر</b><br><select id="fromMonth" class="input"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><select id="fromYear" class="input" style="width:90px"></select></div>
+<div><b>إلى شهر</b><br><select id="toMonth" class="input"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected>7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><select id="toYear" class="input" style="width:90px"></select></div>
+<label style="font-size:11px"><input type="checkbox" id="onlyNotSent" checked> غير مرسل فقط</label>
+<label style="font-size:11px"><input type="checkbox" id="onlyQat3i" checked> قطعي فقط</label>
+<label style="font-size:11px">عدد كل رابطة <input id="perRabta" type="number" value="50" style="width:60px" class="input"></label>
+<button class="btn btn-navy" onclick="fetchAhkam()">🔍 جلب</button>
+<button class="btn btn-gold" onclick="printSarky()">🖨 طباعة شبرا</button>
+</div>
+<div class="table-wrap" style="max-height:45vh"><table><thead><tr><th>م</th><th>رابطة</th><th>م في الرابطة</th><th>رقم/سنة</th><th>المستأنف</th><th>ضده</th><th>تاريخ الحكم</th><th>حالة</th></tr></thead><tbody id="hifzBody"><tr><td colspan="8">اختر الفترة</td></tr></tbody></table></div>
+</div>
+
+<div class="modal" id="searchModal"><div class="modalBox"><div style="display:flex;justify-content:space-between;align-items:center"><h3>🔍 استعلام</h3><button class="btn btn-red" onclick="closeSearchModal()">✖</button></div>
+<div class="filter-bar" style="margin-top:10px">
+<div><b>رقم</b><br><input id="qRaqm" class="input" style="width:110px" placeholder="123"></div>
+<div><b>السنة</b><br><select id="qSana" class="input" style="width:100px"></select></div>
+<button class="btn btn-navy" onclick="doSearch()">🔍 بحث</button>
+<div id="qLog" style="font-weight:bold"></div>
+</div>
+<div id="searchResult" style="display:none">
+<div class="resultGrid">
+<div class="resultItem"><b>رقم / سنة</b><span id="rRaqmSana"></span></div>
+<div class="resultItem"><b>المرتبط</b><span id="rRelated"></span></div>
+<div class="resultItem"><b>المستأنف</b><span id="rMostanef"></span></div>
+<div class="resultItem"><b>ضده</b><span id="rDed"></span></div>
+<div class="resultItem"><b>تاريخ الحكم</b><span id="rTarikh"></span></div>
+<div class="resultItem"><b>نوع الحكم</b><span id="rNoaHokm"></span></div>
+<div class="resultItem" style="grid-column:1/-1"><b>منطوق</b><span id="rQarar" style="font-size:11px"></span></div>
+</div>
+<div id="rHifzStatus"></div>
+<div id="rActions" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"></div>
+</div>
+</div></div>
+
+<div class="modal" id="imgModal"><div class="modalBox imgBox"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><b id="imgTitle">كشف الاستلام</b><button class="btn btn-red" onclick="closeImgModal()">✖</button></div><img id="modalImg" src=""><div style="margin-top:8px;text-align:center"><a id="downloadImg" class="btn btn-navy" download="kashf.jpg">⬇ تحميل</a></div></div></div>
+
+<div class="modal" id="yearWarnModal"><div class="modalBox warn-modal-box">
+<div class="warn-icon">⚠</div>
+<h3 style="text-align:center;color:#b00020">تنبيه - السنة مختلفة!</h3>
+<div id="yearWarnText" style="margin-top:12px;background:#fff3cd;border:2px solid #ff9800;border-radius:8px;padding:12px;text-align:center;line-height:1.8;font-weight:bold;font-size:13px"></div>
+<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+<button class="btn btn-green" style="padding:12px 28px;font-size:14px" onclick="confirmYearDiff()">✅ أكمل</button>
+<button class="btn btn-red" style="padding:12px 28px;font-size:14px" onclick="cancelYearDiff()">❌ إلغاء</button>
+</div>
+</div></div>
+
+<script>
+// ================== إعدادات قاعدة البيانات ==================
+var DATA=[], AHKAM=[], RABTAT=[];
+const DB_NAME='D32_DB';
+const DB_VER=2;
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    let req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      let db=e.target.result;
+      if(!db.objectStoreNames.contains('cases')) db.createObjectStore('cases');
+      if(!db.objectStoreNames.contains('ahkam')) db.createObjectStore('ahkam');
+      if(!db.objectStoreNames.contains('d32store')) db.createObjectStore('d32store');
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbGet(key,store){
+  let db=await openDB();
+  return new Promise(r=>{
+    let tx=db.transaction(store,'readonly');
+    let req=tx.objectStore(store).get(key);
+    req.onsuccess=()=>r(req.result);
+    req.onerror=()=>r(null);
+  });
+}
+async function idbSet(key,val,store){
+  let db=await openDB();
+  return new Promise((resolve,reject)=>{
+    let tx=db.transaction(store,'readwrite');
+    tx.objectStore(store).put(val,key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=e=>reject(e);
+  });
+}
+async function idbGetAllKeys(store){
+  let db=await openDB();
+  return new Promise(r=>{
+    let tx=db.transaction(store,'readonly');
+    let req=tx.objectStore(store).getAllKeys();
+    req.onsuccess=()=>r(req.result||[]);
+    req.onerror=()=>r([]);
+  });
+}
+async function idbGetAll(store){
+  let db=await openDB();
+  return new Promise(r=>{
+    let tx=db.transaction(store,'readonly');
+    let objStore=tx.objectStore(store);
+    let req=objStore.getAll();
+    let keysReq=objStore.getAllKeys();
+    let all=[], keys=[];
+    req.onsuccess=()=>{ all=req.result||[]; };
+    keysReq.onsuccess=()=>{ keys=keysReq.result||[]; };
+    tx.oncomplete=()=>r({values:all, keys:keys});
+  });
+}
+
+var DAIRA_NUM='32';
+var DAIRA='32';
+async function loadDairaNum(){
+  try{
+    var v=await idbGet('D32_DAIRA_CONFIG','d32store');
+    if(!v) v=await idbGet('D32_CIRCLE','d32store');
+    if(!v) v=await idbGet('D32_CONFIG','d32store');
+    if(!v) v=await idbGet('D32_DAIRA','d32store');
+    if(v){
+      var c=(typeof v==='string')?JSON.parse(v):v;
+      var n=c.dairaNumber||c.daira||c.circle||c.number||'';
+      if(n){ DAIRA_NUM=String(n); DAIRA=String(n); }
+    }
+  }catch(e){}
+  return DAIRA_NUM;
+}
+
+
+// ================== تحميل واسترجاع آمن 6 طبقات ==================
+async function loadFromDB(){
+ try{
+  let r1=await idbGet('D32_V3','cases');
+  if(r1){try{let a=JSON.parse(r1);if(Array.isArray(a[1]))a=a[1];DATA=a;}catch(e){}}
+  let r2=await idbGet('D32_AHKAM','ahkam');
+  if(r2){try{let a=JSON.parse(r2);if(Array.isArray(a[1]))a=a[1];AHKAM=a;}catch(e){}}
+
+  let idx=[];
+  let sourcesChecked=[];
+  let allKeys=await idbGetAllKeys('d32store');
+  
+  async function tryLoadIndex(keyName){
+    let v=await idbGet(keyName,'d32store');
+    if(v){
+      try{
+        let arr=JSON.parse(v);
+        if(Array.isArray(arr) && arr.length>0){
+          sourcesChecked.push(keyName+':'+arr.length);
+          return arr;
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+  async function tryLoadFullBackup(keyName){
+    let v=await idbGet(keyName,'d32store');
+    if(v){
+      try{
+        let obj=JSON.parse(v);
+        if(obj && typeof obj==='object' && Object.keys(obj).length>0){
+          let recovered=[];
+          Object.keys(obj).forEach(k=>{
+            try{
+              let o=typeof obj[k]==='string'?JSON.parse(obj[k]):obj[k];
+              if(o && o.id && o.cases) recovered.push(o);
+            }catch(e){}
+          });
+          if(recovered.length>0){
+            sourcesChecked.push(keyName+':'+recovered.length);
+            return recovered;
+          }
+        }
+      }catch(e){}
+    }
+    return null;
+  }
+
+  idx = await tryLoadIndex('RABTAT_INDEX') || [];
+  if(idx.length===0) idx = await tryLoadIndex('RABTAT_INDEX_BACKUP') || [];
+  if(idx.length===0) idx = await tryLoadIndex('RABTAT_INDEX_SAFE') || [];
+  if(idx.length===0) idx = await tryLoadIndex('RABTAT_INDEX_V2') || [];
+  if(idx.length===0){
+    let v=await idbGet('RABTAT_INDEX_EMERGENCY','cases');
+    if(v){ try{ let arr=JSON.parse(v); if(Array.isArray(arr)&&arr.length>0){ idx=arr; sourcesChecked.push('cases:'+arr.length); } }catch(e){} }
+  }
+  if(idx.length===0){
+    let v=await idbGet('RABTAT_INDEX_AHKAM','ahkam');
+    if(v){ try{ let arr=JSON.parse(v); if(Array.isArray(arr)&&arr.length>0){ idx=arr; sourcesChecked.push('ahkam:'+arr.length); } }catch(e){} }
+  }
+
+  RABTAT=[];
+  for(let k of idx){
+    let v=await idbGet(k,'d32store');
+    if(!v) v=await idbGet('SAFE_'+k,'d32store');
+    if(v){ try{ let o=typeof v==='string'?JSON.parse(v):v; if(o && o.id && o.cases) RABTAT.push(o); }catch(e){} }
+  }
+
+  if(RABTAT.length===0){
+    let full = await tryLoadFullBackup('RABTAT_BACKUP_FULL');
+    if(!full) full = await tryLoadFullBackup('RABTAT_ALL_SAFE');
+    if(!full) full = await tryLoadFullBackup('RABTAT_DATA_V2');
+    if(!full){
+      let v=await idbGet('RABTAT_BACKUP_EMERGENCY','cases');
+      if(v){ try{ let obj=JSON.parse(v); let rec=[]; Object.keys(obj).forEach(k=>{ try{ let o=typeof obj[k]==='string'?JSON.parse(obj[k]):obj[k]; if(o&&o.id&&o.cases) rec.push(o); }catch(e){} }); if(rec.length>0){ full=rec; sourcesChecked.push('casesFULL:'+rec.length); } }catch(e){} }
+    }
+    if(!full){
+      let v=await idbGet('RABTAT_BACKUP_AHKAM','ahkam');
+      if(v){ try{ let obj=JSON.parse(v); let rec=[]; Object.keys(obj).forEach(k=>{ try{ let o=typeof obj[k]==='string'?JSON.parse(obj[k]):obj[k]; if(o&&o.id&&o.cases) rec.push(o); }catch(e){} }); if(rec.length>0){ full=rec; sourcesChecked.push('ahkamFULL:'+rec.length); } }catch(e){} }
+    }
+    if(full && full.length>0) RABTAT=full;
+  }
+
+  if(RABTAT.length===0 || idx.length===0){
+    let recovered=0;
+    let seen=new Set(RABTAT.map(r=>r.id));
+    for(let k of allKeys){
+      let ks=String(k);
+      if(ks.startsWith('SAFE_')) ks=ks.slice(5);
+      if(ks==='RABTAT_INDEX' || ks.includes('RABTAT_') || ks.startsWith('D32_') || ks.startsWith('ERSAL_')) continue;
+      if(!(ks.includes('-') && ks.split('-').length===2)) continue;
+      if(seen.has(ks)) continue;
+      let v=await idbGet(k,'d32store');
+      if(!v) v=await idbGet('SAFE_'+k,'d32store');
+      if(v){
+        try{
+          let o=typeof v==='string'?JSON.parse(v):v;
+          if(o && o.cases && Array.isArray(o.cases) && o.sana && o.rabtaNo){
+            if(!seen.has(o.id)){ RABTAT.push(o); seen.add(o.id); recovered++; }
+          }
+        }catch(e){}
+      }
+    }
+    if(recovered>0) sourcesChecked.push('scan:'+recovered);
+  }
+
+  if(RABTAT.length>0) await saveRabtatToDB();
+
+  let logMsg = sourcesChecked.length>0 ? sourcesChecked.join(' | ') : 'فحص شامل';
+  document.getElementById('log').textContent='تم تحميل '+DATA.length+' متداول و '+AHKAM.length+' حكم و '+RABTAT.length+' رابطة ['+logMsg+']';
+  let info=document.getElementById('rabtatInfo');
+  if(info) info.textContent='إجمالي '+RABTAT.length+' رابطة محفوظة'+(RABTAT.length===0?' - لا يوجد':' - آمنة في 6 أماكن');
+  let rLog=document.getElementById('recoveryLog');
+  if(rLog){
+    if(RABTAT.length>0) rLog.textContent='✅ '+RABTAT.length+' رابطة - '+logMsg;
+    else rLog.textContent='⚠ لا يوجد ربط - سيتم حفظ الجديد في 6 أماكن آمنة';
+  }
+  populateSana(); renderRabtatList(); updateRabtaNo();
+ }catch(e){ document.getElementById('log').textContent='خطأ: '+e; console.error(e); }
+}
+
+async function recoverRabtat(){
+  let log=document.getElementById('recoveryLog');
+  if(log) log.textContent='🔍 جاري فحص كل المفاتيح...';
+  let allData=await idbGetAll('d32store');
+  let keys=allData.keys||[]; let values=allData.values||[];
+  let recovered=[];
+  for(let i=0;i<keys.length;i++){
+    let k=keys[i]; let v=values[i]; let ks=String(k);
+    if(ks==='RABTAT_INDEX' || ks==='D32_V3' || ks.startsWith('D32_') || ks.startsWith('ERSAL_')) continue;
+    if(/^\d+-\d+$/.test(ks) || /^\d+-SAFE/.test(ks) || ks.startsWith('SAFE_')){
+      try{
+        let o=typeof v==='string'?JSON.parse(v):v;
+        if(o && o.cases && o.sana) recovered.push(o);
+      }catch(e){}
+    }
+  }
+  if(recovered.length>0){
+    let map={}; RABTAT.forEach(r=>map[r.id]=r); recovered.forEach(r=>map[r.id]=r);
+    RABTAT=Object.values(map);
+    await saveRabtatToDB();
+    if(log) log.textContent='✅ تم استرجاع '+recovered.length+' - الإجمالي '+RABTAT.length;
+    renderRabtatList();
+    alert('✅ تم استرجاع '+recovered.length+' رابطة\nالإجمالي: '+RABTAT.length);
+  }else{
+    if(log) log.textContent='⚠ لم يتم العثور - المفاتيح: '+keys.length;
+    alert('لم يتم العثور على ربط إضافية\nعدد المفاتيح: '+keys.length);
+  }
+}
+async function rebuildIndex(){
+  if(!confirm('إعادة بناء فهرس الربط؟')) return;
+  await recoverRabtat();
+}
+
+// ================== حفظ آمن 6 طبقات - Sequential ==================
+async function saveRabtatToDB(){
+  try{
+    let db1=await openDB();
+    await new Promise((res)=>{
+      let tx=db1.transaction('d32store','readwrite');
+      let st=tx.objectStore('d32store');
+      for(let r of RABTAT){
+        st.put(JSON.stringify(r), r.id);
+        st.put(JSON.stringify(r), 'SAFE_'+r.id);
+      }
+      st.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX');
+      st.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX_BACKUP');
+      st.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX_SAFE');
+      st.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX_V2');
+      let allData={}; RABTAT.forEach(r=>{ allData[r.id]=JSON.stringify(r); });
+      st.put(JSON.stringify(allData), 'RABTAT_BACKUP_FULL');
+      st.put(JSON.stringify(allData), 'RABTAT_ALL_SAFE');
+      st.put(JSON.stringify(allData), 'RABTAT_DATA_V2');
+      st.put(JSON.stringify(allData), 'RABTAT_BACKUP_V2');
+      st.put(JSON.stringify(RABTAT), 'RABTAT_LIST_V2');
+      tx.oncomplete=()=>res(); tx.onerror=()=>res();
+    });
+
+    try{
+      let db2=await openDB();
+      await new Promise((res)=>{
+        let tx2=db2.transaction('cases','readwrite');
+        let st2=tx2.objectStore('cases');
+        let all2={}; RABTAT.forEach(r=>{ all2[r.id]=JSON.stringify(r); });
+        st2.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX_EMERGENCY');
+        st2.put(JSON.stringify(all2), 'RABTAT_BACKUP_EMERGENCY');
+        tx2.oncomplete=()=>res(); tx2.onerror=()=>res();
+      });
+    }catch(e){}
+
+    try{
+      let db3=await openDB();
+      await new Promise((res)=>{
+        let tx3=db3.transaction('ahkam','readwrite');
+        let st3=tx3.objectStore('ahkam');
+        let all3={}; RABTAT.forEach(r=>{ all3[r.id]=JSON.stringify(r); });
+        st3.put(JSON.stringify(RABTAT.map(r=>r.id)), 'RABTAT_INDEX_AHKAM');
+        st3.put(JSON.stringify(all3), 'RABTAT_BACKUP_AHKAM');
+        tx3.oncomplete=()=>res(); tx3.onerror=()=>res();
+      });
+    }catch(e){}
+
+  }catch(e){ console.error('save err',e); }
+}
+
+// ================== أدوات مساعدة ==================
+function toAr(n){return String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function toArText(s){return String(s||'').replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
+function normalizeNum(s){if(!s&&s!==0)return'';s=String(s);const ar='٠١٢٣٤٥٦٧٨٩';const per='۰۱۲۳۴۵۶۷۸۹';let o='';for(let ch of s){let i=ar.indexOf(ch);if(i>=0){o+=i;continue;}i=per.indexOf(ch);if(i>=0){o+=i;continue;}o+=ch;}return o.trim().replace(/\s+/g,'');}
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/-/g,'/').trim(); if(/^\d+(\.\d+)?$/.test(s)){let num=parseFloat(s); if(num>30000){let d=new Date(Math.round((num-25569)*86400*1000)); return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');}} var m=s.match(/\d+/g);if(!m||m.length<3)return s;var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function parseDateForFilter(s){let cd=cleanDate(s);if(!cd)return null;let p=cd.split('/');if(p.length<3)return null;return{str:cd,y:parseInt(p[0]),mo:parseInt(p[1]),d:parseInt(p[2])};}
+function getQararText(a,d){return (a.qarar||a.qar||a.mantouq||a.natiga|| (d&&d.qarar)|| (d&&d.qar)||'').toString();}
+function isQat3i(a,d){let txt=getQararText(a,d).toLowerCase();if(!txt)return true;let bad=['تمهيدي','تمهيدى','اعادة','إعادة','للمرافعة','المرافعة','مرافعة','خبير','خبراء','طب شرعي','طب شرعى','استجواب','تحقيق'];for(let kw of bad){if(txt.indexOf(kw)>-1)return false;}return true;}
+function getHokmType(qarar){let t=(qarar||'').toLowerCase();if(t.indexOf('تأييد')>-1||t.indexOf('تاييد')>-1) return 'تأييد';if(t.indexOf('الغاء')>-1||t.indexOf('إلغاء')>-1) return 'إلغاء';if(t.indexOf('تعديل')>-1) return 'تعديل';if(t.indexOf('عدم جواز')>-1) return 'عدم جواز';if(t.indexOf('سقوط')>-1) return 'سقوط';if(t.indexOf('رفض')>-1) return 'رفض';return 'قطعي';}
+function getHokmDate(a,d){ let cands=[a.tarikhHokm,a.tarHokm,a.tarHokmAwal,a.tarikh,a.galsaAslia,a.tar,d&&d.tarikhHokm,d&&d.tarHokm].filter(Boolean); for(let cand of cands){let p=parseDateForFilter(cand);if(p)return p;} return null; }
+function getHokmDateRaw(a){return a.tarikhHokm||a.tarHokm||a.tar||a.tarikh||'';}
+
+// ================== واجهة ==================
+function populateSana(){
+  let ySel=document.getElementById('sanaSel');
+  let qSel=document.getElementById('qSana');
+  let quickSel=document.getElementById('quickSana');
+  if(ySel.options.length>1) return;
+  let sanawat=new Set();
+  AHKAM.forEach(a=>{if(a.sana) sanawat.add(String(a.sana).trim())});
+  DATA.forEach(d=>{if(d.sana) sanawat.add(String(d.sana).trim())});
+  let arr=Array.from(sanawat).filter(s=>s).sort((a,b)=>parseInt(a)-parseInt(b));
+  if(arr.length===0) arr=['142','143','144','145'];
+  ySel.innerHTML=''; qSel.innerHTML=''; quickSel.innerHTML='<option value="">اختر السنة</option>';
+  arr.forEach(s=>{
+    let o=document.createElement('option');o.value=s;o.textContent=s;ySel.appendChild(o.cloneNode(true));
+    let o2=document.createElement('option');o2.value=s;o2.textContent=s;qSel.appendChild(o2);
+    let o3=document.createElement('option');o3.value=s;o3.textContent=s+' ق';quickSel.appendChild(o3);
+  });
+  if(arr.includes('143')) ySel.value='143'; else ySel.value=arr[arr.length-1];
+  qSel.value=arr.includes('143')?'143':arr[0];
+  quickSel.value=ySel.value;
+  let fromY=document.getElementById('fromYear');let toY=document.getElementById('toYear');
+  if(fromY && fromY.options.length===0){
+    let cur=new Date().getFullYear();
+    for(let i=cur-6;i<=cur+1;i++){
+      let o=document.createElement('option');o.value=i;o.textContent=i;fromY.appendChild(o);
+      let o2=o.cloneNode(true);toY.appendChild(o2);
+    }
+    fromY.value=cur;toY.value=cur;
+  }
+  updateRabtaNo();
+}
+function updateRabtaNo(){
+  let sana=document.getElementById('sanaSel').value||'143';
+  let max=0;RABTAT.forEach(r=>{if(String(r.sana)==String(sana) && r.rabtaNo>max) max=r.rabtaNo;});
+  document.getElementById('rabtaNo').value=max+1;
+  document.getElementById('tableTitle').textContent='رابطة '+toArText(max+1)+' - سنة '+toArText(sana);
+  let qs=document.getElementById('quickSana'); if(qs) qs.value=sana;
+}
+function switchTab(i){
+  document.querySelectorAll('.tabBtn').forEach((b,idx)=>{b.classList.toggle('active', idx==i)});
+  document.querySelectorAll('.tabContent').forEach((c,idx)=>{c.classList.toggle('active', idx==i)});
+}
+function generateRows(){
+  let count=parseInt(document.getElementById('rowsCount').value||19);
+  let sana=document.getElementById('sanaSel').value;
+  let rabtaNo=document.getElementById('rabtaNo').value;
+  document.getElementById('tableTitle').textContent='رابطة '+toArText(rabtaNo)+' - سنة '+toArText(sana)+' - '+toAr(count)+' قضية';
+  let tbody=document.getElementById('rabtaBody'); tbody.innerHTML='';
+  for(let i=1;i<=count;i++){
+    let tr=document.createElement('tr');
+    let td0=document.createElement('td'); td0.textContent=toAr(i);
+    let td1=document.createElement('td'); let inp=document.createElement('input');
+    inp.className='raqmInput'; inp.dataset.idx=i; inp.placeholder='رقم'; inp.setAttribute('data-i', i);
+    inp.onblur=function(){ lookupCase(this); };
+    inp.oninput=function(){ if(this.value.trim().length>=1){ lookupCase(this); } };
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ lookupCase(this); let nxt=document.querySelector('input[data-idx="'+(this.dataset.i*1+1)+'"]'); if(nxt) nxt.focus(); } };
+    td1.appendChild(inp);
+    let td2=document.createElement('td'); td2.className='cellRaqmSana';
+    let td3=document.createElement('td'); td3.className='cellMostanef'; td3.style.textAlign='right';
+    let td4=document.createElement('td'); td4.className='cellDed'; td4.style.textAlign='right';
+    let td5=document.createElement('td'); td5.className='cellTarikh';
+    let td6=document.createElement('td'); td6.className='cellNoa';
+    let td7=document.createElement('td'); td7.className='cellStatus';
+    let td8=document.createElement('td'); let btn=document.createElement('button');
+    btn.className='btn btn-red'; btn.style.padding='4px 6px'; btn.textContent='✖'; btn.onclick=function(){ clearRow(this); }; td8.appendChild(btn);
+    tr.appendChild(td0); tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6); tr.appendChild(td7); tr.appendChild(td8);
+    tbody.appendChild(tr);
+  }
+  updateFilledCount();
+}
+function clearRow(btn){
+  let tr=btn.closest?btn.closest('tr'):btn;
+  if(!tr || !tr.querySelector) return;
+  let inp=tr.querySelector('.raqmInput'); if(inp) inp.value='';
+  tr.querySelectorAll('.cellRaqmSana,.cellMostanef,.cellDed,.cellTarikh,.cellNoa,.cellStatus').forEach(td=>td.textContent='');
+  tr.className='';tr.dataset.raqm='';tr.dataset.isDiffYear='';updateFilledCount();
+}
+function findCase(raqm,sana){
+  raqm=normalizeNum(raqm); sana=normalizeNum(sana);
+  let ahkamFound=AHKAM.find(a=>normalizeNum(a.raqm)==raqm && normalizeNum(a.sana)==sana);
+  let dataFound=DATA.find(d=>normalizeNum(d.raqm)==raqm && normalizeNum(d.sana)==sana);
+  if(ahkamFound||dataFound) return {a:ahkamFound||{}, d:dataFound||{}, found:true, related:getRelated(raqm,sana)};
+  let anyAhkam=AHKAM.find(a=>normalizeNum(a.raqm)==raqm);
+  let anyData=DATA.find(d=>normalizeNum(d.raqm)==raqm);
+  if(anyAhkam||anyData) return {a:anyAhkam||{}, d:anyData||{}, found:true, wrongSana:true, actualSana:normalizeNum(anyAhkam?.sana||anyData?.sana||''), related:getRelated(raqm, anyAhkam?.sana||anyData?.sana||sana)};
+  return {a:{}, d:{}, found:false, related:{joinedTo:null, joinedFrom:[]}};
+}
+function getRelated(raqm,sana){
+  raqm=normalizeNum(raqm); sana=normalizeNum(sana);
+  let joinedFrom=[]; let joinedTo=null;
+  DATA.forEach(x=>{
+    if(!x) return;
+    let xRaqm=normalizeNum(x.raqm||''); let xSana=normalizeNum(x.sana||'');
+    let xDamm=normalizeNum(x.dammTo||x.madmomTo||x.relatedTo||'');
+    if(!xDamm) return;
+    if(xDamm===raqm && xSana===sana){
+      if(!joinedFrom.some(j=> normalizeNum(j.raqm)===xRaqm)){
+        joinedFrom.push({raqm:x.raqm, sana:x.sana, mostanef:x.mostanef||x.most||''});
+      }
+    }
+  });
+  return {joinedTo, joinedFrom};
+}
+function formatRelatedHTML(related){
+  if(!related) return '';
+  let html='';
+  if(related.joinedFrom && related.joinedFrom.length>0){
+    related.joinedFrom.forEach(j=>{
+      html+='<div style="border-top:1px dashed #999;margin-top:3px;padding-top:3px;font-size:11px;font-weight:bold;color:#000">'+toArText(j.raqm+' / '+j.sana)+'</div>';
+    });
+  }
+  return html;
+}
+var pendingYearDiff = null;
+function showYearDiffWarning(data){
+  pendingYearDiff = data;
+  let txt = document.getElementById('yearWarnText');
+  txt.innerHTML = 'القضية رقم <span style="color:#0A2342;font-size:16px">'+toArText(data.raqm)+'</span><br>موجودة فعلياً في سنة <b style="color:#b00020;font-size:18px">'+toArText(data.actualSana)+' ق</b><br>بينما أنت اخترت فوق سنة <b style="color:#0A2342;font-size:18px">'+toArText(data.selectedSana)+' ق</b>';
+  document.getElementById('yearWarnModal').style.display='flex';
+}
+function confirmYearDiff(){
+  if(!pendingYearDiff) return;
+  let d = pendingYearDiff; let tr=d.tr;
+  tr.className='filled'; tr.dataset.raqm=d.raqm; tr.dataset.sana=d.actualSana;
+  tr.dataset.mostanef=d.a.mostanef||d.d.mostanef||''; tr.dataset.ded=d.a.ded||d.d.ded||'';
+  tr.dataset.tarikh=cleanDate(getHokmDateRaw(d.a)||'')||''; tr.dataset.qarar=getQararText(d.a,d.d);
+  tr.dataset.related=JSON.stringify({}); tr.dataset.isDiffYear='1';
+  tr.querySelector('.cellRaqmSana').innerHTML='<b>'+toArText(d.raqm+' / '+d.actualSana)+'</b><br><span style="color:#b00020;font-weight:bold;font-size:10px;border:1px solid #b00020;padding:2px 6px;border-radius:10px;background:#fff">سنة مختلفة</span>';
+  tr.querySelector('.cellMostanef').textContent=(d.a.mostanef||d.d.mostanef||'').substring(0,30);
+  tr.querySelector('.cellDed').textContent=(d.a.ded||d.d.ded||'').substring(0,30);
+  tr.querySelector('.cellTarikh').textContent=toArText(tr.dataset.tarikh);
+  tr.querySelector('.cellNoa').innerHTML='<span class="badge" style="background:#0A2342;color:#fff">'+getHokmType(tr.dataset.qarar)+'</span>';
+  tr.querySelector('.cellStatus').innerHTML='<span class="badge" style="background:#0a7a42;color:#fff">قطعي ✓</span>';
+  document.getElementById('yearWarnModal').style.display='none'; pendingYearDiff = null; updateFilledCount();
+}
+function cancelYearDiff(){
+  if(pendingYearDiff && pendingYearDiff.tr){ clearRow(pendingYearDiff.tr); }
+  document.getElementById('yearWarnModal').style.display='none'; pendingYearDiff = null;
+}
+function lookupCase(inp){
+  let raw=inp.value.trim();
+  let raqm=normalizeNum(raw.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9]/g,''));
+  if(!raqm){clearRow(inp);return;}
+  let sana=document.getElementById('sanaSel').value;
+  let tr=inp.closest('tr');
+  let result=findCase(raqm,sana);
+  let a=result.a, d=result.d, found=result.found, wrongSana=result.wrongSana, related=result.related;
+  if(!found){
+    tr.className='notfound';
+    tr.querySelector('.cellRaqmSana').textContent=toArText(raqm+' / '+sana);
+    tr.querySelector('.cellMostanef').textContent='غير موجودة';
+    tr.querySelector('.cellDed').textContent='';tr.querySelector('.cellTarikh').textContent='';tr.querySelector('.cellNoa').textContent='';
+    tr.querySelector('.cellStatus').innerHTML='<span class="badge" style="background:#b00020;color:#fff">غير موجودة</span>';
+    tr.dataset.raqm='';tr.dataset.related='';tr.dataset.isDiffYear='';updateFilledCount();return;
+  }
+  let actualSana=result.actualSana||a.sana||d.sana||sana;
+  if(wrongSana){
+    showYearDiffWarning({tr:tr, raqm:raqm, selectedSana:sana, actualSana:actualSana, a:a, d:d, related:related});
+    tr.className='notfound';
+    tr.querySelector('.cellRaqmSana').innerHTML='<b>'+toArText(raqm+' / '+actualSana)+'</b><br><small style="color:red">بانتظار موافقة</small>';
+    tr.querySelector('.cellMostanef').textContent=(a.mostanef||d.mostanef||'').substring(0,30);
+    tr.querySelector('.cellDed').textContent=(a.ded||d.ded||'').substring(0,30);
+    tr.querySelector('.cellTarikh').textContent=toArText(cleanDate(getHokmDateRaw(a)||'')||'');
+    tr.querySelector('.cellNoa').textContent=getHokmType(getQararText(a,d));
+    tr.querySelector('.cellStatus').innerHTML='<span class="badge" style="background:orange;color:#000">سنة مختلفة</span>';
+    return;
+  }
+  if(!isQat3i(a,d)){
+    tr.className='notQat3i';
+    tr.querySelector('.cellRaqmSana').innerHTML=toArText(raqm+' / '+sana)+formatRelatedHTML(related);
+    tr.querySelector('.cellMostanef').textContent=(a.mostanef||d.mostanef||'').substring(0,25);
+    tr.querySelector('.cellStatus').innerHTML='<span class="badge" style="background:#ff9800;color:#000">تمهيدي</span>';
+    tr.dataset.raqm='';tr.dataset.related=JSON.stringify(related||{});tr.dataset.isDiffYear='';updateFilledCount();return;
+  }
+  tr.className='filled';tr.dataset.raqm=raqm;tr.dataset.sana=sana;
+  tr.dataset.mostanef=a.mostanef||d.mostanef||'';tr.dataset.ded=a.ded||d.ded||'';
+  tr.dataset.tarikh=cleanDate(getHokmDateRaw(a)||'')||'';tr.dataset.qarar=getQararText(a,d);
+  tr.dataset.related=JSON.stringify(related||{});tr.dataset.isDiffYear='';
+  tr.querySelector('.cellRaqmSana').innerHTML='<b>'+toArText(raqm+' / '+sana)+'</b>'+formatRelatedHTML(related);
+  tr.querySelector('.cellMostanef').textContent=(a.mostanef||d.mostanef||'').substring(0,50);
+  tr.querySelector('.cellDed').textContent=(a.ded||d.ded||'').substring(0,50);
+  tr.querySelector('.cellTarikh').textContent=toArText(tr.dataset.tarikh);
+  tr.querySelector('.cellNoa').innerHTML='<span class="badge" style="background:#0A2342;color:#fff">'+getHokmType(tr.dataset.qarar)+'</span>';
+  tr.querySelector('.cellStatus').innerHTML='<span class="badge" style="background:#0a7a42;color:#fff">قطعي ✓</span>';
+  updateFilledCount();
+}
+function updateFilledCount(){
+  let filled=document.querySelectorAll('#rabtaBody tr.filled').length;
+  let total=parseInt(document.getElementById('rowsCount').value||19);
+  document.getElementById('filledCount').textContent=toAr(filled)+' / '+toAr(total);
+}
+function onQuickSanaChange(){ onQuickRaqmInput(); }
+function onQuickRaqmInput(){
+  let raqm=document.getElementById('quickRaqm').value.trim();
+  let sana=document.getElementById('quickSana').value.trim();
+  let preview=document.getElementById('livePreview');
+  if(!raqm||!sana){ preview.style.display='none'; return; }
+  raqm=normalizeNum(raqm); sana=normalizeNum(sana);
+  let result=findCase(raqm,sana);
+  let a=result.a, d=result.d, found=result.found, related=result.related;
+  if(!found){
+    preview.style.display='block';
+    document.getElementById('prevRaqm').textContent=raqm+' / '+sana;
+    document.getElementById('prevMost').textContent='❌ غير موجودة';
+    document.getElementById('prevDed').textContent='-'; document.getElementById('prevTar').textContent='-'; document.getElementById('prevNoa').textContent='-';
+    document.getElementById('prevRelated').innerHTML=''; document.getElementById('quickLog').textContent='❌ لا يوجد'; return;
+  }
+  if(result.wrongSana){
+    document.getElementById('prevRaqm').textContent=(a.raqm||d.raqm)+' / '+(result.actualSana||a.sana||d.sana)+' (مختلفة عن '+sana+')';
+    document.getElementById('prevMost').textContent=(a.mostanef||d.mostanef||'')+' ⚠ سنة مختلفة';
+  }else{
+    document.getElementById('prevRaqm').textContent=(a.raqm||d.raqm)+' / '+(a.sana||d.sana);
+    document.getElementById('prevMost').textContent=a.mostanef||d.mostanef||'';
+  }
+  document.getElementById('prevDed').textContent=a.ded||d.ded||'';
+  document.getElementById('prevTar').textContent=cleanDate(getHokmDateRaw(a))||'';
+  document.getElementById('prevNoa').textContent=getHokmType(getQararText(a,d));
+  document.getElementById('prevRelated').innerHTML=formatRelatedHTML(related);
+  preview.style.display='block';
+  document.getElementById('quickLog').textContent=result.wrongSana ? '⚠ سنة مختلفة: '+(result.actualSana) : '✅ جاهزة: '+(a.mostanef||'').substring(0,20);
+}
+function quickAdd(){
+  let raqm=document.getElementById('quickRaqm').value.trim();
+  let sana=document.getElementById('quickSana').value.trim();
+  if(!raqm||!sana){alert('اختر السنة واكتب الرقم');return;}
+  raqm=normalizeNum(raqm); sana=normalizeNum(sana);
+  let res=findCase(raqm,sana); let a=res.a,d=res.d,found=res.found;
+  if(!found){alert('غير موجودة');return;}
+  if(!isQat3i(a,d)){alert('تمهيدي وليس قطعي');return;}
+  if(res.wrongSana){
+    let emptyInp=null;
+    document.querySelectorAll('#rabtaBody tr').forEach(tr=>{
+      if(!tr.classList.contains('filled') && !emptyInp){
+        let inp=tr.querySelector('.raqmInput'); if(inp && !inp.value) emptyInp=inp;
+      }
+    });
+    if(!emptyInp){ alert('الجدول مليان'); return; }
+    let tr = emptyInp.closest('tr'); tr.querySelector('.raqmInput').value = raqm;
+    showYearDiffWarning({tr:tr, raqm:raqm, selectedSana:sana, actualSana:res.actualSana||a.sana||d.sana, a:a, d:d, related:res.related}); return;
+  }
+  let emptyInp=null;
+  document.querySelectorAll('#rabtaBody tr').forEach(tr=>{
+    if(!tr.classList.contains('filled') && !emptyInp){
+      let inp=tr.querySelector('.raqmInput'); if(inp && !inp.value) emptyInp=inp;
+    }
+  });
+  if(!emptyInp){ alert('الجدول مليان'); return; }
+  emptyInp.value=raqm; lookupCase(emptyInp);
+  document.getElementById('quickRaqm').value=''; document.getElementById('quickRaqm').focus();
+  document.getElementById('livePreview').style.display='none';
+  document.getElementById('quickLog').textContent='✅ أضيفت '+raqm+' / '+sana;
+}
+async function saveRabta(){
+  let sana=document.getElementById('sanaSel').value;
+  let rabtaNo=parseInt(document.getElementById('rabtaNo').value||1);
+  let tarikh=document.getElementById('tarikhRabta').value;
+  if(!sana){alert('اختار السنة');return;}
+  let rows=document.querySelectorAll('#rabtaBody tr.filled');
+  if(rows.length==0){alert('مفيش قضايا');return;}
+  let cases=[];
+  rows.forEach(tr=>{
+    let rel={}; try{rel=JSON.parse(tr.dataset.related||'{}')}catch(e){rel={}};
+    cases.push({raqm:tr.dataset.raqm,sana:tr.dataset.sana,mostanef:tr.dataset.mostanef,ded:tr.dataset.ded,tarikhHokm:tr.dataset.tarikh,qarar:tr.dataset.qarar,raqmSana:tr.dataset.raqm+' / '+tr.dataset.sana,noaHokm:getHokmType(tr.dataset.qarar), related:rel, isDiffYear: tr.dataset.isDiffYear||''});
+  });
+  let id=sana+'-'+rabtaNo;
+  let existingIdx=RABTAT.findIndex(r=>r.id==id);
+  let rabtaObj={id:id,sana:sana,rabtaNo:rabtaNo,tarikh:tarikh,count:cases.length,cases:cases,signedImage:existingIdx>=0?RABTAT[existingIdx].signedImage:null,createdAt:new Date().toISOString()};
+  if(existingIdx>=0) RABTAT[existingIdx]=rabtaObj; else RABTAT.push(rabtaObj);
+  await saveRabtatToDB();
+  let ahRaw=await idbGet('D32_AHKAM','ahkam');
+  let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){ahArr=AHKAM;}
+  cases.forEach(c=>{
+    let idx=ahArr.findIndex(a=>normalizeNum(a.raqm)==normalizeNum(c.raqm) && normalizeNum(a.sana)==normalizeNum(c.sana));
+    if(idx>=0){ahArr[idx].hifzStatus='sent';ahArr[idx].hifzDate=tarikh;ahArr[idx].rabtaId=id;ahArr[idx].rabtaNo=rabtaNo;}
+  });
+  await idbSet('D32_AHKAM', JSON.stringify(ahArr), 'ahkam'); AHKAM=ahArr;
+  alert('✅ تم حفظ رابطة '+rabtaNo+' سنة '+sana+' - '+cases.length+' قضية');
+  renderRabtatList();
+}
+function newRabta(){
+  let sana=document.getElementById('sanaSel').value;
+  let max=0;RABTAT.forEach(r=>{if(String(r.sana)==String(sana) && r.rabtaNo>max) max=r.rabtaNo;});
+  document.getElementById('rabtaNo').value=max+1;generateRows();updateRabtaNo();
+}
+async function loadRabtat(){await loadFromDB();}
+function renderRabtatList(){
+  let cont=document.getElementById('rabtatList');
+  if(RABTAT.length==0){cont.innerHTML='<div style="color:#888">لا يوجد ربط - اضغط ♻ استرجاع الربط أو استيراد ملف JSON</div>';return;}
+  let html='';
+  RABTAT.sort((a,b)=>{if(a.sana!=b.sana) return parseInt(a.sana)-parseInt(b.sana); return a.rabtaNo-b.rabtaNo;}).forEach(r=>{
+    html+='<div class="rabta-card '+(r.signedImage?'hasImage':'')+'"><div style="display:flex;justify-content:space-between"><b>📦 رابطة '+toArText(r.rabtaNo)+' - سنة '+toArText(r.sana)+'</b><span style="background:#0A2342;color:#fff;padding:2px 8px;border-radius:10px">'+toAr(r.count)+' قضية</span></div><div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-navy" onclick="loadRabtaToTable(\''+r.id+'\')">📋 فتح</button><button class="btn btn-gold" onclick="printOneRabta(\''+r.id+'\')">🖨 طباعة</button><label class="btn btn-green" style="display:inline-block;cursor:pointer">📸 '+(r.signedImage?'تغيير':'تصوير')+'<input type="file" accept="image/*" capture="environment" style="display:none" onchange="uploadSignedImage(\''+r.id+'\', this)"></label>'+(r.signedImage?'<button class="btn btn-dark" onclick="viewSignedImage(\''+r.id+'\')">👁 عرض</button>':'')+'<button class="btn btn-red" onclick="deleteRabta(\''+r.id+'\')">🗑</button></div></div>';
+  });
+  cont.innerHTML=html;
+}
+function loadRabtaToTable(id){
+  let r=RABTAT.find(x=>x.id==id);if(!r) return;
+  document.getElementById('sanaSel').value=r.sana;
+  document.getElementById('rabtaNo').value=r.rabtaNo;
+  document.getElementById('rowsCount').value=r.cases.length>50?r.cases.length:50;
+  generateRows();
+  setTimeout(()=>{
+    r.cases.forEach((c,i)=>{
+      let inp=document.querySelector('input[data-idx="'+(i+1)+'"]');
+      if(inp){inp.value=c.raqm; lookupCase(inp);}
+    });
+  },100);
+  switchTab(0);
+}
+function getShuhoorFromCases(cases){
+  let monthsMap={}; let monthsList=[];
+  cases.forEach(c=>{
+    let cd=cleanDate(c.tarikhHokm||''); if(!cd) return;
+    let p=cd.split('/'); let y=p[0], m=parseInt(p[1]); let key=y+'-'+m;
+    if(!monthsMap[key]){monthsMap[key]={y:y,m:m,count:0}; monthsList.push(monthsMap[key]);}
+    monthsMap[key].count++;
+  });
+  if(monthsList.length==0) return {text:''};
+  monthsList.sort((a,b)=>{if(a.y!=b.y) return a.y-b.y; return a.m-b.m;});
+  let monthNames=['','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  let years=[...new Set(monthsList.map(x=>x.y))];
+  if(years.length==1){
+    let y=years[0];
+    if(monthsList.length==1){
+      return {text:'شهر '+toArText(monthsList[0].m)+' لسنة '+toArText(y)+' - '+monthNames[monthsList[0].m]+' '+toArText(y)};
+    }else{
+      let mTxt=monthsList.map(x=>toArText(x.m)).join(' و ');
+      let mNameTxt=monthsList.map(x=>monthNames[x.m]).join(' و ');
+      return {text:'شهور '+mTxt+' لسنة '+toArText(y)+' - '+mNameTxt+' '+toArText(y)};
+    }
+  }else{
+    let txt=monthsList.map(x=>toArText(x.m+'/'+x.y)).join(' و ');
+    return {text:'شهور '+txt};
+  }
+}
+function buildPrintHTML(r){
+  let shuhoor=getShuhoorFromCases(r.cases);
+  let daira=(typeof DAIRA_NUM!=='undefined' && DAIRA_NUM)?DAIRA_NUM:'';
+  let singleBarBase = (shuhoor.text?shuhoor.text+' - ':'') + 'رابطة '+toAr(r.rabtaNo)+' - سنة '+toArText(r.sana) + (daira?' - دائرة '+toArText(daira):'');
+  let ROWS_PER_PAGE = 19;
+  let pages = [];
+  for(let i=0;i<r.cases.length;i+=ROWS_PER_PAGE){ pages.push(r.cases.slice(i,i+ROWS_PER_PAGE)); }
+  let css = '@page{size:A4 portrait;margin:6mm 10mm 4mm 10mm} *{box-sizing:border-box;font-family:Arial, Tahoma} html,body{margin:0;padding:0;direction:rtl;background:#fff;color:#000} .page{width:100%;display:block;page-break-after:always} .page:last-child{page-break-after:auto} .topTitle{text-align:center;font-size:24px;font-weight:bold;margin:6px 0 8px} .shahrBar{text-align:center;font-size:18px;font-weight:bold;margin:8px 0;background:#fff3cd;border:2px solid #000;padding:10px 8px;border-radius:4px} table{width:100%;border-collapse:collapse;table-layout:fixed} col.m{width:38px} col.raqm{width:125px} col.most{width:27%} col.ded{width:27%} col.tar{width:95px} col.noa{width:80px} th{background:#e0e0e0;color:#000;padding:6px 2px;border:1.5px solid #000;font-size:13px;text-align:center;font-weight:bold;height:38px} tr{height:44px !important; max-height:44px !important; page-break-inside:avoid; break-inside:avoid;} td{border:1px solid #000;padding:2px 2px;font-size:13px;text-align:center;vertical-align:middle;height:44px !important; max-height:44px !important; overflow:hidden;} td:first-child{background:#eeeeee;font-weight:bold;white-space:nowrap} td.col-raqm{white-space:nowrap; overflow:hidden;} .raqm-original{font-size:13px;font-weight:bold;display:block;white-space:nowrap; line-height:1.2} .raqm-line{border:none;border-top:2px solid #000;margin:2px auto;width:85%;max-width:85px;display:block} .raqm-monadam{font-size:13px;font-weight:bold;display:block;white-space:nowrap; line-height:1.2} td.col-most{height:44px !important; max-height:44px !important; white-space:normal !important; word-wrap:break-word; overflow-wrap:break-word; word-break:break-word; text-align:center; overflow:hidden;} td.col-ded{height:44px !important; max-height:44px !important; white-space:normal !important; word-wrap:break-word; overflow-wrap:break-word; word-break:break-word; text-align:center; overflow:hidden;} .bottomLine{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:0 10px;font-size:16px;font-weight:bold;border:none}';
+  let full = '<html dir=rtl lang=ar><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json"><meta charset=utf-8><title>رابطة '+r.rabtaNo+' سنة '+r.sana+'</title><style>'+css+'</style></head><body>';
+  pages.forEach((pageCases, pageIdx)=>{
+    let isFirst = pageIdx===0; let isLast = pageIdx===pages.length-1;
+    let titleText = isFirst ? 'مرسل إلى حفظ شبرا الخيمة' : 'تابع مرسل إلى حفظ شبرا الخيمة';
+    let shahrText = isFirst ? singleBarBase : 'تابع ' + singleBarBase + ' - صفحة ' + toAr(pageIdx+1);
+    full += '<div class="page"><div class="topTitle">'+titleText+'</div><div class="shahrBar">'+shahrText+'</div><table><colgroup><col class="m"><col class="raqm"><col class="most"><col class="ded"><col class="tar"><col class="noa"></colgroup><thead><tr><th>م</th><th>رقم السنة</th><th>المستأنف</th><th>المستأنف ضده</th><th>تاريخ الحكم</th><th>نوع الحكم</th></tr></thead><tbody>';
+    pageCases.forEach((c,i)=>{
+      let globalIdx = pageIdx*ROWS_PER_PAGE + i;
+      let cleanRaqmSana = c.raqmSana || (c.raqm+' / '+c.sana);
+      let raqmHtml = '';
+      if(c.related && c.related.joinedFrom && c.related.joinedFrom.length>0){
+        if(c.related.joinedFrom.length===1){
+          let j = c.related.joinedFrom[0];
+          raqmHtml = '<div><div class="raqm-original">'+toArText(cleanRaqmSana)+'</div><hr class="raqm-line"><div class="raqm-monadam">'+toArText(j.raqm+' / '+j.sana)+'</div></div>';
+        }else{
+          let parts = c.related.joinedFrom.map(jm=>'<div class="raqm-monadam">'+toArText(jm.raqm+' / '+jm.sana)+'</div>').join('<hr class="raqm-line">');
+          raqmHtml = '<div><div class="raqm-original">'+toArText(cleanRaqmSana)+'</div><hr class="raqm-line">'+parts+'</div>';
+        }
+      }else{
+        raqmHtml = '<div class="raqm-original">'+toArText(cleanRaqmSana)+'</div>';
+      }
+      let mostanef = c.mostanef||''; let ded = c.ded||'';
+      let mStyle = mostanef.length<=20 ? 'font-size:13px; white-space:nowrap; line-height:44px; overflow:hidden; text-overflow:ellipsis;' : (mostanef.length<=32 ? 'font-size:12px; white-space:normal; word-wrap:break-word; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;' : 'font-size:10px; white-space:normal; word-wrap:break-word; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;');
+      let dStyle = ded.length<=20 ? 'font-size:13px; white-space:nowrap; line-height:44px; overflow:hidden; text-overflow:ellipsis;' : (ded.length<=32 ? 'font-size:12px; white-space:normal; word-wrap:break-word; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;' : 'font-size:10px; white-space:normal; word-wrap:break-word; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;');
+      full += '<tr><td>'+toAr(globalIdx+1)+'</td><td class="col-raqm">'+raqmHtml+'</td><td class="col-most"><div style="'+mStyle+'">'+mostanef+'</div></td><td class="col-ded"><div style="'+dStyle+'">'+ded+'</div></td><td style="white-space:nowrap">'+toArText(c.tarikhHokm||'')+'</td><td style="white-space:nowrap">'+toArText(c.noaHokm||'')+'</td></tr>';
+    });
+    full += '</tbody></table>';
+    if(isLast){ full += '<div class="bottomLine"><span>عدد '+toAr(r.count)+' ملف</span><span style="margin:0 auto;transform:translateX(-25%)">المستلم /</span><span></span></div>'; }
+    full += '</div>';
+  });
+  full+='<scr'+'ipt>window.onload=function(){setTimeout(()=>window.print(),600)}<\/scr'+'ipt></body></html>';
+  return full;
+}
+function printOneRabta(id){
+  let r=RABTAT.find(x=>x.id==id); if(!r) return;
+  let full=buildPrintHTML(r);
+  let w=window.open('','_blank');w.document.write(full);w.document.close();
+}
+function printRabta(){
+  let sana=document.getElementById('sanaSel').value;
+  let rabtaNo=document.getElementById('rabtaNo').value;
+  let rows=document.querySelectorAll('#rabtaBody tr.filled');
+  if(rows.length==0){alert('لا يوجد قضايا');return;}
+  let cases=[];
+  rows.forEach(tr=>{
+    let rel={}; try{rel=JSON.parse(tr.dataset.related||'{}')}catch(e){rel={}};
+    cases.push({raqm:tr.dataset.raqm,sana:tr.dataset.sana,raqmSana:tr.dataset.raqm+' / '+tr.dataset.sana,mostanef:tr.dataset.mostanef,ded:tr.dataset.ded,tarikhHokm:tr.dataset.tarikh,noaHokm:tr.querySelector('.cellNoa').textContent, related:rel});
+  });
+  let r={sana:sana,rabtaNo:rabtaNo,count:cases.length,cases:cases,tarikh:document.getElementById('tarikhRabta').value};
+  let full=buildPrintHTML(r);
+  let w=window.open('','_blank');w.document.write(full);w.document.close();
+}
+async function uploadSignedImage(id, input){
+  let file=input.files[0];if(!file) return;
+  let reader=new FileReader();
+  reader.onload=async function(e){
+    let base64=e.target.result;
+    let idx=RABTAT.findIndex(r=>r.id==id);
+    if(idx>=0){RABTAT[idx].signedImage=base64;await saveRabtatToDB();renderRabtatList(); alert('✅ تم حفظ كشف الاستلام');}
+  };
+  reader.readAsDataURL(file);
+}
+function viewSignedImage(id){
+  let r=RABTAT.find(x=>x.id==id);if(!r||!r.signedImage){alert('لا يوجد صورة');return;}
+  document.getElementById('modalImg').src=r.signedImage;
+  document.getElementById('downloadImg').href=r.signedImage;
+  document.getElementById('imgTitle').textContent='كشف استلام - رابطة '+toArText(r.rabtaNo)+' سنة '+toArText(r.sana);
+  document.getElementById('imgModal').style.display='flex';
+}
+function closeImgModal(){document.getElementById('imgModal').style.display='none';}
+async function deleteRabta(id){
+  if(!confirm('حذف '+id+'؟'))return;
+  RABTAT=RABTAT.filter(r=>r.id!=id);
+  await saveRabtatToDB();renderRabtatList();
+}
+function openSearchModal(){document.getElementById('searchModal').style.display='flex';document.getElementById('qLog').textContent='';}
+function closeSearchModal(){document.getElementById('searchModal').style.display='none';}
+function doSearch(){
+  let raqm=document.getElementById('qRaqm').value.trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^0-9]/g,'');
+  let sana=document.getElementById('qSana').value.trim();
+  if(!raqm||!sana){document.getElementById('qLog').textContent='اكتب الرقم والسنة';return;}
+  let ahkamFound=AHKAM.find(a=>normalizeNum(a.raqm)==normalizeNum(raqm) && normalizeNum(a.sana)==normalizeNum(sana));
+  let dataFound=DATA.find(d=>normalizeNum(d.raqm)==normalizeNum(raqm) && normalizeNum(d.sana)==normalizeNum(sana));
+  if(!ahkamFound &&!dataFound){document.getElementById('qLog').textContent='غير موجودة';document.getElementById('searchResult').style.display='none';return;}
+  let a=ahkamFound||{};let d=dataFound||{};
+  let relatedText='لا يوجد'; let dammCases=[];
+  DATA.forEach(x=>{
+    if(normalizeNum(x.sana)==normalizeNum(sana)){
+      if(x.dammTo && normalizeNum(x.dammTo)==normalizeNum(raqm)) dammCases.push(x.raqm+' / '+x.sana);
+      if(dataFound && dataFound.dammTo && String(dataFound.dammTo).trim()!='') relatedText=dataFound.dammTo+' / '+sana+' (منضم إليه)';
+    }
+  });
+  if(dammCases.length>0) relatedText=dammCases.join('، ') + ' (منضم)';
+  document.getElementById('rRaqmSana').textContent=toArText(raqm+' / '+sana);
+  document.getElementById('rRelated').textContent=toArText(relatedText);
+  document.getElementById('rMostanef').textContent=a.mostanef||d.mostanef||'';
+  document.getElementById('rDed').textContent=a.ded||d.ded||'';
+  document.getElementById('rTarikh').textContent=toArText(cleanDate(a.tarikhHokm||a.tarHokm||d.tarikhHokm||'')||'');
+  let qarar=getQararText(a,d);
+  document.getElementById('rQarar').textContent=qarar.substring(0,300);
+  document.getElementById('rNoaHokm').textContent=getHokmType(qarar);
+  document.getElementById('searchResult').style.display='block';
+  let statusDiv=document.getElementById('rHifzStatus');
+  let actionsDiv=document.getElementById('rActions'); actionsDiv.innerHTML='';
+  let rabtaFound=null;
+  if(a.hifzStatus==='sent' || d.hifzStatus==='sent' || a.rabtaId || d.rabtaId){
+    let rabtaId=a.rabtaId||d.rabtaId;
+    if(!rabtaId){ RABTAT.forEach(r=>{if(r.cases.some(c=>normalizeNum(c.raqm)==normalizeNum(raqm) && normalizeNum(c.sana)==normalizeNum(sana))) rabtaFound=r;}); }
+    else{ rabtaFound=RABTAT.find(r=>r.id==rabtaId); if(!rabtaFound) RABTAT.forEach(r=>{if(r.cases.some(c=>normalizeNum(c.raqm)==normalizeNum(raqm) && normalizeNum(c.sana)==normalizeNum(sana))) rabtaFound=r;}); }
+    let dateSend=a.hifzDate||d.hifzDate||(rabtaFound?rabtaFound.tarikh:'')||'';
+    statusDiv.className='statusSent';
+    statusDiv.innerHTML='✅ تم إرسالها إلى الحفظ'+(rabtaFound?' - رابطة '+toArText(rabtaFound.rabtaNo)+' سنة '+toArText(rabtaFound.sana):'')+(dateSend?' - تاريخ الإرسال: '+toArText(dateSend):'');
+    if(rabtaFound && rabtaFound.signedImage){ actionsDiv.innerHTML='<button class="btn btn-green" onclick="viewSignedImageFromSearch(\''+rabtaFound.id+'\')">📸 عرض كشف</button><button class="btn btn-gold" onclick="printOneRabta(\''+rabtaFound.id+'\')">🖨 طباعة</button>'; }
+    else if(rabtaFound){ actionsDiv.innerHTML='<span style="color:#b00020">⚠ لم يتم تصوير الكشف</span><button class="btn btn-gold" onclick="printOneRabta(\''+rabtaFound.id+'\')">🖨 طباعة</button>'; }
+  }else{ statusDiv.className='statusNotSent'; statusDiv.textContent='❌ لم يتم إرسالها إلى الحفظ بعد'; }
+  document.getElementById('qLog').textContent='تم العثور عليها - '+toArText(getHokmType(qarar));
+}
+function viewSignedImageFromSearch(id){closeSearchModal();setTimeout(()=>viewSignedImage(id),200);}
+var currentFiltered=[];
+function fetchAhkam(){
+ if(!AHKAM.length){alert('لا يوجد أحكام');return;}
+ let fm=parseInt(document.getElementById('fromMonth').value), fy=parseInt(document.getElementById('fromYear').value);
+ let tm=parseInt(document.getElementById('toMonth').value), ty=parseInt(document.getElementById('toYear').value);
+ let fromKey=fy*100+fm, toKey=ty*100+tm;
+ let onlyNotSent=document.getElementById('onlyNotSent').checked;
+ let onlyQat3i=document.getElementById('onlyQat3i').checked;
+ let list=[];
+ AHKAM.forEach(a=>{
+  let d=DATA.find(x=>x.id==a.id || (normalizeNum(x.raqm)==normalizeNum(a.raqm) && normalizeNum(x.sana)==normalizeNum(a.sana)));
+  let p=getHokmDate(a,d);
+  if(!p)return;
+  let key=p.y*100+p.mo;
+  if(key<fromKey||key>toKey)return;
+  if(onlyNotSent && a.hifzStatus==='sent')return;
+  if(onlyQat3i && !isQat3i(a,d))return;
+  list.push({ahkam:a,data:d||{},parsed:p});
+ });
+ list.sort((a,b)=>{let sa=parseInt(a.ahkam.sana||0), sb=parseInt(b.ahkam.sana||0);if(sa!==sb) return sa-sb;let ra=parseInt(a.ahkam.raqm||0), rb=parseInt(b.ahkam.raqm||0);if(ra!==rb) return ra-rb;return a.parsed.y-b.parsed.y||a.parsed.mo-b.parsed.mo;});
+ currentFiltered=list;renderHifzOld(list);
+}
+function renderHifzOld(list){
+  let tbody=document.getElementById('hifzBody');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8">لا يوجد</td></tr>';return;}
+  let perRabta=parseInt(document.getElementById('perRabta').value||50);
+  let groups={};list.forEach(it=>{let s=it.ahkam.sana||'غير محدد';if(!groups[s]) groups[s]=[];groups[s].push(it);});
+  let html='';let gIdx=1;
+  Object.keys(groups).sort((a,b)=>(parseInt(a)||9999)-(parseInt(b)||9999)).forEach(sana=>{
+    let arr=groups[sana];
+    html+='<tr style="background:#C9A227;font-weight:bold"><td colspan="8">سنة '+toArText(sana)+' - '+toAr(arr.length)+' قضية - '+(Math.ceil(arr.length/perRabta))+' رابطة</td></tr>';
+    let rc=Math.ceil(arr.length/perRabta);
+    for(let r=0;r<rc;r++){
+      let chunk=arr.slice(r*perRabta,(r+1)*perRabta);
+      html+='<tr style="background:#0A2342;color:#FFD700"><td colspan="8">📦 رابطة '+(r+1)+' - سنة '+toArText(sana)+' - '+toAr(chunk.length)+' قضية</td></tr>';
+      chunk.forEach((it,i)=>{
+        let a=it.ahkam;let d=it.data;let raqm=a.raqm||d.raqm||'';let sanaVal=a.sana||d.sana||'';
+        html+='<tr><td>'+toAr(gIdx)+'</td><td style="background:#FFD700">'+toAr(r+1)+'</td><td>'+toAr(i+1)+'</td><td><b>'+toArText(raqm+' / '+sanaVal)+'</b></td><td style="text-align:right">'+(a.mostanef||d.mostanef||'').substring(0,20)+'</td><td style="text-align:right">'+(a.ded||d.ded||'').substring(0,20)+'</td><td>'+toArText(cleanDate(a.tarikhHokm||a.tarHokm||''))+'</td><td>غير مرسل</td></tr>';gIdx++;
+      });
+    }
+  });
+  tbody.innerHTML=html;
+}
+function printSarky(){
+ if(!currentFiltered.length){alert('اجلب أولا');return;}
+ let perRabta=parseInt(document.getElementById('perRabta').value||50);
+ let groups={};currentFiltered.forEach(it=>{let s=it.ahkam.sana||'غير محدد';if(!groups[s]) groups[s]=[];groups[s].push(it);});
+ let css='@page{size:A4 portrait;margin:6mm 10mm 4mm 10mm} *{box-sizing:border-box;font-family:Arial} html,body{margin:0;padding:0;direction:rtl} .page{display:block;page-break-after:always} .page:last-child{page-break-after:auto} .topTitle{text-align:center;font-size:24px;font-weight:bold;margin:6px 0} .shahrBar{text-align:center;font-size:18px;font-weight:bold;margin:8px 0;background:#fff3cd;border:2px solid #000;padding:10px;border-radius:4px} table{width:100%;border-collapse:collapse;table-layout:fixed} col.m{width:38px} col.raqm{width:125px} col.most{width:27%} col.ded{width:27%} col.tar{width:95px} th{background:#e0e0e0;color:#000;padding:6px 2px;border:1.5px solid #000;font-size:13px;font-weight:bold;height:38px} tr{height:44px !important; max-height:44px !important; page-break-inside:avoid;} td{border:1px solid #000;padding:2px 2px;text-align:center;height:44px !important; max-height:44px !important; overflow:hidden;} td:first-child{background:#eeeeee;font-weight:bold} .raqm-original{font-size:13px;font-weight:bold;white-space:nowrap} .raqm-line{border:none;border-top:2px solid #000;margin:2px auto;width:85%;max-width:85px} .raqm-monadam{font-size:13px;font-weight:bold;white-space:nowrap} .bottomLine{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding:0 10px;font-size:16px;font-weight:bold;border:none}';
+ let full='<html dir=rtl lang=ar><head>
+<script src="daira-core.js"></script>
+<link rel="manifest" href="manifest.json"><meta charset=utf-8><style>'+css+'</style></head><body>';
+ let ROWS_PER_PAGE=19;
+ Object.keys(groups).sort((a,b)=>(parseInt(a)||9999)-(parseInt(b)||9999)).forEach(sana=>{
+  let arr=groups[sana];
+  let rc=Math.ceil(arr.length/perRabta);
+  for(let r=0;r<rc;r++){
+   let chunk=arr.slice(r*perRabta,(r+1)*perRabta);
+   let tmpCases=chunk.map(it=>{let a=it.ahkam; return {tarikhHokm:cleanDate(a.tarikhHokm||a.tarHokm||'')};});
+   let shuhoor=getShuhoorFromCases(tmpCases);
+   let daira2=(typeof DAIRA_NUM!=='undefined' && DAIRA_NUM)?DAIRA_NUM:'';
+let singleBar2 = (shuhoor.text?shuhoor.text+' - ':'') + 'رابطة '+toAr(r+1)+' - سنة '+toArText(sana) + (daira2?' - دائرة '+toArText(daira2):'');
+   let subPages=[]; for(let i=0;i<chunk.length;i+=ROWS_PER_PAGE) subPages.push(chunk.slice(i,i+ROWS_PER_PAGE));
+   subPages.forEach((subChunk, subIdx)=>{
+     let title = subIdx===0 ? singleBar2 : 'تابع ' + singleBar2 + ' - صفحة ' + toAr(subIdx+1);
+     full+='<div class="page"><div class="topTitle">'+(subIdx===0?'مرسل إلى حفظ شبرا الخيمة':'تابع مرسل إلى حفظ شبرا الخيمة')+'</div><div class="shahrBar">'+title+'</div><table><colgroup><col class="m"><col class="raqm"><col class="most"><col class="ded"><col class="tar"></colgroup><thead><tr><th>م</th><th>رقم السنة</th><th>المستأنف</th><th>ضده</th><th>تاريخ الحكم</th></tr></thead><tbody>';
+     subChunk.forEach((it,i)=>{
+       let a=it.ahkam;let d=it.data;
+       let mostanef = a.mostanef||d.mostanef||'';
+       let ded = a.ded||d.ded||'';
+       let mStyle = mostanef.length<=20 ? 'font-size:13px; white-space:nowrap; line-height:44px; overflow:hidden;' : (mostanef.length<=32 ? 'font-size:12px; white-space:normal; word-wrap:break-word; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;' : 'font-size:10px; white-space:normal; word-wrap:break-word; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;');
+       let dStyle = ded.length<=20 ? 'font-size:13px; white-space:nowrap; line-height:44px; overflow:hidden;' : (ded.length<=32 ? 'font-size:12px; white-space:normal; word-wrap:break-word; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;' : 'font-size:10px; white-space:normal; word-wrap:break-word; line-height:1.1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;');
+       full+='<tr><td>'+toAr(r*perRabta + subIdx*ROWS_PER_PAGE + i +1)+'</td><td><div class="raqm-original">'+toArText((a.raqm||'')+' / '+(a.sana||''))+'</div></td><td><div style="'+mStyle+'">'+mostanef+'</div></td><td><div style="'+dStyle+'">'+ded+'</div></td><td style="white-space:nowrap">'+toArText(cleanDate(a.tarikhHokm||a.tarHokm||''))+'</td></tr>';});
+     full+='</tbody></table>'; if(subIdx===subPages.length-1){ full+='<div class="bottomLine"><span>عدد '+toAr(chunk.length)+' ملف</span><span style="margin:0 auto;transform:translateX(-25%)">المستلم /</span><span></span></div>'; } full+='</div>';
+   });
+  }
+ });
+ full+='<scr'+'ipt>window.onload=function(){setTimeout(()=>window.print(),600)}<\/scr'+'ipt></body></html>';
+ let w=window.open('','_blank');w.document.write(full);w.document.close();
+}
+async function exportRabtat(){
+  try{
+    let db=await openDB();
+    let tx=db.transaction('d32store','readonly');
+    let store=tx.objectStore('d32store');
+    let idx=await new Promise(r=>{ let q=store.get('RABTAT_INDEX'); q.onsuccess=()=>r(q.result); q.onerror=()=>r(null); });
+    if(!idx){ alert('لا يوجد ربط'); return; }
+    let parsedIdx=[]; try{ parsedIdx=JSON.parse(idx); }catch(e){ parsedIdx = Array.isArray(idx)?idx:[idx]; }
+    let all={index:parsedIdx, rabtat:{}, date:new Date().toISOString(), count:0};
+    for(let key of parsedIdx){
+      let val=await new Promise(res=>{ let q=store.get(key); q.onsuccess=()=>res(q.result); q.onerror=()=>res(null); });
+      if(val) all.rabtat[key]=val;
+    }
+    all.count=Object.keys(all.rabtat).length;
+    let blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+    let url=URL.createObjectURL(blob);
+    let a=document.createElement('a'); a.href=url; a.download='D32_RABTAT_BACKUP_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  }catch(e){ alert('❌ فشل: '+e.message); }
+}
+async function importRabtat(event){
+  let file=event.target.files[0]; if(!file) return;
+  try{
+    let text=await file.text(); let data=JSON.parse(text);
+    let db=await openDB();
+    let tx=db.transaction('d32store','readwrite');
+    let store=tx.objectStore('d32store');
+    let existingIdxStr=await new Promise(r=>{ let q=store.get('RABTAT_INDEX'); q.onsuccess=()=>r(q.result); q.onerror=()=>r(null); });
+    let existingIdx=[]; try{ existingIdx=existingIdxStr?JSON.parse(existingIdxStr):[]; }catch(e){ existingIdx=[]; }
+    let newSet=new Set([...existingIdx]);
+    for(let k of Object.keys(data.rabtat||{})){ store.put(data.rabtat[k], k); newSet.add(k); }
+    if(Array.isArray(data.index)){ data.index.forEach(k=>newSet.add(k)); }
+    let finalIdx=Array.from(newSet);
+    store.put(JSON.stringify(finalIdx), 'RABTAT_INDEX');
+    tx.oncomplete=()=>{ alert('✅ تم الاستيراد'); location.reload(); };
+  }catch(e){ alert('❌ خطأ: '+e.message); }
+}
+window.onload=function(){
+  document.getElementById('tarikhRabta').valueAsDate=new Date();
+  loadDairaNum();
+  loadFromDB();
+  setTimeout(()=>{generateRows();},800);
+};
+</script>
+</body>
+</html>
