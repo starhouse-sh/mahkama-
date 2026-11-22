@@ -2,10 +2,9 @@
 <html dir="rtl" lang="ar">
 <head>
 <script src="daira-core.js"></script>
-<script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
-<title>نظام د32 - متوافق 1289 - FIXED V3 FINAL</title>
+<title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
 body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
@@ -27,12 +26,11 @@ body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 .safe-bar button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px}
 iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
-
 </style>
 </head>
 <body>
 <div class="sidebar">
-<h2>⚖ نظام الدائرة 32<br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
+<h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
 <div class="tab" onclick="openPage('estelam.html',this)">🔍 الاستعلام</div>
 <div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
@@ -43,7 +41,6 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
 <div class="tab" onclick="openPage('kitaba.html',this)">✍ الكتابة</div>
 <div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات -  <br><small style="font-size:9px"></small></div>
-
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
@@ -51,7 +48,6 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
 <div class="tab red" onclick="openPage('natiga.html',this)">📅 النتيجة القضائية</div>
 <div class="tab brown" onclick="openPage('khobara.html',this)">🔬 الخبراء والطب الشرعي</div>
-
 <div class="tab green-dark" style="background:linear-gradient(90deg,#0f1f3a,#2e7d32);border:2px solid #FFD700;color:#fff" onclick="openPage('Ketabet-Ahkam.html',this)">📄 نسخ الأحكام</div>
 <div class="section-title">⚙ إدارة النظام</div>
 <div class="tab blue" onclick="openPage('tadeil.html',this)">✏ تعديل شامل - FIXED</div>
@@ -60,9 +56,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div class="tab" onclick="openPage('ehsaia-esbaia.html',this)">📊 الإحصائية الأسبوعية</div>
 <div class="tab" onclick="openPage('SANAWAT-QADAIYA.html',this)">📚 السنوات القضائية</div>
 <div class="tab elan" onclick="openPage('ealan.html',this)">📢 الإعلان الإداري - <br><small style="font-size:10px"></small></div>
-
 <div class="tab purple" style="background:linear-gradient(90deg,#0f1f3a,#1e3a6b);border:2px solid #FFD700" onclick="openPage('daira-config.html',this)">⚙ بيانات الدائرة<br><small style="font-size:9px"></small></div>
-
 <div style="margin-top:auto;padding-top:10px;border-top:1px solid #ffffff22;font-size:10px;text-align:center;line-height:1.6">
 <span id="countSide">0</span> قضية<br>
 <span id="sizeInfo" style="color:#4caf50"></span><br>
@@ -87,10 +81,14 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <iframe id="frame" src="about:blank"></iframe>
 </div>
 <script>
-const DB_NAME='D32_DB';
+// ===== 39 DAIRA - DYNAMIC =====
+const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+const DB_NAME='D'+CURRENT_DAIRA+'_DB';
 const DB_VER=2;
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=getAll';
-const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=getAll&daira=D'+CURRENT_DAIRA;
+const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?daira=D'+CURRENT_DAIRA;
+// لو دايرة 32 هيفضل DB_NAME = D32_DB زي ما هو بالظبط، ولو دايرة 5 هيبقى D5_DB
+// ==============================
 
 async function fetchWithRetry(url, options, retries=3){
   for(let attempt=1; attempt<=retries; attempt++){
@@ -120,7 +118,6 @@ function openDB(){return new Promise((res,rej)=>{
       if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');
       if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');
       if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');
-      
     }catch(err){ console.log('DB upgrade error',err); }
   };
   r.onsuccess=e=>res(e.target.result);
@@ -211,8 +208,8 @@ window.addEventListener('message',async(e)=>{
 
 async function updateCounts(){try{let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw){let arr;try{arr=JSON.parse(raw);if(Array.isArray(arr[1]))arr=arr[1];}catch(e){arr=[];}document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';}let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){console.log('updateCounts error',e);}}
 function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
-async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store','ersal_archive'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D32_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
-async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D32_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
+async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store','ersal_archive'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
+async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
 
 const MERGE_FIELDS = ['raqm','sana','mostanef','most','ded','noa','galsaQadima','galsaAsasia','galsaSabiqa','qar','notes','molahazat','mof','mofradat','haletQadya','raqmAwal','sanaAwal','mahkama','code','tarikhHokm','halat','hala','zawgy','dammTo','dammDate','dammList','mofradat','jalsat'];
 
@@ -291,7 +288,7 @@ async function downloadBackupJson(){
   let ahRaw = await idbGet('D32_AHKAM')||'[]'; let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
   let toSave = {v3:arr, ahkam:ahArr, _updatedAt:Date.now()};
   let blob = new Blob([JSON.stringify(toSave)], {type:'application/json'});
-  let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D32_DB_'+arr.length+'.json'; a.click();
+  let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
 }
 async function forceUpload(silent){
   let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
@@ -314,27 +311,21 @@ async function syncBidirectionalSmart(silent){
     let j=JSON.parse(text);
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     let cloudAhkam=j.ahkam||[];
-
     let raw=await idbGet('D32_V3')||'[]';
     let localData; try{localData=JSON.parse(raw); if(Array.isArray(localData[1])) localData=localData[1];}catch(e){localData=[];}
-
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
     cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
-
     let mapById={}, mapByKey={};
     localData.forEach((o,i)=>{
       if(o.id!=null) mapById[String(o.id)]=i;
       let k = normalizeKey(o.raqm,o.sana);
       if(mapByKey[k]===undefined) mapByKey[k]=i;
     });
-
     let maxFileIndex=0;
     localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
-
     let newLocal=[...localData];
     let added=0, fromCloud=0, keptLocal=0;
-
     cloudData.forEach(o=>{
       if(!o.raqm) return;
       let k=normalizeKey(o.raqm,o.sana);
@@ -355,11 +346,9 @@ async function syncBidirectionalSmart(silent){
         } else keptLocal++;
       }
     });
-
     newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
     await idbSet('D32_V3',JSON.stringify(newLocal));
     await idbSet('D32_FINAL',JSON.stringify(newLocal));
-
     try{
       if(cloudAhkam.length>0){
         let ahRaw = await idbGet('D32_AHKAM')||'[]';
@@ -380,9 +369,7 @@ async function syncBidirectionalSmart(silent){
         if(ahAdded>0) await idbSet('D32_AHKAM',JSON.stringify(localAhkam));
       }
     }catch(e){}
-
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
-
     if(toUpload.length>0){
       document.getElementById('health').textContent='✅ دمج +'+added+' جاري رفع '+toUpload.length+'...';
       let ok = await uploadToDrive(toUpload, true, {deletedIds:deletedIds});
@@ -402,6 +389,8 @@ async function syncBidirectionalSmart(silent){
   }
 }
 
+document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
+document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
   updateCounts();checkHealth();
   openPage('mahdar.html',document.querySelector('.tab.active'));
