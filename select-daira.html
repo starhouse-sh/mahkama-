@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اختيار الدائرة</title>
+<link rel="manifest" href="manifest.json">
+<style>
+body{font-family:system-ui;background:#0b1e3a;color:#fff;text-align:center;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:600px;margin:20px auto}
+button{padding:14px;border:none;border-radius:12px;background:#f8d775;font-weight:bold;font-size:16px;cursor:pointer}
+#box{display:none;background:#fff;color:#111;padding:20px;border-radius:14px;max-width:400px;margin:20px auto}
+input{width:100%;padding:12px;margin:10px 0;border:1px solid #ccc;border-radius:8px;text-align:center}
+</style>
+</head>
+<body>
+<h2>⚖️ اختار الدائرة</h2>
+<p>اختار رقم دايرتك واكتب الباسورد بتاعها</p>
+<div class="grid" id="grid"></div>
+<div id="box">
+<h3 id="title">دائرة</h3>
+<input id="pass" type="password" placeholder="باسورد الدائرة">
+<br>
+<button onclick="enter()">دخول</button>
+<p id="msg" style="color:red"></p>
+</div>
+<script>
+// لو الجهاز حافظ دائرة قبل كده - افتح عليها على طول ومفيش تغيير
+const savedDaira = localStorage.getItem('current_daira');
+if (savedDaira) {
+  location.href = 'index.html';
+}
+const grid=document.getElementById('grid');
+for(let i=1;i<=39;i++){
+  const b=document.createElement('button');
+  b.textContent='د/'+i;
+  b.onclick=()=>{document.getElementById('box').style.display='block';document.getElementById('title').textContent='دائرة '+i;document.getElementById('box').dataset.daira=i;document.getElementById('pass').value='';document.getElementById('msg').textContent='';};
+  grid.appendChild(b);
+}
+function enter(){
+  const daira=document.getElementById('box').dataset.daira;
+  const pass=document.getElementById('pass').value.trim();
+  if(!pass){document.getElementById('msg').textContent='اكتب الباسورد';return;}
+  const key='daira_pass_'+daira;
+  const saved=localStorage.getItem(key);
+  if(saved && saved!==pass){document.getElementById('msg').textContent='الباسورد غلط للدائرة دي';return;}
+  if(!saved) localStorage.setItem(key,pass);
+  localStorage.setItem('current_daira',daira);
+  localStorage.setItem('current_daira_pass',pass);
+  location.href='index.html';
+}
+</script>
+<script src="pwa-install.js"></script>
+</body>
+</html>
