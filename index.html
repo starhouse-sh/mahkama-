@@ -89,8 +89,8 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
 const DB_NAME='D'+CURRENT_DAIRA+'_DB';
 const DB_VER=2;
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?action=get&daira='+CURRENT_DAIRA;
-const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbzead9Zzdk18QXRoCcNEVXDtY099yu2pt_ds6aVFVIEneswt0VLVyPkKDLgi2llip_Y/exec?daira='+CURRENT_DAIRA;
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
+const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
 let CLOUD_PASSWORD = '';
 
 async function fetchWithRetry(url, options, retries=3){
@@ -131,14 +131,12 @@ function storeForKey(k){k=String(k||'');if(k.includes('AHKAM')||k==='D32_AHKAM')
 async function idbSet(k,v){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readwrite');tx.objectStore(s).put(v,k);tx.oncomplete=()=>rs();tx.onerror=e=>rj(e);});}
 async function idbGet(k){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readonly');let rq=tx.objectStore(s).get(k);rq.onsuccess=()=>rs(rq.result);rq.onerror=e=>rj(e);});}
 
-// ===== FIX: هات القضايا من V3 أو FINAL - اللي فيه بيانات =====
 async function getCasesArray(){
   let rawV3 = await idbGet('D32_V3') || '[]';
   let rawFinal = await idbGet('D32_FINAL') || '[]';
   let arrV3=[]; let arrFinal=[];
   try{ arrV3=JSON.parse(rawV3); if(Array.isArray(arrV3[1])) arrV3=arrV3[1]; }catch(e){ arrV3=[]; }
   try{ arrFinal=JSON.parse(rawFinal); if(Array.isArray(arrFinal[1])) arrFinal=arrFinal[1]; }catch(e){ arrFinal=[]; }
-  // خد الأطول، ولو واحد فيهم أطول انقله للتاني عشان يتوحدوا
   if(arrFinal.length > arrV3.length){
     await idbSet('D32_V3', JSON.stringify(arrFinal));
     return arrFinal;
@@ -217,7 +215,6 @@ window.addEventListener('message',async(e)=>{
         e.data.val=JSON.stringify(arr);
       }
     }catch(err){console.warn(err);}
-    // FIX: احفظ في الاتنين عشان أي زرار يلاقيها
     await idbSet(e.data.key,e.data.val);
     if(e.data.key==='D32_V3') await idbSet('D32_FINAL', e.data.val);
     if(e.data.key==='D32_FINAL') await idbSet('D32_V3', e.data.val);
@@ -225,7 +222,6 @@ window.addEventListener('message',async(e)=>{
   }
   if(e.data.type==='D32_GET'){
     let val=await idbGet(e.data.key);
-    // لو طلب V3 وهو فاضي بس FINAL فيه بيانات، ابعت FINAL
     if((!val || val==='[]') && e.data.key==='D32_V3'){
       val = await idbGet('D32_FINAL');
     }
