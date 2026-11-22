@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-  <script>
+<script>
 if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
   location.href = 'select-daira.html';
 }
@@ -231,15 +231,12 @@ async function uploadToDrive(localArray, silent, options){
   try{
     document.getElementById('health').textContent='⏳ رفع '+(isForceReplace?' (استبدال كامل) ':'')+localArray.length+'...';
     localArray.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
-    // لو فيه محذوفات، شيلها قبل الرفع لأن السكريبت بيحفظ الملف كله على بعضه
     if(deletedIds.length>0){
       let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});
       localArray = localArray.filter(o=>!delMap[String(o.id)]);
     }
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    // السكريبت بتاعك doPost بيحفظ الملف كله على بعضه، ممنوع تقسيم دفعات وممنوع action
-    // ولازم نحافظ على _password عشان check_pass ميتكسرش
     const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
     if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
@@ -283,7 +280,6 @@ async function downloadBackupJson(){
   let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
 }
 async function forceUpload(silent){
-  // مهم: السكريبت بيحفظ الملف كله، فمينفعش نرفع التعديلات بس، لازم نرفع الملف كله
   let raw=await idbGet('D32_V3')||'[]'; let arr; try{arr=JSON.parse(raw); if(Array.isArray(arr[1])) arr=arr[1];}catch(e){arr=[];}
   if(!arr.length){ if(!silent) alert('مفيش بيانات'); return; }
   let deletedIds = await getDeletedIds();
@@ -300,7 +296,6 @@ async function syncBidirectionalSmart(silent){
     if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
     let j;
     try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
-    // السكريبت ممكن يرجع [] لو الملف مش موجود، أو {error:'update_needed'} لو الأدمن وقف الدايرة
     if(j && j.error === 'update_needed'){
       document.getElementById('health').textContent='⛔ الدايرة دي موقوفة من الأدمن - حدث التطبيق';
       if(!silent) alert('⛔ الدايرة دي موقوفة من الأدمن');
@@ -371,7 +366,6 @@ async function syncBidirectionalSmart(silent){
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
     if(toUpload.length>0 || deletedIds.length>0){
       document.getElementById('health').textContent='✅ دمج +'+added+' جاري رفع '+newLocal.length+'...';
-      // مهم: بنرفع الملف كله newLocal مش التعديلات بس، لأن السكريبت بيستبدل الملف كله
       let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
       if(ok){
         await setLastSync();
