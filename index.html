@@ -45,7 +45,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div class="tab" onclick="openPage('rolat.html',this)">📜 رولات القضاه</div>
 <div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
 <div class="tab" onclick="openPage('kitaba.html',this)">✍ الكتابة</div>
-<div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات -  <br><small style="font-size:9px"></small></div>
+<div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
@@ -60,8 +60,8 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div class="tab" onclick="openPage('ehsaiat.html',this)">📊 الإحصائية</div>
 <div class="tab" onclick="openPage('ehsaia-esbaia.html',this)">📊 الإحصائية الأسبوعية</div>
 <div class="tab" onclick="openPage('SANAWAT-QADAIYA.html',this)">📚 السنوات القضائية</div>
-<div class="tab elan" onclick="openPage('ealan.html',this)">📢 الإعلان الإداري - <br><small style="font-size:10px"></small></div>
-<div class="tab purple" style="background:linear-gradient(90deg,#0f1f3a,#1e3a6b);border:2px solid #FFD700" onclick="openPage('daira-config.html',this)">⚙ بيانات الدائرة<br><small style="font-size:9px"></small></div>
+<div class="tab elan" onclick="openPage('ealan.html',this)">📢 الإعلان الإداري</div>
+<div class="tab purple" style="background:linear-gradient(90deg,#0f1f3a,#1e3a6b);border:2px solid #FFD700" onclick="openPage('daira-config.html',this)">⚙ بيانات الدائرة</div>
 <div style="margin-top:auto;padding-top:10px;border-top:1px solid #ffffff22;font-size:10px;text-align:center;line-height:1.6">
 <span id="countSide">0</span> قضية<br>
 <span id="sizeInfo" style="color:#4caf50"></span><br>
@@ -78,7 +78,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <button onclick="exportAll()" style="background:#0A2342;color:#FFD700">💾 حفظ</button>
 <button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">⬇ تنزيل JSON</button>
 <button onclick="checkHealth()" style="background:#FFD700">🔍 فحص</button>
-<button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية - كل ربع ساعة</button>
+<button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
 <button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
@@ -92,7 +92,6 @@ const DB_VER=2;
 const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
 const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
 let CLOUD_PASSWORD = '';
-
 async function fetchWithRetry(url, options, retries=3){
   for(let attempt=1; attempt<=retries; attempt++){
     try{
@@ -108,10 +107,8 @@ async function fetchWithRetry(url, options, retries=3){
     }
   }
 }
-
 function normalizeNum(s){if(!s&&s!==0)return'';s=String(s);const ar='٠١٢٣٤٥٦٧٨٩';const per='۰۱۲۳۴۵۶۷۸۹';let o='';for(let ch of s){let i=ar.indexOf(ch);if(i>=0){o+=i;continue;}i=per.indexOf(ch);if(i>=0){o+=i;continue;}o+=ch;}return o.trim().replace(/\s+/g,'');}
 function normalizeKey(r,s){return normalizeNum(r)+'/'+normalizeNum(s);}
-
 function openDB(){return new Promise((res,rej)=>{
   let r=indexedDB.open(DB_NAME,2);
   r.onupgradeneeded=e=>{
@@ -120,17 +117,14 @@ function openDB(){return new Promise((res,rej)=>{
       if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');
       if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');
       if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');
-    }catch(err){ console.log('DB upgrade error',err); }
+    }catch(err){}
   };
   r.onsuccess=e=>res(e.target.result);
   r.onerror=e=>rej(e.target.error);
-  r.onblocked=()=>{ console.log('DB blocked - close other tabs'); };
 });}
-
-function storeForKey(k){k=String(k||'');if(k.includes('AHKAM')||k==='D32_AHKAM')return'ahkam';if(k.includes('V3')||k.includes('FINAL')||k.includes('MOT')||k.includes('MOTADAWAL')||k==='D32_V3'||k==='D32_FINAL')return'cases';return'd32store';}
+function storeForKey(k){k=String(k||'');if(k.includes('AHKAM')||k==='D32_AHKAM')return'ahkam';if(k.includes('V3')||k.includes('FINAL')||k.includes('MOT')||k==='D32_V3'||k==='D32_FINAL')return'cases';return'd32store';}
 async function idbSet(k,v){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readwrite');tx.objectStore(s).put(v,k);tx.oncomplete=()=>rs();tx.onerror=e=>rj(e);});}
 async function idbGet(k){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readonly');let rq=tx.objectStore(s).get(k);rq.onsuccess=()=>rs(rq.result);rq.onerror=e=>rj(e);});}
-
 async function getCasesArray(){
   let rawV3 = await idbGet('D32_V3') || '[]';
   let rawFinal = await idbGet('D32_FINAL') || '[]';
@@ -146,34 +140,16 @@ async function getCasesArray(){
   }
   return arrV3.length ? arrV3 : arrFinal;
 }
-
 async function getDeletedIds(){try{let raw=await idbGet('D32_DELETED_IDS');return raw?JSON.parse(raw):[];}catch(e){return[];}}
 async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.stringify([...new Set(arr.map(x=>String(x)))]));}catch(e){}}
 async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
 async function getLastSync(){try{return await idbGet('D32_LAST_SYNC_TS')||'0';}catch(e){return'0';}}
 async function setLastSync(){try{await idbSet('D32_LAST_SYNC_TS', String(Date.now()));}catch(e){}}
-
 async function migrate(){
-  try{
-    let db=await openDB();
-    let v3_cases = await new Promise(r=>{let tx=db.transaction('cases','readonly');let rq=tx.objectStore('cases').get('D32_V3');rq.onsuccess=()=>r(rq.result);rq.onerror=()=>r(null);});
-    let v3_store = await new Promise(r=>{let tx=db.transaction('d32store','readonly');let rq=tx.objectStore('d32store').get('D32_V3');rq.onsuccess=()=>r(rq.result);rq.onerror=()=>r(null);});
-    if(v3_store){
-      let a1=[]; try{a1=JSON.parse(v3_cases||'[]'); if(Array.isArray(a1[1])) a1=a1[1];}catch(e){a1=[];}
-      let a2=[]; try{a2=JSON.parse(v3_store||'[]'); if(Array.isArray(a2[1])) a2=a2[1];}catch(e){a2=[];}
-      if(a2.length > a1.length){
-        await new Promise((res,rej)=>{let tx=db.transaction('cases','readwrite');tx.objectStore('cases').put(v3_store,'D32_V3');tx.oncomplete=()=>res();tx.onerror=e=>rej(e);});
-      }
-    }
-  }catch(e){}
-  try{
-    let d=await idbGet('MIGRATED_D32_DB');
-    if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED';return;}
-  }catch(e){}
+  try{let d=await idbGet('MIGRATED_D32_DB');if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED';return;}}catch(e){}
   document.getElementById('health').textContent='✅ متوافق - جاري...';
   try{await idbSet('MIGRATED_D32_DB','yes'+new Date().toISOString());}catch(e){}
 }
-
 window.addEventListener('message',async(e)=>{
   if(!e.data) return;
   if(e.data.type==='D32_SET'){
@@ -199,22 +175,19 @@ window.addEventListener('message',async(e)=>{
             if((newObj.most||'')!=(old.most||'')) changed=true;
             if((newObj.ded||'')!=(old.ded||'')) changed=true;
             if((newObj.noa||'')!=(old.noa||'')) changed=true;
-            if((newObj.mof||newObj.mofradat||'')!=(old.mof||old.mofradat||'')) changed=true;
             if(JSON.stringify(newObj.jalsat||[])!=JSON.stringify(old.jalsat||[])) changed=true;
             if(changed) newObj._updatedAt = Date.now();
             else newObj._updatedAt = old._updatedAt || Date.now();
           } else {
             maxIdx++;
             if(newObj._fileIndex==null) newObj._fileIndex=maxIdx;
-            if(newObj._sessionOrder==null) newObj._sessionOrder=newObj._fileIndex;
-            if(newObj._manualOrder==null) newObj._manualOrder=newObj._sessionOrder;
             newObj._updatedAt=Date.now();
           }
         });
         arr.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
         e.data.val=JSON.stringify(arr);
       }
-    }catch(err){console.warn(err);}
+    }catch(err){}
     await idbSet(e.data.key,e.data.val);
     if(e.data.key==='D32_V3') await idbSet('D32_FINAL', e.data.val);
     if(e.data.key==='D32_FINAL') await idbSet('D32_V3', e.data.val);
@@ -222,89 +195,44 @@ window.addEventListener('message',async(e)=>{
   }
   if(e.data.type==='D32_GET'){
     let val=await idbGet(e.data.key);
-    if((!val || val==='[]') && e.data.key==='D32_V3'){
-      val = await idbGet('D32_FINAL');
-    }
-    if((!val || val==='[]') && e.data.key==='D32_FINAL'){
-      val = await idbGet('D32_V3');
-    }
+    if((!val || val==='[]') && e.data.key==='D32_V3') val = await idbGet('D32_FINAL');
+    if((!val || val==='[]') && e.data.key==='D32_FINAL') val = await idbGet('D32_V3');
     e.source.postMessage({type:'D32_VAL',key:e.data.key,val:val},'*');
   }
 });
-
-async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){console.log('updateCounts error',e);}}
+async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
 function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
-async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store','ersal_archive'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
+async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
 async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
-
-const MERGE_FIELDS = ['raqm','sana','mostanef','most','ded','noa','galsaQadima','galsaAsasia','galsaSabiqa','qar','notes','molahazat','mof','mofradat','haletQadya','raqmAwal','sanaAwal','mahkama','code','tarikhHokm','halat','hala','zawgy','dammTo','dammDate','dammList','mofradat','jalsat'];
-
 async function uploadToDrive(localArray, silent, options){
   options = options || {};
-  var isForceReplace = options.forceReplace || false;
   var deletedIds = options.deletedIds || [];
-  try{
-    let storedDeleted = await getDeletedIds();
-    if(storedDeleted.length>0) deletedIds = [...new Set([...deletedIds,...storedDeleted])];
-  }catch(e){}
+  try{let storedDeleted = await getDeletedIds();if(storedDeleted.length>0) deletedIds = [...new Set([...deletedIds,...storedDeleted])];}catch(e){}
   if(!localArray ||!Array.isArray(localArray) || localArray.length==0){ if(!silent) alert('⚠ فاضي'); return false; }
   try{
-    document.getElementById('health').textContent='⏳ رفع '+(isForceReplace?' (استبدال كامل) ':'')+localArray.length+'...';
+    document.getElementById('health').textContent='⏳ رفع '+localArray.length+'...';
     localArray.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
-    if(deletedIds.length>0){
-      let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});
-      localArray = localArray.filter(o=>!delMap[String(o.id)]);
-    }
+    if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
     const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
     if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
-    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + أحكام '+ahArr.length;
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
     return true;
   }catch(e){
     if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
     return false;
   }
 }
-
-async function forceReplaceDrive(){
-  if(!confirm('⚠ سيستبدل ملف Drive بالكامل')) return;
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات'); return; }
-  let deletedIds=await getDeletedIds();
-  let ok = await uploadToDrive(arr, false, {forceReplace:true, deletedIds:deletedIds});
-  if(ok) alert('✅ تم الاستبدال - '+arr.length);
-}
-async function cleanWrongMahgozFromLab(){
-  if(!confirm('مسح المحجوز الخطأ؟')) return;
-  let arr = await getCasesArray();
-  let before=arr.length; let deletedIds=[];
-  let cleaned = arr.filter(o=>{ if(o.tarikhHokm && (!o.code || String(o.code).trim()=='')){ deletedIds.push(o.id); return false; } return true; });
-  if(cleaned.length==before){ alert('مفيش محجوز خطأ'); return; }
-  await idbSet('D32_V3', JSON.stringify(cleaned));
-  await idbSet('D32_FINAL', JSON.stringify(cleaned));
-  let existingDeleted = await getDeletedIds();
-  await setDeletedIds([...existingDeleted,...deletedIds]);
-  updateCounts();
-}
-async function downloadBackupJson(){
-  let arr = await getCasesArray();
-  let ahRaw = await idbGet('D32_AHKAM')||'[]'; let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-  let toSave = {v3:arr, ahkam:ahArr, _updatedAt:Date.now()};
-  if(CLOUD_PASSWORD) toSave._password = CLOUD_PASSWORD;
-  let blob = new Blob([JSON.stringify(toSave)], {type:'application/json'});
-  let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
-}
 async function forceUpload(silent){
   let arr = await getCasesArray();
-  if(!arr.length){ if(!silent) alert('مفيش بيانات - القضية لسه متحفظتش، افتح صفحة المحاضر واعمل تحديث'); return; }
+  if(!arr.length){ if(!silent) alert('مفيش بيانات - افتح المحاضر واعمل تحديث'); return; }
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
-
 async function syncBidirectionalSmart(silent){
   let lastSyncBefore = Number(await getLastSync()||0);
   try{
@@ -312,103 +240,36 @@ async function syncBidirectionalSmart(silent){
     let res=await fetch(CLOUD_URL,{cache:'no-store'});
     let text=await res.text();
     if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
-    let j;
-    try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
-    if(j && j.error === 'update_needed'){
-      document.getElementById('health').textContent='⛔ الدايرة دي موقوفة من الأدمن - حدث التطبيق';
-      if(!silent) alert('⛔ الدايرة دي موقوفة من الأدمن');
-      return;
-    }
+    let j; try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
+    if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
-    let cloudAhkam=j.ahkam||[];
     let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
     cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
-    let mapById={}, mapByKey={};
-    localData.forEach((o,i)=>{
-      if(o.id!=null) mapById[String(o.id)]=i;
-      let k = normalizeKey(o.raqm,o.sana);
-      if(mapByKey[k]===undefined) mapByKey[k]=i;
-    });
-    let maxFileIndex=0;
-    localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
     let newLocal=[...localData];
-    let added=0, fromCloud=0, keptLocal=0;
-    cloudData.forEach(o=>{
-      if(!o.raqm) return;
-      let k=normalizeKey(o.raqm,o.sana);
-      let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k];
-      if(idx===undefined){
-        if(o._fileIndex==null || o._fileIndex>=900000000){ maxFileIndex++; o._fileIndex=maxFileIndex; }
-        if(!o._updatedAt) o._updatedAt=Date.now();
-        newLocal.push(o); added++;
-      }else{
-        let cur=newLocal[idx];
-        if(Number(o._updatedAt||0) > Number(cur._updatedAt||0) + 1000){
-          let keepF = cur._fileIndex;
-          MERGE_FIELDS.forEach(f=>{ if(o[f]!=null) cur[f]=o[f]; });
-          if(o.jalsat) cur.jalsat=o.jalsat;
-          cur._fileIndex = keepF;
-          cur._updatedAt = Number(o._updatedAt);
-          fromCloud++;
-        } else keptLocal++;
-      }
-    });
+    let mapById={}, mapByKey={};
+    localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i; let k=normalizeKey(o.raqm,o.sana); if(mapByKey[k]===undefined) mapByKey[k]=i;});
+    let maxFileIndex=0; localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
+    let added=0;
+    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } newLocal.push(o); added++; }});
     newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
     await idbSet('D32_V3',JSON.stringify(newLocal));
     await idbSet('D32_FINAL',JSON.stringify(newLocal));
-    try{
-      if(cloudAhkam.length>0){
-        let ahRaw = await idbGet('D32_AHKAM')||'[]';
-        let localAhkam; try{localAhkam=JSON.parse(ahRaw); if(Array.isArray(localAhkam[1])) localAhkam=localAhkam[1];}catch(e){localAhkam=[];}
-        let ahMapKey={}; localAhkam.forEach((o,i)=>{ ahMapKey[normalizeKey(o.raqm,o.sana)]=i; });
-        let ahAdded=0;
-        cloudAhkam.forEach(o=>{
-          if(!o.raqm) return;
-          let k=normalizeKey(o.raqm,o.sana);
-          if(!(k in ahMapKey)){
-            if(!o._updatedAt) o._updatedAt=Date.now();
-            localAhkam.push(o); ahAdded++;
-          } else {
-            let cur = localAhkam[ahMapKey[k]];
-            if(Number(o._updatedAt||0) > Number(cur._updatedAt||0) + 1000) Object.assign(cur,o);
-          }
-        });
-        if(ahAdded>0) await idbSet('D32_AHKAM',JSON.stringify(localAhkam));
-      }
-    }catch(e){}
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
     if(toUpload.length>0 || deletedIds.length>0){
-      document.getElementById('health').textContent='✅ دمج +'+added+' جاري رفع '+newLocal.length+'...';
       let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
-      if(ok){
-        await setLastSync();
-        document.getElementById('health').textContent='✅ V3 +'+added+' جديد، '+fromCloud+' من الموبايل، رفع '+newLocal.length+' - الآن '+newLocal.length;
-      }
-    }else{
-      await setLastSync();
-      document.getElementById('health').textContent='✅ محدث - '+newLocal.length+' (+'+added+' جديد، '+fromCloud+' من الموبايل)';
-    }
+      if(ok) await setLastSync();
+    }else{await setLastSync();}
     updateCounts();
     let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1&v='+Date.now();
-    if(!silent && (added>0||fromCloud>0)) alert('✅ مزامنة:\n+'+added+' جديد\n'+fromCloud+' تحديث من الموبايل\nالآن: '+newLocal.length);
-  }catch(e){
-    document.getElementById('health').textContent='❌ فشل: '+e.message;
-  }
+  }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
-migrate().then(()=>{
-  updateCounts();checkHealth();
-  openPage('mahdar.html',document.querySelector('.tab.active'));
-  setTimeout(()=>syncBidirectionalSmart(true),2500);
-  setInterval(()=>syncBidirectionalSmart(true), 900000);
-  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) syncBidirectionalSmart(true); });
-});
+migrate().then(()=>{updateCounts();checkHealth();openPage('mahdar.html',document.querySelector('.tab.active'));setTimeout(()=>syncBidirectionalSmart(true),2500);});
 </script>
 <script src="pwa-install.js"></script>
 </body>
