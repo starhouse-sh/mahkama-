@@ -2,7 +2,7 @@
   "name": "نظام د32 - إدارة القضايا",
   "short_name": "د32",
   "start_url": "./select-daira.html",
-"scope": "./"
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0b1e3a",
   "theme_color": "#0b1e3a",
