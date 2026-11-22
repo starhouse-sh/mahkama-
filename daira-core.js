@@ -1,37 +1,50 @@
-// daira-core.js - نسخة آمنة
-try{
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
-  window.SCRIPT_URL = SCRIPT_URL;
-  window.MY_DAIRA = localStorage.getItem('MY_DAIRA');
-  window.DAIRA_PASS = localStorage.getItem('DAIRA_PASS');
-  window.showUpdateNeeded = function(){
-    let div = document.createElement('div');
-    div.style.cssText = 'position:fixed; top:0; left:0; right:0; background:#C9A227; color:#0b1e3a; text-align:center; padding:12px; z-index:99999';
-    div.innerHTML = '🔄 التطبيق يحتاج إلى تحديث من الإنترنت - يجب أن تتصل بالنت لإجراء بعض التحديثات.';
-    document.body.appendChild(div);
-  };
-  window.checkLicense = function(){
-    try{
-      let last = parseInt(localStorage.getItem('LAST_ONLINE_CHECK') || '0');
-      let diffDays = (Date.now() - last) / (1000*60*60*24);
-      if(last !== 0 && diffDays > 7 && !navigator.onLine){ showUpdateNeeded(); }
-      if(navigator.onLine){ localStorage.setItem('LAST_ONLINE_CHECK', Date.now().toString()); }
-    }catch(e){}
-  };
-  window.addEventListener('load', checkLicense);
-  window.syncWithDrive = async function(){
-    try{
-      let res = await fetch(`${SCRIPT_URL}?action=get&daira=${window.MY_DAIRA}`).then(r=>r.json());
-      if(res && res.error === 'update_needed'){ showUpdateNeeded(); return null; }
-      return res;
-    }catch(e){ return null; }
-  };
-  window.uploadToDrive = async function(data){
-    try{
-      data._password = window.DAIRA_PASS;
-      data._daira = window.MY_DAIRA;
-      await fetch(`${SCRIPT_URL}?daira=${window.MY_DAIRA}`, {method:'POST', body: JSON.stringify(data)});
-      localStorage.setItem('LAST_ONLINE_CHECK', Date.now().toString());
-    }catch(e){}
-  };
-}catch(e){}
+// daira-core.js - كل دايرة ليها ملف لوحده
+function getCurrentDaira() {
+  return localStorage.getItem('current_daira') || '32';
+}
+
+// اسم ملف الدرايف حسب الدايرة
+function getDairaFileName() {
+  const d = getCurrentDaira();
+  return `D${d}_DB_latest.json`;
+}
+
+// ده اللي هتعدله في index.html
+// بدل ما كنت كاتب رابط ثابت لملف واحد، هتستخدم ده
+
+/* 
+مثال للاستخدام في index.html :
+
+const FOLDER_ID = 'ID_الفولدر_بتاعك_على_درايف'; // نفس الفولدر اللي فيه الـ 39 ملف
+const fileName = getDairaFileName(); // هيطلع مثلا D5_DB_latest.json لو انت د/5
+
+// بعدها تجيب الملف من الدرايف بالاسم
+const url = `https://www.googleapis.com/drive/v3/files?q=name='${fileName}'+and+'${FOLDER_ID}'+in+parents&key=YOUR_API_KEY&fields=files(id,name)`;
+
+fetch(url).then(r=>r.json()).then(data=>{
+  if(data.files && data.files.length>0){
+    const fileId = data.files[0].id;
+    // حمل محتوى الملف
+    return fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=YOUR_API_KEY`);
+  } else {
+    console.log('مفيش ملف للدائرة دي لسه');
+    return null;
+  }
+})
+
+*/
+
+// لو بتستخدم Apps Script Web App
+function getDairaDataUrl() {
+  const d = getCurrentDaira();
+  // حط هنا رابط الـ Web App بتاعك + ?daira=D5
+  const BASE_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  return `${BASE_URL}?daira=D${d}`;
+}
+
+// عرض رقم الدائرة في الصفحة
+function showDairaNumber() {
+  const el = document.getElementById('current-daira-display');
+  if (el) el.textContent = 'دائرة ' + getCurrentDaira();
+}
+document.addEventListener('DOMContentLoaded', showDairaNumber);
