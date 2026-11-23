@@ -202,6 +202,11 @@ window.addEventListener('message',async(e)=>{
 });
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
 function openPage(f,el){
+  // حماية ضد التداخل: لو حد طلب index.html جوه الـ iframe، امنعه
+  if(f.includes('index.html')){
+    console.warn('Blocked nesting index inside iframe:', f);
+    return;
+  }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');
   document.getElementById('pageTitle').textContent=f;
@@ -309,7 +314,8 @@ async function syncBidirectionalSmart(silent){
       if(ok) await setLastSync();
     }else{await setLastSync();}
     updateCounts();
-    let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1'+(navigator.onLine?'&v='+Date.now():'');
+    // مترجعش تحميل الـ iframe في المزامنة عشان ميعملش تداخل - سيبه زي ما هو
+    // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
