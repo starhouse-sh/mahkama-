@@ -242,7 +242,16 @@ async function uploadToDrive(localArray, silent, options){
     if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    // حماية: لو الجهاز ده 0 أحكام، متحطش [] فوق الـ 951 اللي في الدرايف - جيبهم من الدرايف الأول
+    // === AUTO SYNC DAIRA CONFIG - جديد ===
+    let dairaInfo=null;
+    try{
+      let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D'+CURRENT_DAIRA+'_DAIRA_CONFIG'];
+      for(let k of keys){
+        let raw=await idbGet(k);
+        if(raw){ dairaInfo=JSON.parse(raw); break; }
+      }
+    }catch(e){}
+    // حماية الأحكام زي جيت هوب
     if(ahArr.length===0){
       try{
         let cr = await fetch(CLOUD_URL,{cache:'no-store'});
@@ -251,21 +260,24 @@ async function uploadToDrive(localArray, silent, options){
         if(cj && Array.isArray(cj.ahkam) && cj.ahkam.length>0){
           ahArr = cj.ahkam;
           await idbSet('D32_AHKAM', JSON.stringify(ahArr));
-          console.log('حماية الأحكام: جبت '+ahArr.length+' من الدرايف بدل ما أرفع []');
         }
-      }catch(e){ console.log('مش قادر أجيب أحكام الدرايف للحماية', e); }
+        if(!dairaInfo && (cj.dairaInfo||cj.dairaConfig)){
+          dairaInfo = cj.dairaInfo||cj.dairaConfig;
+        }
+      }catch(e){}
     }
-    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    const payload = {v3:localArray, ahkam:ahArr, dairaInfo:dairaInfo, dairaConfig:dairaInfo, _updatedAt: Date.now()};
     if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
-    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + بيانات الدائرة';
     return true;
   }catch(e){
     if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
     return false;
   }
 }
+
 async function forceUpload(silent){
   let arr = await getCasesArray();
   if(!arr.length){ if(!silent) alert('مفيش بيانات - افتح المحاضر واعمل تحديث'); return; }
@@ -336,6 +348,8 @@ async function syncBidirectionalSmart(silent){
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
+    // === AUTO LOAD DAIRA CONFIG FROM DRIVE ===
+    try{ let ci=j.dairaInfo||j.dairaConfig||j.config; if(ci && (ci.dairaNumber||ci.members)){ await idbSet('D32_DAIRA_CONFIG', JSON.stringify(ci)); await idbSet('D32_CIRCLE', JSON.stringify(ci)); await idbSet('D'+CURRENT_DAIRA+'_DAIRA_CONFIG', JSON.stringify(ci)); console.log('✅ تم تحديث بيانات الدائرة من الدرايف'); } }catch(e){ console.log('daira config sync error',e); }
     let cloudAhkam=j.ahkam&&Array.isArray(j.ahkam)?j.ahkam:[];
     try{
       let localAhRaw = await idbGet('D32_AHKAM')||'[]';
