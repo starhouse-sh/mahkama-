@@ -201,7 +201,19 @@ window.addEventListener('message',async(e)=>{
   }
 });
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
-function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
+function openPage(f,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('pageTitle').textContent=f;
+  const frame = document.getElementById('frame');
+  // لو فيه نت، خلي كسر الكاش، لو مفيش نت، متكسرش الكاش عشان يلاقيها
+  if(navigator.onLine){
+    frame.src=f+'?safe=1&v='+Date.now();
+  } else {
+    frame.src=f+'?safe=1';
+  }
+  setTimeout(updateCounts,300);
+}
 async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
 async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
 async function uploadToDrive(localArray, silent, options){
@@ -246,6 +258,38 @@ async function syncBidirectionalSmart(silent){
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
+    // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
+    try{
+      let cloudAhkam = j.ahkam && Array.isArray(j.ahkam) ? j.ahkam : [];
+      if(cloudAhkam.length>1 && Array.isArray(cloudAhkam[1])) cloudAhkam = cloudAhkam[1];
+      if(cloudAhkam.length>0){
+        let localAhRaw = await idbGet('D32_AHKAM') || '[]';
+        let localAh = [];
+        try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
+        let ahMap = {};
+        localAh.forEach(a=>{ if(a.id!=null) ahMap[String(a.id)]=a; else ahMap[normalizeKey(a.raqm,a.sana)]=a; });
+        let addedAh=0;
+        cloudAhkam.forEach(a=>{
+          let k = a.id!=null ? String(a.id) : normalizeKey(a.raqm,a.sana);
+          if(!ahMap[k]){ ahMap[k]=a; addedAh++; }
+          else {
+            // لو السحابة أحدث، حدثها
+            if(Number(a._updatedAt||0) > Number(ahMap[k]._updatedAt||0)) ahMap[k]=a;
+          }
+        });
+        let mergedAh = Object.values(ahMap);
+        await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
+      }
+    }catch(e){ console.log('ahkam sync err', e); }
+    // --- إصلاح بيانات الدائرة ---
+    try{
+      let info = j.dairaInfo || j.dairaConfig || j.config || null;
+      if(info){
+        await idbSet('D32_DAIRA_CONFIG', JSON.stringify(info));
+        await idbSet('D32_CIRCLE', JSON.stringify(info));
+        await idbSet('D32_CONFIG', JSON.stringify(info));
+      }
+    }catch(e){}
     let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
@@ -265,7 +309,7 @@ async function syncBidirectionalSmart(silent){
       if(ok) await setLastSync();
     }else{await setLastSync();}
     updateCounts();
-    let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1&v='+Date.now();
+    let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1'+(navigator.onLine?'&v='+Date.now():'');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
