@@ -1,7 +1,8 @@
 {
   "name": "نظام الدائرة 32",
   "short_name": "الدائرة 32",
-  "start_url": "./index.html",
+  "start_url": "./select-daira.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0A2342",
   "theme_color": "#0A2342",
