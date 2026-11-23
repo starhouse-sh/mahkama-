@@ -271,18 +271,30 @@ async function syncBidirectionalSmart(silent){
         let localAhRaw = await idbGet('D32_AHKAM') || '[]';
         let localAh = [];
         try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
-        let ahMap = {};
-        localAh.forEach(a=>{ if(a.id!=null) ahMap[String(a.id)]=a; else ahMap[normalizeKey(a.raqm,a.sana)]=a; });
-        let addedAh=0;
-        cloudAhkam.forEach(a=>{
-          let k = a.id!=null ? String(a.id) : normalizeKey(a.raqm,a.sana);
-          if(!ahMap[k]){ ahMap[k]=a; addedAh++; }
-          else {
-            // لو السحابة أحدث، حدثها
-            if(Number(a._updatedAt||0) > Number(ahMap[k]._updatedAt||0)) ahMap[k]=a;
-          }
-        });
-        let mergedAh = Object.values(ahMap);
+        // إصلاح العدد 875 بدل 951: لو السحابة أكبر، السحابة هي الصح - خدها كلها
+        // الدمج القديم بـ رقم/سنة كان بيدوس أحكام على بعض
+        let mergedAh;
+        if(cloudAhkam.length >= localAh.length){
+          // السحابة فيها كل الأحكام (951) - استخدمها كأساس
+          // وادمج عليها أي حكم محلي جديد مش موجود في السحابة بالـ id فقط
+          let cloudIds = new Set(cloudAhkam.map(a=> a.id!=null ? String(a.id) : ''));
+          let extraLocal = localAh.filter(a=> a.id!=null && !cloudIds.has(String(a.id)));
+          mergedAh = [...cloudAhkam, ...extraLocal];
+        } else {
+          // المحلي أكبر - ادمج بالـ id فقط، مش برقم/سنة
+          let ahMap = new Map();
+          localAh.forEach(a=>{ if(a.id!=null) ahMap.set(String(a.id), a); else ahMap.set('noid_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a); });
+          cloudAhkam.forEach(a=>{
+            if(a.id!=null){
+              let k = String(a.id);
+              if(!ahMap.has(k)) ahMap.set(k, a);
+              else if(Number(a._updatedAt||0) > Number(ahMap.get(k)._updatedAt||0)) ahMap.set(k, a);
+            } else {
+              ahMap.set('noid_cloud_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a);
+            }
+          });
+          mergedAh = [...ahMap.values()];
+        }
         await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
       }
     }catch(e){ console.log('ahkam sync err', e); }
