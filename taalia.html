@@ -74,10 +74,10 @@ tr.active td{background:#ffec99!important}
 <div>🏷 تعلية الملف - <span id="cnt">٠</span> - ٤٤ حكم قطعي - <span id="dbInfo" style="font-size:10px;background:#fff;color:#000;padding:3px 8px;border-radius:6px">جاري تحميل من D32_DB...</span></div>
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
 <div class="date-box"><input id="d" placeholder="يوم" maxlength="2"><span class="date-sep">/</span><input id="m" placeholder="شهر" maxlength="2"><span class="date-sep">/</span><input id="y" placeholder="سنة" maxlength="4"></div>
-<button class="btn btn-navy" onclick="searchAhkam()">🔍 عرض القطعي A-G</button>
+<button class="btn btn-green" onclick="searchAhkam()">🔍 بحث</button>
 <button class="btn btn-gold" onclick="loadFromDB()">🔄 تحديث من DB</button>
-<button class="btn btn-red" onclick="printSingle()">🖨 فردي</button>
-<button class="btn btn-green" onclick="printAllTa3leyat()">🖨 الكل (٦)</button>
+<button class="btn btn-red" onclick="printSingle()" style="min-width:110px; padding:8px 16px;">🖨 طباعة فردي</button>
+<button class="btn btn-green" onclick="printAllTa3leyat()" style="min-width:120px; padding:8px 16px;">🖨 طباعة الكل</button>
 </div>
 </header>
 
@@ -138,7 +138,7 @@ tr.active td{background:#ffec99!important}
 <script>
 const DB_NAME='D32_DB';
 var DATA=[], DATA_MOT=[];
-var DOCS=["أصل الحكم","الأصل الثاني للحكم","أصل المسودة","أصل عريضة الاستئناف","محاضر جلسات","رولات القضاه","الأصل المعلن","إعادة إعلان","إعلان إداري","إعلان بالحضور شخصيا","إعلان والإرشاد","إعلان بالإعادة للمرافعة","إعلان بحكم التحقيق","إعلان بحكم الاستجواب","إعلان بالحكم التمهيدي","حكم تمهيدي","مسودة حكم تمهيدي","محضر تحقيق","مذكرة نيابة","عريضة تجديد من الشطب","إعلان بالتجديد","عريضة تعجيل من الوقف","إعلان بالتعجيل","صحيفة تصحيح الشكل","إعلان بالتصحيح"];
+var DOCS=["أصل الحكم","الأصل الثاني للحكم","أصل المسودة","أصل عريضة الاستئناف","محاضر جلسات","رولات القضاه","الأصل المعلن","إعادة إعلان","إعلان بأصل الصحيفة","إعلان إداري","إعلان بالحضور شخصيا","إعلان والإرشاد","إعلان بالإعادة للمرافعة","إعلان بحكم التحقيق","إعلان بحكم الاستجواب","إعلان بالحكم التمهيدي","حكم تمهيدي","مسودة حكم تمهيدي","محضر تحقيق","مذكرة نيابة","عريضة تجديد من الشطب","إعلان بالتجديد","عريضة تعجيل من الوقف","إعلان بالتعجيل","صحيفة تصحيح الشكل","إعلان بالتصحيح"];
 
 function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases')) db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam')) db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store')) db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 function extractArray(raw){if(!raw) return [];try{let arr=typeof raw==='string'?JSON.parse(raw):raw;if(Array.isArray(arr)&&arr.length==2&&Array.isArray(arr[1])) arr=arr[1];if(Array.isArray(arr)) return arr;}catch(e){}return [];}
@@ -157,7 +157,6 @@ async function loadFromDB(){
  if(!ahkRaw) ahkRaw = await idbGet('cases','D32_AHKAM');
  DATA = extractArray(ahkRaw);
 
- // fallback to localStorage if IDB empty (للتوافق)
  if(DATA.length===0){
    try{let ls=JSON.parse(localStorage.getItem('D32_AHKAM')||'[]'); if(Array.isArray(ls)&&ls.length) DATA=ls;}catch(e){}
  }
@@ -264,27 +263,65 @@ function searchAhkam(){
  if(!yy||!mm||!dd){alert('اكمل التاريخ');return;}
  var target=cleanDate(yy+'/'+mm+'/'+dd);
  var results=[], seen={};
- // من الأحكام
- for(var i=0;i<DATA.length;i++){var x=DATA[i]; if(datesEqual(getTar(x),target)){var k=(x.id||getRaqm(x)+getSana(x))+cleanDate(getTar(x)); if(!seen[k]){seen[k]=true; results.push(x);}}}
- // من المتداول اللي ليه tarikhHokm أو tarHokm
- for(var j=0;j<DATA_MOT.length;j++){var ap=DATA_MOT[j]; 
+ var seenRaqmSana={};
+ var dupCount=0;
+ function makeUniqueKey(ap){
+   var r = String(getRaqm(ap)||'').trim();
+   var s = String(getSana(ap)||'').trim();
+   var j = '';
+   try{
+     var ji = getJoinedInfo(ap);
+     if(ji && ji.raqm) j = String(ji.raqm).trim();
+   }catch(e){}
+   return r + '_' + s + (j ? '_' + j : '');
+ }
+ for(var i=0;i<DATA.length;i++){
+   var x=DATA[i]; 
+   if(datesEqual(getTar(x),target)){
+     var uniq = makeUniqueKey(x);
+     var k=(x.id||getRaqm(x)+getSana(x))+cleanDate(getTar(x));
+     if(!seen[k] && !seenRaqmSana[uniq]){
+       seen[k]=true; 
+       seenRaqmSana[uniq]=true;
+       results.push(x);
+     } else { dupCount++; }
+   }
+ }
+ for(var j=0;j<DATA_MOT.length;j++){
+   var ap=DATA_MOT[j]; 
    var tHokm = ap.tarikhHokm||ap.tarHokm||ap.tarHokmAwal||'';
    var tQadima = ap.galsaQadima||'';
    var isQat3y = ap.halat==='حكم' || ap.qarar && (ap.qarar.includes('رفض')||ap.qarar.includes('قبول')||ap.qarar.includes('إلزام')||ap.qarar.includes('قطعي'));
+   var uniqMot = makeUniqueKey(ap);
    if(tHokm && datesEqual(tHokm,target)){
-     var k2=(ap.id||ap.raqm+ap.sana)+cleanDate(tHokm); if(!seen[k2]){seen[k2]=true; results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tHokm,tar:tHokm,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});}
+     if(!seenRaqmSana[uniqMot]){
+       var k2=(ap.id||ap.raqm+ap.sana)+cleanDate(tHokm); 
+       if(!seen[k2]){
+         seen[k2]=true; 
+         seenRaqmSana[uniqMot]=true;
+         results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tHokm,tar:tHokm,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});
+       }
+     } else { dupCount++; }
    }
-   // كمان لو القضية قطعية بتاريخ القادمة
    if(tQadima && datesEqual(tQadima,target) && isQat3y){
-     var k3=(ap.id||ap.raqm+ap.sana)+cleanDate(tQadima)+'_qat3y'; if(!seen[k3]){seen[k3]=true; results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tQadima,tar:tQadima,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});}
+     if(!seenRaqmSana[uniqMot]){
+       var k3=(ap.id||ap.raqm+ap.sana)+cleanDate(tQadima)+'_qat3y'; 
+       if(!seen[k3]){
+         seen[k3]=true; 
+         seenRaqmSana[uniqMot]=true;
+         results.push({id:ap.id,raqm:ap.raqm,sana:ap.sana,mostanef:ap.mostanef||ap.most||'',ded:ap.ded||'',tarHokm:tQadima,tar:tQadima,code:ap.code||'',qar:ap.qarar||ap.qar||'',zawgy:ap.zawgy||0,dammList:ap.dammList||[],monDam:ap.monDam||null,mondam:ap.mondam||null,raqmMonDam:ap.raqmMonDam||null,sanaMonDam:ap.sanaMonDam||null,mostanadatList:ap.mostanadatList||[],aminSir:ap.aminSir||ap.amin||''});
+       }
+     } else { dupCount++; }
    }
  }
- // فلترة القطعي فقط (0 = قطعي)
  results=results.filter(function(x){return getCategory(getQar(x))===0;});
  results.sort(function(a,b){var ca=getCodeOrder(getCode(a)), cb=getCodeOrder(getCode(b)); if(ca!==cb) return ca-cb; return (parseInt(getRaqm(a))||0)-(parseInt(getRaqm(b))||0);});
  CURRENT_LIST=results;
  document.getElementById('tarikhHead').textContent=toAr(dd+'/'+mm+'/'+yy);
  document.getElementById('cnt').textContent=toAr(results.length);
+ if(dupCount>0){
+   document.getElementById('dbInfo').textContent = `✅ ${DATA_MOT.length} متداول | ${DATA.length} أحكام | تم حذف ${toAr(dupCount)} مكرر`;
+ }
  renderCases(results);
  if(results.length>0){
    setTimeout(function(){var firstRow=document.querySelector('#tbodyRight tr'); if(firstRow) selectCase(results[0],firstRow,0);},100);
@@ -330,11 +367,11 @@ function selectCase(ap,el,idx){
  }
 
  SELECTED=isZ? getDefaultZawgy() : getDefaultFardy();
- // لو فيه تعلية محفوظة اعرضها
  var saved=getSavedDocs(ap);
  if(saved) SELECTED=saved;
  document.getElementById('leftHead').textContent=isZ?'🏷 قائمة التعلية - زوجي (استئنافين)':'🏷 قائمة التعلية - فردي';
  renderLeft(); renderBtns();
+ setTimeout(updateSaveButtonLabel,100);
 }
 
 function renderBtns(){
@@ -356,7 +393,28 @@ function renderBtns(){
  for(var k=1;k<=5;k++){var btn2=document.createElement('button'); btn2.textContent=toAr(k); btn2.onclick=function(n){return function(e){e.stopPropagation(); addMozkera("مذكرة دفاع المستأنف ضده",n);};}(k); contentM2.appendChild(btn2);}
 
  for(var x=0;x<DOCS.length;x++){var name=DOCS[x]; var on=false; for(var s=0;s<SELECTED.length;s++){if(SELECTED[s].indexOf(name)>-1) on=true;} var btnN=document.createElement('button'); btnN.className='btn-doc'+(on?' on':''); btnN.textContent=name; btnN.onclick=(function(n){return function(e){e.stopPropagation(); toggleDoc(n);};})(name); b.appendChild(btnN);}
+
+ // ===== زر جديد: طلب فتح باب مرافعة - في الآخر خالص =====
+ var divFath=document.createElement('div'); divFath.className='dropdown'; divFath.id='dropFath';
+ divFath.innerHTML='<button class="btn-doc" style="background:#ffeb9c; color:#000; border:1px solid #C9A227;" onclick="toggleDrop(event,\'dropFath\')">▼ طلب فتح باب مرافعه</button><div class="dropdown-content" style="width:220px"></div>'; b.appendChild(divFath);
+ var contentFath=divFath.querySelector('.dropdown-content');
+ var fathOptions=[
+   {label: "بدون مستندات", text: "طلب فتح باب مرافعه"},
+   {label: "مرفق به حافظه مستندات", text: "طلب فتح باب مرافعه مرفق به حافظة مستندات"},
+   {label: "مرفق به حافظتين مستندات", text: "طلب فتح باب مرافعه مرفق به حافظتين مستندات"},
+   {label: "مرفق به ثلاث حوافظ مستندات", text: "طلب فتح باب مرافعه مرفق به ثلاث حوافظ مستندات"},
+   {label: "مرفق به اربع حوافظ مستندات", text: "طلب فتح باب مرافعه مرفق به اربع حوافظ مستندات"}
+ ];
+ fathOptions.forEach(function(opt){
+   var btnF=document.createElement('button');
+   btnF.textContent=opt.label;
+   btnF.style.fontSize='11px';
+   btnF.style.padding='10px 6px';
+   btnF.onclick=(function(t){return function(e){e.stopPropagation(); addFathMorafaa(t);};})(opt.text);
+   contentFath.appendChild(btnF);
+ });
 }
+
 function toggleDrop(e,id){
  if(e) e.stopPropagation();
  var el=document.getElementById(id);
@@ -364,7 +422,11 @@ function toggleDrop(e,id){
  document.querySelectorAll('.dropdown').forEach(function(d){d.classList.remove('open');});
  if(!isOpen) el.classList.add('open');
 }
-function addHafza(num){var txt=num==1?"حوافظ مستندات":"عدد "+toAr(num)+" حوافظ مستندات"; if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var dd=document.getElementById('dropH'); if(dd) dd.classList.remove('open'); renderLeft(); renderBtns();}
+// ===== التعديل الأول: مفرد / جمع =====
+// كان: num==1 ? "حوافظ مستندات" : "عدد X حوافظ مستندات"
+// بقى: num==1 ? "حافظة مستندات" : "عدد X حوافظ مستندات"
+function addFathMorafaa(txt){ if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var d=document.getElementById('dropFath'); if(d) d.classList.remove('open'); renderLeft(); renderBtns(); }
+function addHafza(num){var txt=num==1?"حافظة مستندات":"عدد "+toAr(num)+" حوافظ مستندات"; if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var dd=document.getElementById('dropH'); if(dd) dd.classList.remove('open'); renderLeft(); renderBtns();}
 function addMozkera(type,num){var txt=num==1?type:"عدد "+toAr(num)+" "+type; if(SELECTED.indexOf(txt)==-1) SELECTED.push(txt); var d1=document.getElementById('dropM1'); if(d1) d1.classList.remove('open'); var d2=document.getElementById('dropM2'); if(d2) d2.classList.remove('open'); renderLeft(); renderBtns();}
 function toggleDoc(name){var idx=SELECTED.indexOf(name); if(idx==-1) SELECTED.push(name); else SELECTED.splice(idx,1); renderLeft(); renderBtns();}
 function addCustom(){var inp=document.getElementById('customDoc'); var v=inp.value.trim(); if(!v){alert('اكتب اسم المستند');return;} SELECTED.push(v); inp.value=''; renderLeft(); renderBtns();}
@@ -373,8 +435,8 @@ function removeDoc(i){SELECTED.splice(i,1); renderLeft(); renderBtns();}
 function clearAll(){SELECTED=[]; renderLeft(); renderBtns();}
 async function saveCurrent(){
  if(!CUR){alert('اختار قضية');return;}
- // حفظ في IDB
  let db = await openDB();
+ let isUpdate = getSavedDocs(CUR) ? true : false;
  let updated=false;
  for(let k=0;k<DATA.length;k++){if(String(DATA[k].raqm)==String(CUR.raqm)&&String(DATA[k].sana)==String(CUR.sana)){DATA[k].mostanadatList=SELECTED.slice(); updated=true; break;}}
  for(let k2=0;k2<DATA_MOT.length;k2++){if(String(DATA_MOT[k2].raqm)==String(CUR.raqm)&&String(DATA_MOT[k2].sana)==String(CUR.sana)){DATA_MOT[k2].mostanadatList=SELECTED.slice();}}
@@ -383,12 +445,30 @@ async function saveCurrent(){
    await idbPut('cases','D32_V3',JSON.stringify(DATA_MOT));
    await idbPut('d32store','D32_AHKAM',JSON.stringify(DATA));
  }
- // حفظ في localStorage أيضا للتوافق
  try{localStorage.setItem('D32_AHKAM',JSON.stringify(DATA)); localStorage.setItem('D32_V3',JSON.stringify(DATA_MOT)); localStorage.setItem('D32_FINAL',JSON.stringify(DATA_MOT));}catch(e){}
  if(CURRENT_LIST[CUR_IDX]) CURRENT_LIST[CUR_IDX].mostanadatList=SELECTED.slice();
- if(CUR_IDX>-1 && CUR_IDX < CURRENT_LIST.length-1){var nextAp=CURRENT_LIST[CUR_IDX+1]; var rows=document.querySelectorAll('#tbodyRight tr'); var nextRow=rows[CUR_IDX+1]; if(nextRow){selectCase(nextAp,nextRow,CUR_IDX+1); nextRow.scrollIntoView({block:'nearest'});}}
- else {alert('✅ اتحفظ - دي آخر قضية');}
+ if(isUpdate){
+   alert('✅ تم تحديث التعلية بنجاح للاستئناف رقم '+toAr(CUR.raqm)+' - تم حفظ التعديل');
+ } else {
+   if(CUR_IDX>-1 && CUR_IDX < CURRENT_LIST.length-1){var nextAp=CURRENT_LIST[CUR_IDX+1]; var rows=document.querySelectorAll('#tbodyRight tr'); var nextRow=rows[CUR_IDX+1]; if(nextRow){selectCase(nextAp,nextRow,CUR_IDX+1); nextRow.scrollIntoView({block:'nearest'});}}
+   else {alert('✅ اتحفظ - دي آخر قضية');}
+ }
+ updateSaveButtonLabel();
 }
+function updateSaveButtonLabel(){
+  var btn = document.querySelector('button[onclick="saveCurrent()"]');
+  if(!btn) return;
+  if(CUR && getSavedDocs(CUR)){
+    btn.innerHTML='🔄 تحديث التعلية';
+    btn.style.background='#C9A227';
+    btn.style.color='#000';
+  } else {
+    btn.innerHTML='💾 حفظ واللي بعده';
+    btn.style.background='#0f1f3a';
+    btn.style.color='#fff';
+  }
+}
+
 
 function getSavedDocs(ap){
  var real=null;
