@@ -2,12 +2,11 @@
 <html dir="rtl" lang="ar">
 <head>
 <script>
-if(window.top !== window.self && location.pathname.includes('index.html')){ document.body.innerHTML='<h3 style=text-align:center;padding:20px>⚠️ index لا يفتح داخل الإطار</h3>'; throw new Error('nested'); }
 if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
   location.href = 'select-daira.html';
 }
 </script>
-<script>try{var s=document.createElement("script");s.src="daira-core.js";s.onerror=function(){console.log("daira-core.js not found - continue");};document.head.appendChild(s);}catch(e){}</script>
+<script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
@@ -33,36 +32,6 @@ body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
 </style>
-
-<script>
-// تحديث اسم التطبيق ديناميكي حسب الدائرة المحفوظة
-(function(){
-  try{
-    const d = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
-    const manifest = {
-      name: `نظام د${d}`,
-      short_name: `نظام د${d}`,
-      start_url: "./select-daira.html",
-      display: "standalone",
-      background_color: "#0A2342",
-      theme_color: "#0A2342",
-      scope: "./",
-      icons: [
-        {src: "./icon-192.png", sizes: "192x192", type: "image/png"},
-        {src: "./icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable"}
-      ]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    let link = document.querySelector('link[rel=manifest]');
-    if(link){ link.href = url; }
-    document.title = `نظام د${d} - متوافق 1289`;
-    const el = document.getElementById('dairaNum');
-    if(el) el.textContent = d;
-  }catch(e){}
-})();
-</script>
-
 </head>
 <body>
 <div class="sidebar">
@@ -112,7 +81,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
-<!-- تم إلغاء جميع أزرار الحذف نهائيا - لا يوجد أي مسح -->
+<button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
 </div>
 <iframe id="frame" src="about:blank"></iframe>
 </div>
@@ -124,26 +93,15 @@ const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43
 const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
 let CLOUD_PASSWORD = '';
 async function fetchWithRetry(url, options, retries=3){
-  options = options || {};
   for(let attempt=1; attempt<=retries; attempt++){
-    let ctrl = null;
-    let tid = null;
-    let opts = {...options};
-    if(!opts.signal){
-      ctrl = new AbortController();
-      tid = setTimeout(()=>ctrl.abort(), 20000);
-      opts.signal = ctrl.signal;
-    }
     try{
-      let res = await fetch(url, opts);
-      if(tid) clearTimeout(tid);
+      let res = await fetch(url, options);
       let txt = await res.text();
       if(txt.trim().startsWith('<!DOCTYPE')||txt.trim().startsWith('<html')){
         throw new Error('Google رجع HTML - السكريبت مش منشور Anyone');
       }
       return txt;
     }catch(e){
-      if(tid) clearTimeout(tid);
       if(attempt===retries) throw e;
       await new Promise(r=>setTimeout(r, 2000*attempt));
     }
@@ -182,22 +140,15 @@ async function getCasesArray(){
   }
   return arrV3.length ? arrV3 : arrFinal;
 }
-async function getDeletedIds(){ return []; } // تم إلغاء الحذف نهائيا
-async function setDeletedIds(arr){ return; } // لا تحفظ أي محذوفات
-async function clearDeletedIds(){ return; } // لا تمسح أي شيء تلقائي
+async function getDeletedIds(){try{let raw=await idbGet('D32_DELETED_IDS');return raw?JSON.parse(raw):[];}catch(e){return[];}}
+async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.stringify([...new Set(arr.map(x=>String(x)))]));}catch(e){}}
+async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
 async function getLastSync(){try{return await idbGet('D32_LAST_SYNC_TS')||'0';}catch(e){return'0';}}
 async function setLastSync(){try{await idbSet('D32_LAST_SYNC_TS', String(Date.now()));}catch(e){}}
 async function migrate(){
-  try{
-    let d=null;
-    try{d=await idbGet('MIGRATED_D32_DB');}catch(e){d=null;}
-    if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED - '+ (await getCasesArray()).length; return;}
-    document.getElementById('health').textContent='✅ متوافق - جاري...';
-    try{await idbSet('MIGRATED_D32_DB','yes'+new Date().toISOString());}catch(e){}
-    document.getElementById('health').textContent='✅ متوافق - V3 FIXED';
-  }catch(e){
-    document.getElementById('health').textContent='✅ يعمل - '+e.message;
-  }
+  try{let d=await idbGet('MIGRATED_D32_DB');if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED';return;}}catch(e){}
+  document.getElementById('health').textContent='✅ متوافق - جاري...';
+  try{await idbSet('MIGRATED_D32_DB','yes'+new Date().toISOString());}catch(e){}
 }
 window.addEventListener('message',async(e)=>{
   if(!e.data) return;
@@ -252,17 +203,7 @@ window.addEventListener('message',async(e)=>{
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
 function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
 async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
-async function checkHealth(){
-  try{
-    let arr = await getCasesArray();
-    let raw = await idbGet('D32_V3') || await idbGet('D32_FINAL') || '[]';
-    let sz = (new Blob([raw]).size/1024/1024).toFixed(2);
-    document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+arr.length+' قضية - '+sz+'MB ✅';
-  }catch(e){
-    document.getElementById('health').textContent='✅ يعمل - '+arr.length+' قضية';
-    console.error('checkHealth', e);
-  }
-}
+async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
 async function uploadToDrive(localArray, silent, options){
   options = options || {};
   var deletedIds = options.deletedIds || [];
@@ -274,42 +215,17 @@ async function uploadToDrive(localArray, silent, options){
     if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    // === AUTO SYNC DAIRA CONFIG - جديد ===
-    let dairaInfo=null;
-    try{
-      let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D'+CURRENT_DAIRA+'_DAIRA_CONFIG'];
-      for(let k of keys){
-        let raw=await idbGet(k);
-        if(raw){ dairaInfo=JSON.parse(raw); break; }
-      }
-    }catch(e){}
-    // حماية الأحكام زي جيت هوب
-    if(ahArr.length===0){
-      try{
-        let cr = await fetch(CLOUD_URL,{cache:'no-store'});
-        let ct = await cr.text();
-        let cj = JSON.parse(ct);
-        if(cj && Array.isArray(cj.ahkam) && cj.ahkam.length>0){
-          ahArr = cj.ahkam;
-          await idbSet('D32_AHKAM', JSON.stringify(ahArr));
-        }
-        if(!dairaInfo && (cj.dairaInfo||cj.dairaConfig)){
-          dairaInfo = cj.dairaInfo||cj.dairaConfig;
-        }
-      }catch(e){}
-    }
-    const payload = {v3:localArray, ahkam:ahArr, dairaInfo:dairaInfo, dairaConfig:dairaInfo, _updatedAt: Date.now()};
+    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
     if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
-    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + بيانات الدائرة';
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
     return true;
   }catch(e){
     if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
     return false;
   }
 }
-
 async function forceUpload(silent){
   let arr = await getCasesArray();
   if(!arr.length){ if(!silent) alert('مفيش بيانات - افتح المحاضر واعمل تحديث'); return; }
@@ -317,174 +233,44 @@ async function forceUpload(silent){
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
-
-async function forceReplaceDrive(){
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات على الجهاز ده'); return; }
-  // رسالة تأكيد وإلغاء واضحة
-  let msg = '⚠ تأكيد الاستبدال الكامل\n\n';
-  msg += 'الدايرة: د/' + CURRENT_DAIRA + '\n';
-  msg += 'اللي على الجهاز ده: ' + arr.length + ' قضية\n';
-  msg += 'اللي في الدرايف: هيتمسح كله ويتحط مكانه اللي على الجهاز ده\n';
-  msg += 'باقي الدواير مش هتتأثر\n\n';
-  msg += 'هل انت متأكد؟\n';
-  msg += 'دوس OK للتأكيد - دوس Cancel للإلغاء';
-  if(!confirm(msg)){
-    document.getElementById('health').textContent='❌ تم الإلغاء - مفيش حاجة اتغيرت';
-    return;
-  }
-  let deletedIds = await getDeletedIds();
-  document.getElementById('health').textContent='⏳ استبدال كامل '+arr.length+'...';
-  let ok = await uploadToDrive(arr, false, {deletedIds:deletedIds});
-  if(ok) alert('✅ تم الاستبدال الكامل لدايرة '+CURRENT_DAIRA+' - '+arr.length+' قضية');
-  else alert('❌ فشل الاستبدال');
-}
-async function cleanWrongMahgozFromLab(){ alert('تم إلغاء الميزة نهائيا - مفيش حذف من المتداول'); return; }
-async function restoreLastClean(){ 
-  alert('تم إلغاء ميزة الاسترجاع والحذف نهائيا - مفيش حاجة هتتمسح'); return; // استرجاع طوارئ للـ 15 اللي اتمسحوا قبل الإلغاء
-  try{
-    await clearDeletedIds();
-    document.getElementById('health').textContent='⏳ استرجاع طوارئ من الدرايف...';
-    let res = await fetch(CLOUD_URL,{cache:'no-store'});
-    let t = await res.text();
-    let j = JSON.parse(t);
-    if(Array.isArray(j)) j={v3:j, ahkam:j.ahkam||[]};
-    await idbSet('D32_V3', JSON.stringify(j.v3||[]));
-    await idbSet('D32_FINAL', JSON.stringify(j.v3||[]));
-    if(j.ahkam&&j.ahkam.length>0) await idbSet('D32_AHKAM', JSON.stringify(j.ahkam));
-    await setLastSync();
-    updateCounts();
-    await checkHealth();
-    alert('✅ رجعوا من الدرايف: '+(j.v3||[]).length+' قضية');
-    location.reload();
-  }catch(e){ alert('افتح اللاب الأصلي 1600 ودوس رفع التعديلات فقط'); }
-}
-async function clearDeletedListOnly(){ await clearDeletedIds(); alert('✅ اتمسحت قائمة المحذوفات'); }
-
-
-
-async function downloadBackupJson(){
-  let arr = await getCasesArray();
-  let ahRaw = await idbGet('D32_AHKAM')||'[]';
-  let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-  let toSave = {v3:arr, ahkam:ahArr, _updatedAt:Date.now()};
-  let blob = new Blob([JSON.stringify(toSave)], {type:'application/json'});
-  let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='D'+CURRENT_DAIRA+'_DB_'+arr.length+'.json'; a.click();
-}
 async function syncBidirectionalSmart(silent){
   let lastSyncBefore = Number(await getLastSync()||0);
-  let controller = new AbortController();
-  let timeoutId = setTimeout(()=>controller.abort(), 15000); // 15 ثانية ويوقف
   try{
     if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
-    console.log('CLOUD_URL:', CLOUD_URL);
-    let res=await fetch(CLOUD_URL,{cache:'no-store', signal: controller.signal, mode:'cors'});
-    clearTimeout(timeoutId);
+    let res=await fetch(CLOUD_URL,{cache:'no-store'});
     let text=await res.text();
-    if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')){
-      throw new Error('السكريبت مش منشور Anyone - افتح السكريبت واضغط Deploy -> Anyone');
-    }
+    if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
     let j; try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
     if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
-    // === AUTO LOAD DAIRA CONFIG FROM DRIVE ===
-    try{ let ci=j.dairaInfo||j.dairaConfig||j.config; if(ci && (ci.dairaNumber||ci.members)){ await idbSet('D32_DAIRA_CONFIG', JSON.stringify(ci)); await idbSet('D32_CIRCLE', JSON.stringify(ci)); await idbSet('D'+CURRENT_DAIRA+'_DAIRA_CONFIG', JSON.stringify(ci)); console.log('✅ تم تحديث بيانات الدائرة من الدرايف'); } }catch(e){ console.log('daira config sync error',e); }
-    let cloudAhkam=j.ahkam&&Array.isArray(j.ahkam)?j.ahkam:[];
-    // مزامنة الأحكام - لو اللي في الدرايف فيه أحكام والموبايل فاضي، حمله
-    try{
-      let localAhRaw = await idbGet('D32_AHKAM')||'[]';
-      let localAh=[];
-      try{localAh=JSON.parse(localAhRaw); if(Array.isArray(localAh)&&Array.isArray(localAh[1])) localAh=localAh[1];}catch(e){localAh=[];}
-      if(cloudAhkam.length > localAh.length){
-        await idbSet('D32_AHKAM', JSON.stringify(cloudAhkam));
-        console.log('تم تحديث الأحكام من الدرايف:', cloudAhkam.length);
-      } else if(localAh.length > 0 && cloudAhkam.length===0){
-        // لو الدرايف فاضي والمحلي فيه، هنرفعه في خطوة الرفع الجاية
-      }
-    }catch(e){console.error('ahkam sync error', e);}
-
     let localData = await getCasesArray();
-    // تم إلغاء فلترة المحذوفات نهائيا - مفيش حاجة هتتمسح
-    let deletedIds=[];
+    let deletedIds=await getDeletedIds();
+    let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
+    cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
     let newLocal=[...localData];
-    let mapById={};
-    localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i;});
+    let mapById={}, mapByKey={};
+    localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i; let k=normalizeKey(o.raqm,o.sana); if(mapByKey[k]===undefined) mapByKey[k]=i;});
     let maxFileIndex=0; localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
-    let added=0, updated=0;
-    cloudData.forEach(o=>{
-      if(!o.raqm) return;
-      // التجديد من الشطب: نفس الـ id بنحدثه بجلسة قادمة، مش نضيفه كقضية جديدة
-      let idx = o.id!=null ? mapById[String(o.id)] : undefined;
-      if(idx===undefined){
-        // قضية جديدة فعلاً - id جديد خالص
-        if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; }
-        newLocal.push(o); added++;
-      } else {
-        let cur = newLocal[idx];
-        // لو نفس الـ id، حدثه دايماً بجلسة قادمة حتى لو _updatedAt قديم - ده أهم حاجة للتجديد
-        // نحافظ على _fileIndex القديم عشان الرولات
-        let oldIdx = cur._fileIndex;
-        let isDifferent = JSON.stringify(cur) !== JSON.stringify(o);
-        Object.assign(cur, o);
-        if(oldIdx!=null) cur._fileIndex = oldIdx;
-        if(isDifferent) updated++;
-      }
-    });
+    let added=0;
+    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } newLocal.push(o); added++; }});
     newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
     await idbSet('D32_V3',JSON.stringify(newLocal));
     await idbSet('D32_FINAL',JSON.stringify(newLocal));
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
-    if(toUpload.length>0){
-      document.getElementById('health').textContent='✅ لقيت '+added+' جديد - برفع '+toUpload.length+'...';
+    if(toUpload.length>0 || deletedIds.length>0){
       let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
       if(ok) await setLastSync();
     }else{await setLastSync();}
-    document.getElementById('health').textContent='✅ محدث - '+newLocal.length+' ( +'+added+' جديد، '+updated+' تحديث من الموبايل )';
     updateCounts();
     let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1&v='+Date.now();
-    if(!silent && (added>0||updated>0)) alert('✅ مزامنة:\n+'+added+' جديد من الموبايل\n'+updated+' تحديث\nالآن: '+newLocal.length);
-  }catch(e){
-    clearTimeout(timeoutId);
-    console.error(e);
-    let msg = e.name==='AbortError' ? '⏱ انتهت المهلة - الدرايف بطيء، دوس مزامنة تاني' : '❌ فشل: '+e.message;
-    document.getElementById('health').textContent=msg;
-    if(!silent) alert(msg+'\n\nجرب:\n1- دوس F5\n2- دوس مزامنة تاني\n3- لو فضل واقف افتح mahdar.html لوحده وشوف العدد');
-  }
+  }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
-// منع مزامنة الصفحات الداخلية القديمة اللي بتعلق
-window.addEventListener('message', e=>{
-  if(e.data && e.data.type==='disableInnerSync'){
-    console.log('disable inner sync');
-  }
-});
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
-async function startApp(){
-  // لا يوجد أي مسح تلقائي - بناء على طلبك
-
-  try{await migrate();}catch(e){console.error(e);}
-  try{await updateCounts();}catch(e){console.error(e);}
-  try{await checkHealth();}catch(e){console.error(e);}
-  try{openPage('mahdar.html',document.querySelector('.tab.active'));}catch(e){console.error(e);}
-  setTimeout(()=>{try{syncBidirectionalSmart(true);}catch(e){console.error(e);}}, 2500);
-  // لو فضل واقف على جاري فحص بعد 5 ثواني، فكه
-  setTimeout(async()=>{
-    let h=document.getElementById('health');
-    if(h && h.textContent.includes('جاري فحص')){
-      h.textContent='✅ جاهز - دوس مزامنة ذكية';
-      try{await updateCounts(); await checkHealth();}catch(e){}
-    }
-  }, 5000);
-}
-startApp();
+migrate().then(()=>{updateCounts();checkHealth();openPage('mahdar.html',document.querySelector('.tab.active'));setTimeout(()=>syncBidirectionalSmart(true),2500);});
 </script>
 <script src="pwa-install.js"></script>
-<script>
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("./sw.js").then(()=>console.log("SW registered")).catch(e=>console.log("SW fail",e)); }
-</script>
 </body>
 </html>
