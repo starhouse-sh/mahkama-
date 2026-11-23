@@ -1,16 +1,22 @@
 {
-  "name": "نظام الدائرة 32",
-  "short_name": "الدائرة 32",
+  "name": "نظام الدائرة",
+  "short_name": "نظام الدائرة",
   "start_url": "./select-daira.html",
-  "scope": "./",
   "display": "standalone",
   "background_color": "#0A2342",
   "theme_color": "#0A2342",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1087/1087815.png",
-      "sizes": "512x512",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
       "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "scope": "./"
 }
