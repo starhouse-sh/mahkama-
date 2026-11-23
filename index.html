@@ -234,6 +234,7 @@ async function forceUpload(silent){
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
 async function syncBidirectionalSmart(silent){
+  if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
   let lastSyncBefore = Number(await getLastSync()||0);
   try{
     if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
@@ -269,7 +270,31 @@ async function syncBidirectionalSmart(silent){
 }
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
-migrate().then(()=>{updateCounts();checkHealth();openPage('mahdar.html',document.querySelector('.tab.active'));setTimeout(()=>syncBidirectionalSmart(true),2500);});
+migrate().then(()=>{
+  updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
+  // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
+  if(!navigator.onLine){
+    const h=document.getElementById('health');
+    if(h) h.textContent='📴 وضع Offline - شغال من الجهاز - لما النت يرجع دوس مزامنة ذكية';
+  } else {
+    setTimeout(()=>syncBidirectionalSmart(true),2500);
+  }
+  // تخزين تلقائي لكل الصفحات من غير ما تفتحها يدوي
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.ready.then(reg => {
+      if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
+      // سجل الـ SW لو مش مسجل
+    }).catch(()=>{});
+    // لو الـ SW مش مسجل، سجله
+    navigator.serviceWorker.getRegistration().then(r => {
+      if(!r) navigator.serviceWorker.register('./sw.js').then(reg => {
+        if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
+      }).catch(()=>{});
+    });
+  }
+  window.addEventListener('online', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='🌐 النت رجع - دوس مزامنة ذكية'; });
+  window.addEventListener('offline', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='📴 وضع Offline - شغال من الجهاز'; });
+});
 </script>
 <script src="pwa-install.js"></script>
 </body>
