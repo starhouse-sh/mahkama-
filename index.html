@@ -81,7 +81,6 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
-<button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
 </div>
 <iframe id="frame" src="about:blank"></iframe>
 </div>
@@ -274,11 +273,9 @@ async function forceUpload(silent){
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
-
 async function forceReplaceDrive(){
   let arr = await getCasesArray();
   if(!arr.length){ alert('مفيش بيانات على الجهاز ده'); return; }
-  // رسالة تأكيد وإلغاء واضحة
   let msg = '⚠ تأكيد الاستبدال الكامل\n\n';
   msg += 'الدايرة: د/' + CURRENT_DAIRA + '\n';
   msg += 'اللي على الجهاز ده: ' + arr.length + ' قضية\n';
@@ -324,7 +321,7 @@ async function downloadBackupJson(){
 async function syncBidirectionalSmart(silent){
   let lastSyncBefore = Number(await getLastSync()||0);
   let controller = new AbortController();
-  let timeoutId = setTimeout(()=>controller.abort(), 15000); // 15 ثانية ويوقف
+  let timeoutId = setTimeout(()=>controller.abort(), 15000);
   try{
     if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
     console.log('CLOUD_URL:', CLOUD_URL);
@@ -340,7 +337,6 @@ async function syncBidirectionalSmart(silent){
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     let cloudAhkam=j.ahkam&&Array.isArray(j.ahkam)?j.ahkam:[];
-    // مزامنة الأحكام - لو اللي في الدرايف فيه أحكام والموبايل فاضي، حمله
     try{
       let localAhRaw = await idbGet('D32_AHKAM')||'[]';
       let localAh=[];
@@ -349,10 +345,8 @@ async function syncBidirectionalSmart(silent){
         await idbSet('D32_AHKAM', JSON.stringify(cloudAhkam));
         console.log('تم تحديث الأحكام من الدرايف:', cloudAhkam.length);
       } else if(localAh.length > 0 && cloudAhkam.length===0){
-        // لو الدرايف فاضي والمحلي فيه، هنرفعه في خطوة الرفع الجاية
       }
     }catch(e){console.error('ahkam sync error', e);}
-
     let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
@@ -364,16 +358,12 @@ async function syncBidirectionalSmart(silent){
     let added=0, updated=0;
     cloudData.forEach(o=>{
       if(!o.raqm) return;
-      // التجديد من الشطب: نفس الـ id بنحدثه بجلسة قادمة، مش نضيفه كقضية جديدة
       let idx = o.id!=null ? mapById[String(o.id)] : undefined;
       if(idx===undefined){
-        // قضية جديدة فعلاً - id جديد خالص
         if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; }
         newLocal.push(o); added++;
       } else {
         let cur = newLocal[idx];
-        // لو نفس الـ id، حدثه دايماً بجلسة قادمة حتى لو _updatedAt قديم - ده أهم حاجة للتجديد
-        // نحافظ على _fileIndex القديم عشان الرولات
         let oldIdx = cur._fileIndex;
         let isDifferent = JSON.stringify(cur) !== JSON.stringify(o);
         Object.assign(cur, o);
@@ -402,14 +392,11 @@ async function syncBidirectionalSmart(silent){
     if(!silent) alert(msg+'\n\nجرب:\n1- دوس F5\n2- دوس مزامنة تاني\n3- لو فضل واقف افتح mahdar.html لوحده وشوف العدد');
   }
 }
-
-// منع مزامنة الصفحات الداخلية القديمة اللي بتعلق
 window.addEventListener('message', e=>{
   if(e.data && e.data.type==='disableInnerSync'){
     console.log('disable inner sync');
   }
 });
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 async function startApp(){
@@ -418,7 +405,6 @@ async function startApp(){
   try{await checkHealth();}catch(e){console.error(e);}
   try{openPage('mahdar.html',document.querySelector('.tab.active'));}catch(e){console.error(e);}
   setTimeout(()=>{try{syncBidirectionalSmart(true);}catch(e){console.error(e);}}, 2500);
-  // لو فضل واقف على جاري فحص بعد 5 ثواني، فكه
   setTimeout(async()=>{
     let h=document.getElementById('health');
     if(h && h.textContent.includes('جاري فحص')){
