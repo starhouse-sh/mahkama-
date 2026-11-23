@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v12-icon-scales-only';
+const CACHE = 'mahkama-v14-auto-cache-all';
 const FILES = [
   './',
   './index.html',
@@ -16,6 +16,9 @@ const FILES = [
   './edkhal.html',
   './ehsaiat.html',
   './ehsaia-esbaia.html',
+  './tajdid_taagel.html',
+  './kitaba.html',
+  './eltemasat.html',
   './manifest.json',
   './icon-512.png',
   './icon-192.png',
@@ -24,9 +27,22 @@ const FILES = [
   './pwa-install.js'
 ];
 
+// تخزين تلقائي: خزن كل ملف لوحده، لو واحد فشل كمل الباقي
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(FILES).catch(()=>c.addAll(['./','./index.html']))).then(()=>self.skipWaiting())
+    caches.open(CACHE).then(async c => {
+      // خزن كل ملف لوحده - مش addAll اللي بيفشل كله لو ملف واحد ناقص
+      await Promise.allSettled(FILES.map(url => 
+        fetch(url).then(res => {
+          if(res.ok) return c.put(url, res);
+        }).catch(()=>{})
+      ));
+      // خزن الصفحات اللي ممكن تكون بأسماء تانية
+      const extra = ['./taalia.html','./galasat.html','./mahdar.html','./ahkam.html','./estelam.html','./mofradat.html','./kashf.html','./rolat.html'];
+      await Promise.allSettled(extra.map(url => 
+        fetch(url).then(res => { if(res.ok) return c.put(url, res); }).catch(()=>{})
+      ));
+    }).then(()=>self.skipWaiting())
   );
 });
 
@@ -36,11 +52,25 @@ self.addEventListener('activate', e => {
   );
 });
 
+// لما الصفحة تطلب تخزين الكل، خزنهم في الخلفية
+self.addEventListener('message', e => {
+  if(e.data && e.data.type === 'CACHE_ALL'){
+    caches.open(CACHE).then(async c => {
+      await Promise.allSettled(FILES.map(url => 
+        c.match(url).then(hit => {
+          if(hit) return;
+          return fetch(url).then(res => { if(res.ok) return c.put(url, res); }).catch(()=>{});
+        })
+      ));
+    });
+  }
+});
+
 self.addEventListener('fetch', e => {
   const url = e.request.url;
   if(url.includes('script.google.com') || url.includes('googleusercontent')) return;
   
-  // للصفحات HTML - كاش أولا، لو مفيش كاش هات من النت، لو مفيش نت رجع index فقط لو هو index
+  // للصفحات HTML - كاش أولا
   if(e.request.destination === 'document' || (e.request.headers.get('accept')||'').includes('text/html')){
     e.respondWith(
       caches.match(e.request).then(cached => {
@@ -51,11 +81,11 @@ self.addEventListener('fetch', e => {
             caches.open(CACHE).then(c=>c.put(e.request, cl));
           }
           return res;
-        }).catch(()=>{
-          // لو offline وطلب صفحة فرعية مش متخزنة، مترجعش index عشان ميعملش nesting
-          if(url.includes('index.html') || url.endsWith('/') || url.includes('select-daira')){
-            return caches.match('./index.html');
-          }
+        }).catch(async ()=>{
+          const c2 = await caches.match(e.request);
+          if(c2) return c2;
+          const idx = await caches.match('./index.html');
+          if(idx) return idx;
           return new Response('<html dir=rtl><body style="font-family:Tahoma;text-align:center;padding:40px"><h2>⚠️ مفيش نت</h2><p>افتح النت مرة واحدة لتخزين الصفحة</p></body></html>', {headers:{'Content-Type':'text/html'}});
         });
       })
@@ -68,6 +98,6 @@ self.addEventListener('fetch', e => {
         const cl=res.clone(); caches.open(CACHE).then(ca=>ca.put(e.request, cl));
       }
       return res;
-    }))
+    }).catch(()=>caches.match(e.request)))
   );
 });
