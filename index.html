@@ -81,6 +81,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
+<!-- تم إلغاء جميع أزرار الحذف نهائيا - لا يوجد أي مسح -->
 </div>
 <iframe id="frame" src="about:blank"></iframe>
 </div>
@@ -150,9 +151,9 @@ async function getCasesArray(){
   }
   return arrV3.length ? arrV3 : arrFinal;
 }
-async function getDeletedIds(){try{let raw=await idbGet('D32_DELETED_IDS');return raw?JSON.parse(raw):[];}catch(e){return[];}}
-async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.stringify([...new Set(arr.map(x=>String(x)))]));}catch(e){}}
-async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
+async function getDeletedIds(){ return []; } // تم إلغاء الحذف نهائيا
+async function setDeletedIds(arr){ return; } // لا تحفظ أي محذوفات
+async function clearDeletedIds(){ return; } // لا تمسح أي شيء تلقائي
 async function getLastSync(){try{return await idbGet('D32_LAST_SYNC_TS')||'0';}catch(e){return'0';}}
 async function setLastSync(){try{await idbSet('D32_LAST_SYNC_TS', String(Date.now()));}catch(e){}}
 async function migrate(){
@@ -285,9 +286,11 @@ async function forceUpload(silent){
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
+
 async function forceReplaceDrive(){
   let arr = await getCasesArray();
   if(!arr.length){ alert('مفيش بيانات على الجهاز ده'); return; }
+  // رسالة تأكيد وإلغاء واضحة
   let msg = '⚠ تأكيد الاستبدال الكامل\n\n';
   msg += 'الدايرة: د/' + CURRENT_DAIRA + '\n';
   msg += 'اللي على الجهاز ده: ' + arr.length + ' قضية\n';
@@ -305,23 +308,30 @@ async function forceReplaceDrive(){
   if(ok) alert('✅ تم الاستبدال الكامل لدايرة '+CURRENT_DAIRA+' - '+arr.length+' قضية');
   else alert('❌ فشل الاستبدال');
 }
-async function cleanWrongMahgozFromLab(){
-  if(!confirm('مسح المحجوز الخطأ؟')) return;
-  let arr = await getCasesArray();
-  let before = arr.length;
-  let deletedIds = [];
-  let cleaned = arr.filter(o=>{
-    if(o.tarikhHokm && (!o.code || String(o.code).trim()=='')){ deletedIds.push(o.id); return false; }
-    return true;
-  });
-  if(cleaned.length==before){ alert('مفيش محجوز خطأ'); return; }
-  await idbSet('D32_V3', JSON.stringify(cleaned));
-  await idbSet('D32_FINAL', JSON.stringify(cleaned));
-  let existing = await getDeletedIds();
-  await setDeletedIds([...existing, ...deletedIds]);
-  updateCounts();
-  alert('✅ اتمسح '+(before-cleaned.length)+' محجوز خطأ');
+async function cleanWrongMahgozFromLab(){ alert('تم إلغاء الميزة نهائيا - مفيش حذف من المتداول'); return; }
+async function restoreLastClean(){ 
+  alert('تم إلغاء ميزة الاسترجاع والحذف نهائيا - مفيش حاجة هتتمسح'); return; // استرجاع طوارئ للـ 15 اللي اتمسحوا قبل الإلغاء
+  try{
+    await clearDeletedIds();
+    document.getElementById('health').textContent='⏳ استرجاع طوارئ من الدرايف...';
+    let res = await fetch(CLOUD_URL,{cache:'no-store'});
+    let t = await res.text();
+    let j = JSON.parse(t);
+    if(Array.isArray(j)) j={v3:j, ahkam:j.ahkam||[]};
+    await idbSet('D32_V3', JSON.stringify(j.v3||[]));
+    await idbSet('D32_FINAL', JSON.stringify(j.v3||[]));
+    if(j.ahkam&&j.ahkam.length>0) await idbSet('D32_AHKAM', JSON.stringify(j.ahkam));
+    await setLastSync();
+    updateCounts();
+    await checkHealth();
+    alert('✅ رجعوا من الدرايف: '+(j.v3||[]).length+' قضية');
+    location.reload();
+  }catch(e){ alert('افتح اللاب الأصلي 1600 ودوس رفع التعديلات فقط'); }
 }
+async function clearDeletedListOnly(){ await clearDeletedIds(); alert('✅ اتمسحت قائمة المحذوفات'); }
+
+
+
 async function downloadBackupJson(){
   let arr = await getCasesArray();
   let ahRaw = await idbGet('D32_AHKAM')||'[]';
@@ -333,7 +343,7 @@ async function downloadBackupJson(){
 async function syncBidirectionalSmart(silent){
   let lastSyncBefore = Number(await getLastSync()||0);
   let controller = new AbortController();
-  let timeoutId = setTimeout(()=>controller.abort(), 15000);
+  let timeoutId = setTimeout(()=>controller.abort(), 15000); // 15 ثانية ويوقف
   try{
     if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
     console.log('CLOUD_URL:', CLOUD_URL);
@@ -351,6 +361,7 @@ async function syncBidirectionalSmart(silent){
     // === AUTO LOAD DAIRA CONFIG FROM DRIVE ===
     try{ let ci=j.dairaInfo||j.dairaConfig||j.config; if(ci && (ci.dairaNumber||ci.members)){ await idbSet('D32_DAIRA_CONFIG', JSON.stringify(ci)); await idbSet('D32_CIRCLE', JSON.stringify(ci)); await idbSet('D'+CURRENT_DAIRA+'_DAIRA_CONFIG', JSON.stringify(ci)); console.log('✅ تم تحديث بيانات الدائرة من الدرايف'); } }catch(e){ console.log('daira config sync error',e); }
     let cloudAhkam=j.ahkam&&Array.isArray(j.ahkam)?j.ahkam:[];
+    // مزامنة الأحكام - لو اللي في الدرايف فيه أحكام والموبايل فاضي، حمله
     try{
       let localAhRaw = await idbGet('D32_AHKAM')||'[]';
       let localAh=[];
@@ -359,12 +370,13 @@ async function syncBidirectionalSmart(silent){
         await idbSet('D32_AHKAM', JSON.stringify(cloudAhkam));
         console.log('تم تحديث الأحكام من الدرايف:', cloudAhkam.length);
       } else if(localAh.length > 0 && cloudAhkam.length===0){
+        // لو الدرايف فاضي والمحلي فيه، هنرفعه في خطوة الرفع الجاية
       }
     }catch(e){console.error('ahkam sync error', e);}
+
     let localData = await getCasesArray();
-    let deletedIds=await getDeletedIds();
-    let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
-    cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
+    // تم إلغاء فلترة المحذوفات نهائيا - مفيش حاجة هتتمسح
+    let deletedIds=[];
     let newLocal=[...localData];
     let mapById={};
     localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i;});
@@ -372,12 +384,16 @@ async function syncBidirectionalSmart(silent){
     let added=0, updated=0;
     cloudData.forEach(o=>{
       if(!o.raqm) return;
+      // التجديد من الشطب: نفس الـ id بنحدثه بجلسة قادمة، مش نضيفه كقضية جديدة
       let idx = o.id!=null ? mapById[String(o.id)] : undefined;
       if(idx===undefined){
+        // قضية جديدة فعلاً - id جديد خالص
         if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; }
         newLocal.push(o); added++;
       } else {
         let cur = newLocal[idx];
+        // لو نفس الـ id، حدثه دايماً بجلسة قادمة حتى لو _updatedAt قديم - ده أهم حاجة للتجديد
+        // نحافظ على _fileIndex القديم عشان الرولات
         let oldIdx = cur._fileIndex;
         let isDifferent = JSON.stringify(cur) !== JSON.stringify(o);
         Object.assign(cur, o);
@@ -389,7 +405,7 @@ async function syncBidirectionalSmart(silent){
     await idbSet('D32_V3',JSON.stringify(newLocal));
     await idbSet('D32_FINAL',JSON.stringify(newLocal));
     let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
-    if(toUpload.length>0 || deletedIds.length>0){
+    if(toUpload.length>0){
       document.getElementById('health').textContent='✅ لقيت '+added+' جديد - برفع '+toUpload.length+'...';
       let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
       if(ok) await setLastSync();
@@ -406,19 +422,25 @@ async function syncBidirectionalSmart(silent){
     if(!silent) alert(msg+'\n\nجرب:\n1- دوس F5\n2- دوس مزامنة تاني\n3- لو فضل واقف افتح mahdar.html لوحده وشوف العدد');
   }
 }
+
+// منع مزامنة الصفحات الداخلية القديمة اللي بتعلق
 window.addEventListener('message', e=>{
   if(e.data && e.data.type==='disableInnerSync'){
     console.log('disable inner sync');
   }
 });
+
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 async function startApp(){
+  // لا يوجد أي مسح تلقائي - بناء على طلبك
+
   try{await migrate();}catch(e){console.error(e);}
   try{await updateCounts();}catch(e){console.error(e);}
   try{await checkHealth();}catch(e){console.error(e);}
   try{openPage('mahdar.html',document.querySelector('.tab.active'));}catch(e){console.error(e);}
   setTimeout(()=>{try{syncBidirectionalSmart(true);}catch(e){console.error(e);}}, 2500);
+  // لو فضل واقف على جاري فحص بعد 5 ثواني، فكه
   setTimeout(async()=>{
     let h=document.getElementById('health');
     if(h && h.textContent.includes('جاري فحص')){
@@ -430,5 +452,8 @@ async function startApp(){
 startApp();
 </script>
 <script src="pwa-install.js"></script>
+<script>
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("./sw.js").then(()=>console.log("SW registered")).catch(e=>console.log("SW fail",e)); }
+</script>
 </body>
 </html>
