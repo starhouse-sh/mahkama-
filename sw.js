@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v18-7-manifest-password';
+const CACHE = 'mahkama-v18-10-icons-scales-only-FINAL';
 const FILES = [
   './',
   './index.html',
