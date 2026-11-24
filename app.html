@@ -88,17 +88,44 @@ async function checkEnterDaira(){
     if(saved) document.getElementById('enterDairaNum').value = saved;
   }
 }
-function enterExistingDaira(){
+async function enterExistingDaira(){
   var num = document.getElementById('enterDairaNum').value.trim();
   var pass = document.getElementById('enterDairaPass').value;
   var msg = document.getElementById('enterDairaMsg');
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
   if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
-  // احفظ في 3 أماكن وادخل على طول - من غير ما تروح لصفحة إنشاء
-  saveDairaPersist(num, pass);
-  try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-  document.getElementById('enterDairaScreen').style.display='none';
-  location.reload();
+  msg.style.color='#fff'; msg.textContent='⏳ جاري التحقق من الباسورد...';
+  // 1. قارن مع الباسورد المحفوظ في الجهاز لو موجود
+  var saved = null;
+  try{ saved = localStorage.getItem('daira_pass_'+num) || localStorage.getItem('current_daira_pass'); }catch(e){}
+  if(saved && pass === saved){
+    saveDairaPersist(num, pass);
+    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+    document.getElementById('enterDairaScreen').style.display='none';
+    location.reload(); return;
+  }
+  // 2. لو مفيش محفوظ أو مش متطابق - تحقق من السحابة (المصدر الصح)
+  if(!navigator.onLine){
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط أو لازم نت للتحقق أول مرة - وصل النت وحاول تاني'; return;
+  }
+  try{
+    var CLOUD='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
+    var res = await fetch(CLOUD+'?action=get&daira='+num, {cache:'no-store'}).then(function(r){ return r.text(); });
+    var cj={}; try{ cj=JSON.parse(res); }catch(e){}
+    var cloudPass = cj._password || (cj.dairaInfo && cj.dairaInfo._password) || null;
+    if(cloudPass && pass === cloudPass){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      document.getElementById('enterDairaScreen').style.display='none';
+      location.reload(); return;
+    }
+    if(!cloudPass && !saved){
+      msg.style.color='#ffcccc'; msg.textContent='الدائرة دي مش موجودة - أنشئها من صفحة الإنشاء أو تواصل مع الإدارة'; return;
+    }
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+  }catch(e){
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+  }
 }
 checkEnterDaira();
 </script>
