@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v18-10-icons-scales-only-FINAL';
+const CACHE = 'mahkama-v20-scales-only-final-fix';
 const FILES = [
   './',
   './index.html',
