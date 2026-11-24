@@ -2,9 +2,16 @@
 <html dir="rtl" lang="ar">
 <head>
 <script>
-if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
-  location.href = 'create-daira.html';
-}
+(function(){
+  try{
+    var d = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
+    if(!d){
+      // جرب تسترجع من الباسورد المحفوظ
+      for(var i=1;i<=39;i++){ if(localStorage.getItem('daira_pass_'+i)){ localStorage.setItem('current_daira', String(i)); d=String(i); break; } }
+    }
+    if(!d){ location.href='create-daira.html'; }
+  }catch(e){ if(!localStorage.getItem('current_daira')) location.href='create-daira.html'; }
+})();
 </script>
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
