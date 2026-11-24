@@ -33,7 +33,7 @@ footer{background:#0A2342;color:#E8B93C;text-align:center;padding:18px;font-weig
 <header>
 <div class="logo"><span>⚖️</span> نظام الدائرة</div>
 <nav><a href="#" class="active">الرئيسية</a><a href="#features">المميزات</a><a href="#install">كيفية التثبيت</a><a href="#contact">تواصل معنا</a></nav>
-<a class="btn-login" id="loginBtn" href="app.html">تسجيل الدخول</a>
+<a class="btn-login" href="app.html">تسجيل الدخول</a>
 </header>
 <section class="hero">
 <h1>نظام إدارة قضايا الدوائر</h1>
@@ -58,10 +58,7 @@ footer{background:#0A2342;color:#E8B93C;text-align:center;padding:18px;font-weig
 let deferredPrompt=null;
 const btn=document.getElementById('installBtn');
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
-const existingDaira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
-if(existingDaira){ btn.textContent='⬇ دخول لدائرتي '+existingDaira; }
 btn.onclick=async()=>{
-  if(existingDaira){ location.href='app.html'; return; }
   if(deferredPrompt){deferredPrompt.prompt();const {outcome}=await deferredPrompt.userChoice;deferredPrompt=null; if(outcome==='accepted'){location.href='create-daira.html';} }
   else { location.href='create-daira.html'; }
 };
