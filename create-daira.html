@@ -39,7 +39,7 @@ a{color:#0A2342;font-weight:bold}
 <input id="pass1" type="password" placeholder="أنشئ باسورد قوي">
 <label>تأكيد باسورد</label>
 <input id="pass2" type="password" placeholder="أعد كتابة الباسورد">
-<button class="btn-create" onclick="createDaira()">إنشاء الدائرة ➜</button>
+<p style="font-size:12px;color:#b00020;font-weight:bold;text-align:center">⚠️ لو دائرتك موجودة أصلاً (مثلاً 32) متعملهاش تاني - هتدخل عليها تلقائي من غير مسح</p><button class="btn-create" onclick="createDaira()">إنشاء الدائرة ➜</button>
 <button class="btn-install" id="installBtn">📥 تثبيت التطبيق</button>
 <p class="msg" id="msg"></p>
 <p class="small">عندك دائرة؟ <a href="app.html">سجل دخول</a> • الدائرة موجودة؟ <a href="#" onclick="contactAdmin()">تواصل مع جهة الإدارة</a></p>
@@ -60,11 +60,28 @@ async function createDaira(){
   if(!navigator.onLine){msg.textContent='وصل النت لاكتمال التثبيت';return;}
   msg.style.color='#0A2342'; msg.textContent='⏳ جاري إنشاء الدائرة وملف الدرايف...';
   try{
-    let check=await fetch(CLOUD+'?action=get&daira='+num,{cache:'no-store'}).then(r=>r.text());
-    let cj={}; try{cj=JSON.parse(check);}catch(e){}
-    let exists = cj && (cj.exists===true || (cj.v3&&cj.v3.length>0) || cj.dairaInfo);
-    if(exists){
-      msg.style.color='#b00020'; msg.textContent='الدائرة موجودة أصلاً - اختر دائرة أخرى أو تواصل مع جهة الإدارة';
+    // تحقق صارم: لو الدائرة ليها أي ملف في الدرايف، متعملش overwrite أبداً
+    let checkTxt='';
+    try{ checkTxt=await fetch(CLOUD+'?action=get&daira='+num,{cache:'no-store'}).then(r=>r.text()); }catch(e){ checkTxt=''; }
+    let cj=null; try{cj=JSON.parse(checkTxt);}catch(e){ cj=null; }
+    // أي رد فيه بيانات أو حتى error غير "not_found" يعتبر موجود - لا تمسح
+    let hasData = false;
+    if(cj){
+      if(cj.error && String(cj.error).toLowerCase().includes('not_found')) hasData=false;
+      else if(cj.v3 && Array.isArray(cj.v3) && cj.v3.length>0) hasData=true;
+      else if(cj.ahkam && Array.isArray(cj.ahkam) && cj.ahkam.length>0) hasData=true;
+      else if(cj.dairaInfo || cj.dairaConfig || cj.config) hasData=true;
+      else if(cj.exists===true) hasData=true;
+      // لو السكريبت رجع {} فاضي أو v3 فاضي بس فيه _updatedAt يبقى الملف موجود
+      else if(cj._updatedAt || cj.updatedAt) hasData=true;
+    }
+    if(hasData){
+      // متعملش POST أبداً - ادخل على الدائرة الموجودة مباشرة
+      msg.style.color='#16a34a'; msg.textContent='✅ الدائرة موجودة - جاري الدخول عليها من غير ما نمسح بياناتها...';
+      localStorage.setItem('current_daira',String(num));
+      localStorage.setItem('daira_pass_'+num,p1);
+      localStorage.setItem('current_daira_pass',p1);
+      setTimeout(()=>{location.href='app.html';},800);
       return;
     }
     let dairaInfo={dairaNumber:String(num),dawr:dawr,fatra:fatra,entag:'مدني مستأنف',_updatedAt:Date.now()};

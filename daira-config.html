@@ -137,8 +137,11 @@ async function saveToIDB(cfg){
 }
 async function load(){
   var cfg=await getConfig();
-  if(cfg){ fillForm(cfg); document.getElementById('status').textContent='✅ محمل من الجهاز ده - '+cfg.savedAt; return true; }
-  document.getElementById('status').textContent='⏳ فاضي هنا - بجيب من الدرايف تلقائي...';
+  // لو فيه بيانات كاملة (فيها أعضاء) اعرضها، غير كده هات من الدرايف
+  if(cfg && cfg.members && cfg.members.some(m=>m.name)){
+    fillForm(cfg); document.getElementById('status').textContent='✅ محمل من الجهاز ده - '+cfg.savedAt; return true;
+  }
+  document.getElementById('status').textContent='⏳ بجيب بيانات الدائرة '+CURRENT_DAIRA+' من الدرايف تلقائي...';
   await loadFromDrive(true);
   return false;
 }
