@@ -51,8 +51,16 @@ function loginAdmin(){
   else document.getElementById('loginMsg').textContent='باسورد الأدمن غلط';
 }
 async function loadAdmin(){
-  // قراءة الطلبات من localStorage (تتزامن مع الدرايف عند التنفيذ الكامل)
-  let reqs=[]; try{reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){}
+  // قراءة الطلبات من الدرايف أولاً - عشان تظهر من أي جهاز
+  let reqs=[];
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira=ADMIN',{cache:'no-store'});
+    let t=await r.text(); let j={}; try{j=JSON.parse(t);}catch(e){}
+    if(j.adminRequests && Array.isArray(j.adminRequests)) reqs=j.adminRequests;
+  }catch(e){}
+  if(reqs.length===0){ try{reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){} }
+  // احفظ نسخة محلية
+  window._adminReqs=reqs;
   document.getElementById('pendingCount').textContent=reqs.filter(r=>r.status==='pending').length;
   let html='';
   reqs.filter(r=>r.status==='pending').forEach((r,i)=>{
@@ -66,9 +74,18 @@ async function loadAdmin(){
   document.getElementById('totalDairas').textContent=registry.length;
   document.getElementById('dairaTable').innerHTML=registry.map(r=>`<tr><td>${r.num}</td><td>${r.dawr}</td><td>${r.fatra}</td><td>${r.count||0}</td><td>${r.status}</td><td><button class="btn btn-view" onclick="alert('عرض دائرة ${r.num}')">عرض</button> <button class="btn btn-lock" onclick="toggleLock('${r.num}')">قفل</button></td></tr>`).join('');
 }
-function decide(idx,decision){
-  let reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');
-  if(reqs[idx]){reqs[idx].status=decision; localStorage.setItem('admin_requests',JSON.stringify(reqs)); localStorage.setItem('admin_decision_'+reqs[idx].daira, decision); alert(decision==='approved'?'✅ تمت الموافقة - المستخدم هيشوف نافذة إعادة تعيين':'❌ تم رفض الطلب'); loadAdmin();}
+async function decide(idx,decision){
+  let reqs=window._adminReqs||JSON.parse(localStorage.getItem('admin_requests')||'[]');
+  if(reqs[idx]){
+    reqs[idx].status=decision;
+    // حدث الدرايف
+    try{ await fetch(CLOUD+'?daira=ADMIN',{method:'POST',body:JSON.stringify({v3:[],ahkam:[],adminRequests:reqs,_updatedAt:Date.now()})}); }catch(e){}
+    localStorage.setItem('admin_requests',JSON.stringify(reqs));
+    localStorage.setItem('admin_decision_'+reqs[idx].daira, decision);
+    // سجل القرار في ملف الدائرة نفسها عشان المستخدم يشوفه من أي جهاز
+    try{ await fetch(CLOUD+'?daira='+reqs[idx].daira,{method:'POST',body:JSON.stringify({v3:[],ahkam:[],adminDecision:decision,_updatedAt:Date.now()})}); }catch(e){}
+    alert(decision==='approved'?'✅ تمت الموافقة - المستخدم هيشوف نافذة إعادة تعيين':'❌ تم رفض الطلب'); loadAdmin();
+  }
 }
 function toggleLock(num){alert('تم قفل/فتح الدائرة '+num+' - سيظهر للمستخدم: الدائرة مقفولة من الإدارة');}
 </script>

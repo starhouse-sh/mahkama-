@@ -23,15 +23,31 @@ input{width:100%;padding:12px;border:2px solid #ccc;border-radius:10px;margin:10
 <a href="app.html">← رجوع للدخول</a>
 </div>
 <script>
-function sendReq(){
+const CLOUD='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
+async function sendReq(){
   const msg=document.getElementById('msg');
   const num=document.getElementById('dairaNum').value.trim();
   if(!num){msg.style.color='#b00020';msg.textContent='اكتب رقم الدائرة';return;}
   if(!navigator.onLine){msg.style.color='#b00020';msg.textContent='وصل النت لإرسال الطلب';return;}
-  let reqs=[]; try{reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){}
-  reqs.push({daira:num,status:'pending',time:new Date().toLocaleString('ar-EG')});
-  localStorage.setItem('admin_requests',JSON.stringify(reqs));
-  msg.style.color='#16a34a';msg.textContent='✅ تم إرسال الطلب للإدارة - استنى الموافقة';
+  msg.style.color='#0A2342'; msg.textContent='⏳ جاري إرسال الطلب للإدارة...';
+  try{
+    // 1. هات الطلبات القديمة من الدرايف (ملف ADMIN)
+    let oldReqs=[];
+    try{
+      let r=await fetch(CLOUD+'?action=get&daira=ADMIN',{cache:'no-store'});
+      let t=await r.text(); let j={}; try{j=JSON.parse(t);}catch(e){}
+      if(j.adminRequests && Array.isArray(j.adminRequests)) oldReqs=j.adminRequests;
+      else if(Array.isArray(j)) oldReqs=j;
+    }catch(e){}
+    let newReq={daira:num,status:'pending',time:new Date().toLocaleString('ar-EG'),id:Date.now()};
+    oldReqs.push(newReq);
+    // 2. احفظ في الدرايف
+    await fetch(CLOUD+'?daira=ADMIN',{method:'POST',body:JSON.stringify({v3:[],ahkam:[],adminRequests:oldReqs,_updatedAt:Date.now()})});
+    // 3. احفظ محلي كنسخة احتياطية
+    let localReqs=[]; try{localReqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){}
+    localReqs.push(newReq); localStorage.setItem('admin_requests',JSON.stringify(localReqs));
+    msg.style.color='#16a34a';msg.textContent='✅ تم إرسال الطلب للإدارة - استنى الموافقة، وافتح صفحة الدخول تاني بعد الموافقة';
+  }catch(e){msg.style.color='#b00020';msg.textContent='فشل الإرسال: '+e.message;}
 }
 </script>
 </body>
