@@ -1,363 +1,68 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<script>
-if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
-  location.href = 'select-daira.html';
-}
-</script>
-<script src="daira-core.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نظام الدائرة - إدارة القضايا</title>
 <link rel="manifest" href="manifest.json">
-<meta charset="UTF-8">
-<title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
-.sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
-.sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
-.section-title{font-size:11px;color:#FFD700;margin:14px 6px 6px;font-weight:bold}
-.tab{padding:11px 12px;margin:4px 0;background:#132f5a;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;border:1px solid #1e3a6b;color:#fff}
-.tab:hover{background:#1d4a8a}
-.tab.active{background:#C9A227;color:#000;font-weight:bold;border-color:#FFD700}
-.tab.gold{background:linear-gradient(90deg,#C9A227,#FFD700);color:#000;font-weight:bold}
-.tab.blue{background:#1976D2;border-color:#64b5f6}
-.tab.red{background:#c0392b;border-color:#ff7961}
-.tab.brown{background:#7a2e00;border-color:#a0522d}
-.tab.navy{background:#0f1f3a;border-color:#FFD700}
-.content{flex:1;display:flex;flex-direction:column}
-.topbar{background:#fff;padding:10px 16px;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
-#info{font-size:11px;background:#e8f5e9;padding:6px 10px;border-radius:20px;border:1px solid #4caf50}
-.safe-bar{background:#fff3cd;border-bottom:2px solid #ffc107;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:11px;flex-wrap:wrap}
-.safe-bar button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px}
-iframe{flex:1;width:100%;border:none;background:#fff}
-.tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
+body{background:#f5f7fa;color:#0A2342}
+header{background:#fff;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;box-shadow:0 2px 10px rgba(0,0,0,.08);position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:10px;font-weight:bold;font-size:20px;color:#0A2342}
+.logo span{font-size:28px}
+nav a{margin:0 10px;color:#0A2342;text-decoration:none;font-weight:bold;font-size:14px}
+nav a.active{color:#C9A227;border-bottom:2px solid #C9A227;padding-bottom:4px}
+.btn-login{border:1px solid #C9A227;color:#8a6d00;padding:8px 16px;border-radius:20px;text-decoration:none;font-weight:bold;font-size:14px}
+.hero{background:#0A2342;color:#fff;text-align:center;padding:56px 20px 48px}
+.hero h1{font-size:36px;line-height:1.4;margin-bottom:12px}
+.hero p{font-size:15px;color:#e8e8e8;margin-bottom:22px}
+.btn-download{background:#E8B93C;color:#0A2342;border:none;padding:16px 36px;border-radius:10px;font-size:20px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.btn-download:hover{background:#f8d775}
+.tagline{margin-top:16px;font-size:15px;color:#fff}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1000px;margin:-10px auto 30px;padding:20px}
+.card{background:#fff;border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.07)}
+.card .icon{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px}
+.card h3{font-size:18px;margin-bottom:8px}
+.card p{font-size:13px;line-height:1.7;color:#444}
+footer{background:#0A2342;color:#E8B93C;text-align:center;padding:18px;font-weight:bold;font-size:15px}
+@media(max-width:700px){.cards{grid-template-columns:1fr} .hero h1{font-size:26px} nav a{display:none}}
 </style>
 </head>
 <body>
-<div class="sidebar">
-<h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
-<div class="section-title">📂 الأعمال اليومية</div>
-<div class="tab" onclick="openPage('estelam.html',this)">🔍 الاستعلام</div>
-<div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
-<div class="tab" onclick="openPage('galasat.html',this)">🗓 الجلسات</div>
-<div class="tab blue" onclick="openPage('mofradat.html',this)">📁 المفردات</div>
-<div class="tab" onclick="openPage('kashf.html',this)">📋 كشف تأجيلات أحوال</div>
-<div class="tab" onclick="openPage('rolat.html',this)">📜 رولات القضاه</div>
-<div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
-<div class="tab" onclick="openPage('kitaba.html',this)">✍ الكتابة</div>
-<div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
-<div class="section-title">⚖ الأحكام والتسليم</div>
-<div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
-<div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
-<div class="tab navy" onclick="openPage('tasleem_ahkam.html',this)">📋 تسليم أحكام</div>
-<div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
-<div class="tab red" onclick="openPage('natiga.html',this)">📅 النتيجة القضائية</div>
-<div class="tab brown" onclick="openPage('khobara.html',this)">🔬 الخبراء والطب الشرعي</div>
-<div class="tab green-dark" style="background:linear-gradient(90deg,#0f1f3a,#2e7d32);border:2px solid #FFD700;color:#fff" onclick="openPage('Ketabet-Ahkam.html',this)">📄 نسخ الأحكام</div>
-<div class="section-title">⚙ إدارة النظام</div>
-<div class="tab blue" onclick="openPage('tadeil.html',this)">✏ تعديل شامل - FIXED</div>
-<div class="tab gold" onclick="openPage('edkhal.html',this)">📝 إدخال + استيراد</div>
-<div class="tab" onclick="openPage('ehsaiat.html',this)">📊 الإحصائية</div>
-<div class="tab" onclick="openPage('ehsaia-esbaia.html',this)">📊 الإحصائية الأسبوعية</div>
-<div class="tab" onclick="openPage('SANAWAT-QADAIYA.html',this)">📚 السنوات القضائية</div>
-<div class="tab elan" onclick="openPage('ealan.html',this)">📢 الإعلان الإداري</div>
-<div class="tab purple" style="background:linear-gradient(90deg,#0f1f3a,#1e3a6b);border:2px solid #FFD700" onclick="openPage('daira-config.html',this)">⚙ بيانات الدائرة</div>
-<div style="margin-top:auto;padding-top:10px;border-top:1px solid #ffffff22;font-size:10px;text-align:center;line-height:1.6">
-<span id="countSide">0</span> قضية<br>
-<span id="sizeInfo" style="color:#4caf50"></span><br>
-<span style="color:#FFD700">🛡 متوافق - FIXED V3</span>
+<header>
+<div class="logo"><span>⚖️</span> نظام الدائرة</div>
+<nav><a href="#" class="active">الرئيسية</a><a href="#features">المميزات</a><a href="#install">كيفية التثبيت</a><a href="#contact">تواصل معنا</a></nav>
+<a class="btn-login" href="app.html">تسجيل الدخول</a>
+</header>
+<section class="hero">
+<h1>نظام إدارة قضايا الدوائر</h1>
+<button class="btn-download" id="installBtn">⬇ تحميل التطبيق</button>
+<p class="tagline">✨ سيستم كامل لإدارة الجلسات مدعوم بالذكاء الاصطناعي</p>
+<p style="font-size:13px;color:#cbd5e1">بعد التثبيت، أنشئ دائرتك في دقيقة وابدأ إدارة قضاياك</p>
+</section>
+<section class="cards" id="features">
+<div class="card"><div class="icon" style="background:#dbeafe">📅</div><h3>إدارة الجلسات</h3><p>تنظيم وجدولة الجلسات بسهولة عبر تقويم متكامل وتذكيرات تلقائية للحضور والمواعيد</p></div>
+<div class="card"><div class="icon" style="background:#fef3c7">📄</div><h3>تتبع القضايا</h3><p>مراقبة القضايا وتحديثاتها خطوة بخطوة بشكل لحظي، متداول وأحكام وتعلية في مكان واحد</p></div>
+<div class="card"><div class="icon" style="background:#ede9fe">🧠</div><h3>تقارير ذكية</h3><p>تقارير وتحليلات ذكية مدعومة بالذكاء الاصطناعي لدعم القرار ومتابعة أداء الدائرة</p></div>
+</section>
+<section id="install" style="max-width:800px;margin:0 auto 30px;padding:0 20px">
+<div style="background:#fff;border-radius:14px;padding:20px">
+<h3 style="margin-bottom:12px">كيفية التثبيت في 3 خطوات</h3>
+<p style="line-height:2;font-size:14px">1 - دوس <b>⬇ تحميل التطبيق</b><br>2 - وافق على التثبيت من المتصفح<br>3 - افتح التطبيق وأنشئ دائرتك</p>
+<button class="btn-download" onclick="document.getElementById('installBtn').click()" style="font-size:16px;padding:12px 24px">⬇ تحميل التطبيق</button>
 </div>
-</div>
-<div class="content">
-<div class="topbar">
-<b id="pageTitle">📋 المحاضر</b>
-<span id="info">✅ <span id="count">0</span> | أحكام: <span id="countAhkamTop">0</span> | تعلية: <span id="countTaalia">0</span></span>
-</div>
-<div class="safe-bar">
-🛡 <span id="health">جاري فحص...</span>
-<button onclick="exportAll()" style="background:#0A2342;color:#FFD700">💾 حفظ</button>
-<button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">⬇ تنزيل JSON</button>
-<button onclick="checkHealth()" style="background:#FFD700">🔍 فحص</button>
-<button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
-<button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
-<button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
-<button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
-</div>
-<iframe id="frame" src="about:blank"></iframe>
-</div>
+</section>
+<footer id="contact">تصميم: مسعد ياسين</footer>
 <script>
-const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
-const DB_NAME='D'+CURRENT_DAIRA+'_DB';
-const DB_VER=2;
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
-const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
-let CLOUD_PASSWORD = '';
-async function fetchWithRetry(url, options, retries=3){
-  for(let attempt=1; attempt<=retries; attempt++){
-    try{
-      let res = await fetch(url, options);
-      let txt = await res.text();
-      if(txt.trim().startsWith('<!DOCTYPE')||txt.trim().startsWith('<html')){
-        throw new Error('Google رجع HTML - السكريبت مش منشور Anyone');
-      }
-      return txt;
-    }catch(e){
-      if(attempt===retries) throw e;
-      await new Promise(r=>setTimeout(r, 2000*attempt));
-    }
-  }
-}
-function normalizeNum(s){if(!s&&s!==0)return'';s=String(s);const ar='٠١٢٣٤٥٦٧٨٩';const per='۰۱۲۳۴۵۶۷۸۹';let o='';for(let ch of s){let i=ar.indexOf(ch);if(i>=0){o+=i;continue;}i=per.indexOf(ch);if(i>=0){o+=i;continue;}o+=ch;}return o.trim().replace(/\s+/g,'');}
-function normalizeKey(r,s){return normalizeNum(r)+'/'+normalizeNum(s);}
-function openDB(){return new Promise((res,rej)=>{
-  let r=indexedDB.open(DB_NAME,2);
-  r.onupgradeneeded=e=>{
-    let db=e.target.result;
-    try{
-      if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');
-      if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');
-      if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');
-    }catch(err){}
-  };
-  r.onsuccess=e=>res(e.target.result);
-  r.onerror=e=>rej(e.target.error);
-});}
-function storeForKey(k){k=String(k||'');if(k.includes('AHKAM')||k==='D32_AHKAM')return'ahkam';if(k.includes('V3')||k.includes('FINAL')||k.includes('MOT')||k==='D32_V3'||k==='D32_FINAL')return'cases';return'd32store';}
-async function idbSet(k,v){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readwrite');tx.objectStore(s).put(v,k);tx.oncomplete=()=>rs();tx.onerror=e=>rj(e);});}
-async function idbGet(k){let db=await openDB();let s=storeForKey(k);return new Promise((rs,rj)=>{let tx=db.transaction(s,'readonly');let rq=tx.objectStore(s).get(k);rq.onsuccess=()=>rs(rq.result);rq.onerror=e=>rj(e);});}
-async function getCasesArray(){
-  let rawV3 = await idbGet('D32_V3') || '[]';
-  let rawFinal = await idbGet('D32_FINAL') || '[]';
-  let arrV3=[]; let arrFinal=[];
-  try{ arrV3=JSON.parse(rawV3); if(Array.isArray(arrV3[1])) arrV3=arrV3[1]; }catch(e){ arrV3=[]; }
-  try{ arrFinal=JSON.parse(rawFinal); if(Array.isArray(arrFinal[1])) arrFinal=arrFinal[1]; }catch(e){ arrFinal=[]; }
-  if(arrFinal.length > arrV3.length){
-    await idbSet('D32_V3', JSON.stringify(arrFinal));
-    return arrFinal;
-  }
-  if(arrV3.length > arrFinal.length){
-    await idbSet('D32_FINAL', JSON.stringify(arrV3));
-  }
-  return arrV3.length ? arrV3 : arrFinal;
-}
-async function getDeletedIds(){try{let raw=await idbGet('D32_DELETED_IDS');return raw?JSON.parse(raw):[];}catch(e){return[];}}
-async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.stringify([...new Set(arr.map(x=>String(x)))]));}catch(e){}}
-async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
-async function getLastSync(){try{return await idbGet('D32_LAST_SYNC_TS')||'0';}catch(e){return'0';}}
-async function setLastSync(){try{await idbSet('D32_LAST_SYNC_TS', String(Date.now()));}catch(e){}}
-async function migrate(){
-  try{let d=await idbGet('MIGRATED_D32_DB');if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED';return;}}catch(e){}
-  document.getElementById('health').textContent='✅ متوافق - جاري...';
-  try{await idbSet('MIGRATED_D32_DB','yes'+new Date().toISOString());}catch(e){}
-}
-window.addEventListener('message',async(e)=>{
-  if(!e.data) return;
-  if(e.data.type==='D32_SET'){
-    try{
-      let arr=JSON.parse(e.data.val);
-      if(Array.isArray(arr) && arr.length>0){
-        let oldArr = await getCasesArray();
-        let maxIdx=0; let oldMapByKey={}, oldMapById={};
-        oldArr.forEach(o=>{
-          if(o._fileIndex!=null && o._fileIndex>maxIdx) maxIdx=o._fileIndex;
-          let k=normalizeKey(o.raqm,o.sana); oldMapByKey[k]=o;
-          if(o.id!=null) oldMapById[String(o.id)]=o;
-        });
-        arr.forEach(newObj=>{
-          let k=normalizeKey(newObj.raqm,newObj.sana);
-          let old = oldMapByKey[k] || oldMapById[String(newObj.id)] || null;
-          if(old){
-            if(old._fileIndex!=null) newObj._fileIndex = old._fileIndex;
-            if(old._manualOrder!=null) newObj._manualOrder = old._manualOrder;
-            if(old._sessionOrder!=null) newObj._sessionOrder = old._sessionOrder;
-            let changed = false;
-            if((newObj.mostanef||'')!=(old.mostanef||'')) changed=true;
-            if((newObj.most||'')!=(old.most||'')) changed=true;
-            if((newObj.ded||'')!=(old.ded||'')) changed=true;
-            if((newObj.noa||'')!=(old.noa||'')) changed=true;
-            if(JSON.stringify(newObj.jalsat||[])!=JSON.stringify(old.jalsat||[])) changed=true;
-            if(changed) newObj._updatedAt = Date.now();
-            else newObj._updatedAt = old._updatedAt || Date.now();
-          } else {
-            maxIdx++;
-            if(newObj._fileIndex==null) newObj._fileIndex=maxIdx;
-            newObj._updatedAt=Date.now();
-          }
-        });
-        arr.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
-        e.data.val=JSON.stringify(arr);
-      }
-    }catch(err){}
-    await idbSet(e.data.key,e.data.val);
-    if(e.data.key==='D32_V3') await idbSet('D32_FINAL', e.data.val);
-    if(e.data.key==='D32_FINAL') await idbSet('D32_V3', e.data.val);
-    updateCounts();
-  }
-  if(e.data.type==='D32_GET'){
-    let val=await idbGet(e.data.key);
-    if((!val || val==='[]') && e.data.key==='D32_V3') val = await idbGet('D32_FINAL');
-    if((!val || val==='[]') && e.data.key==='D32_FINAL') val = await idbGet('D32_V3');
-    e.source.postMessage({type:'D32_VAL',key:e.data.key,val:val},'*');
-  }
-});
-async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
-function openPage(f,el){
-  // حماية ضد التداخل: لو حد طلب index.html جوه الـ iframe، امنعه
-  if(f.includes('index.html')){
-    console.warn('Blocked nesting index inside iframe:', f);
-    return;
-  }
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('pageTitle').textContent=f;
-  const frame = document.getElementById('frame');
-  // لو فيه نت، خلي كسر الكاش، لو مفيش نت، متكسرش الكاش عشان يلاقيها
-  if(navigator.onLine){
-    frame.src=f+'?safe=1&v='+Date.now();
-  } else {
-    frame.src=f+'?safe=1';
-  }
-  setTimeout(updateCounts,300);
-}
-async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
-async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
-async function uploadToDrive(localArray, silent, options){
-  options = options || {};
-  var deletedIds = options.deletedIds || [];
-  try{let storedDeleted = await getDeletedIds();if(storedDeleted.length>0) deletedIds = [...new Set([...deletedIds,...storedDeleted])];}catch(e){}
-  if(!localArray ||!Array.isArray(localArray) || localArray.length==0){ if(!silent) alert('⚠ فاضي'); return false; }
-  try{
-    document.getElementById('health').textContent='⏳ رفع '+localArray.length+'...';
-    localArray.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
-    if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
-    let ahRaw = await idbGet('D32_AHKAM')||'[]';
-    let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
-    if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
-    await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
-    await clearDeletedIds(); await setLastSync();
-    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
-    return true;
-  }catch(e){
-    if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
-    return false;
-  }
-}
-async function forceUpload(silent){
-  let arr = await getCasesArray();
-  if(!arr.length){ if(!silent) alert('مفيش بيانات - افتح المحاضر واعمل تحديث'); return; }
-  let deletedIds = await getDeletedIds();
-  let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
-  if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
-}
-async function syncBidirectionalSmart(silent){
-  if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
-  let lastSyncBefore = Number(await getLastSync()||0);
-  try{
-    if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
-    let res=await fetch(CLOUD_URL,{cache:'no-store'});
-    let text=await res.text();
-    if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
-    let j; try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
-    if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
-    if(Array.isArray(j)) j = {v3:j, ahkam:[]};
-    if(j._password) CLOUD_PASSWORD = j._password;
-    let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
-    // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
-    try{
-      let cloudAhkam = j.ahkam && Array.isArray(j.ahkam) ? j.ahkam : [];
-      if(cloudAhkam.length>1 && Array.isArray(cloudAhkam[1])) cloudAhkam = cloudAhkam[1];
-      if(cloudAhkam.length>0){
-        let localAhRaw = await idbGet('D32_AHKAM') || '[]';
-        let localAh = [];
-        try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
-        // إصلاح العدد 875 بدل 951: لو السحابة أكبر، السحابة هي الصح - خدها كلها
-        // الدمج القديم بـ رقم/سنة كان بيدوس أحكام على بعض
-        let mergedAh;
-        if(cloudAhkam.length >= localAh.length){
-          // السحابة فيها كل الأحكام (951) - استخدمها كأساس
-          // وادمج عليها أي حكم محلي جديد مش موجود في السحابة بالـ id فقط
-          let cloudIds = new Set(cloudAhkam.map(a=> a.id!=null ? String(a.id) : ''));
-          let extraLocal = localAh.filter(a=> a.id!=null && !cloudIds.has(String(a.id)));
-          mergedAh = [...cloudAhkam, ...extraLocal];
-        } else {
-          // المحلي أكبر - ادمج بالـ id فقط، مش برقم/سنة
-          let ahMap = new Map();
-          localAh.forEach(a=>{ if(a.id!=null) ahMap.set(String(a.id), a); else ahMap.set('noid_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a); });
-          cloudAhkam.forEach(a=>{
-            if(a.id!=null){
-              let k = String(a.id);
-              if(!ahMap.has(k)) ahMap.set(k, a);
-              else if(Number(a._updatedAt||0) > Number(ahMap.get(k)._updatedAt||0)) ahMap.set(k, a);
-            } else {
-              ahMap.set('noid_cloud_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a);
-            }
-          });
-          mergedAh = [...ahMap.values()];
-        }
-        await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
-      }
-    }catch(e){ console.log('ahkam sync err', e); }
-    // --- إصلاح بيانات الدائرة ---
-    try{
-      let info = j.dairaInfo || j.dairaConfig || j.config || null;
-      if(info){
-        await idbSet('D32_DAIRA_CONFIG', JSON.stringify(info));
-        await idbSet('D32_CIRCLE', JSON.stringify(info));
-        await idbSet('D32_CONFIG', JSON.stringify(info));
-      }
-    }catch(e){}
-    let localData = await getCasesArray();
-    let deletedIds=await getDeletedIds();
-    let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
-    cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
-    let newLocal=[...localData];
-    let mapById={}, mapByKey={};
-    localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i; let k=normalizeKey(o.raqm,o.sana); if(mapByKey[k]===undefined) mapByKey[k]=i;});
-    let maxFileIndex=0; localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
-    let added=0;
-    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } newLocal.push(o); added++; }});
-    newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
-    await idbSet('D32_V3',JSON.stringify(newLocal));
-    await idbSet('D32_FINAL',JSON.stringify(newLocal));
-    let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
-    if(toUpload.length>0 || deletedIds.length>0){
-      let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
-      if(ok) await setLastSync();
-    }else{await setLastSync();}
-    updateCounts();
-    // مترجعش تحميل الـ iframe في المزامنة عشان ميعملش تداخل - سيبه زي ما هو
-    // let f=document.getElementById('frame');
-  }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
-}
-document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
-document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
-migrate().then(()=>{
-  updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
-  // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
-  if(!navigator.onLine){
-    const h=document.getElementById('health');
-    if(h) h.textContent='📴 وضع Offline - شغال من الجهاز - لما النت يرجع دوس مزامنة ذكية';
-  } else {
-    setTimeout(()=>syncBidirectionalSmart(true),2500);
-  }
-  // تخزين تلقائي لكل الصفحات من غير ما تفتحها يدوي
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.ready.then(reg => {
-      if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
-      // سجل الـ SW لو مش مسجل
-    }).catch(()=>{});
-    // لو الـ SW مش مسجل، سجله
-    navigator.serviceWorker.getRegistration().then(r => {
-      if(!r) navigator.serviceWorker.register('./sw.js').then(reg => {
-        if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
-      }).catch(()=>{});
-    });
-  }
-  window.addEventListener('online', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='🌐 النت رجع - دوس مزامنة ذكية'; });
-  window.addEventListener('offline', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='📴 وضع Offline - شغال من الجهاز'; });
-});
+let deferredPrompt=null;
+const btn=document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
+btn.onclick=async()=>{
+  if(deferredPrompt){deferredPrompt.prompt();const {outcome}=await deferredPrompt.userChoice;deferredPrompt=null; if(outcome==='accepted'){location.href='create-daira.html';} }
+  else { location.href='create-daira.html'; }
+};
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
-<script src="pwa-install.js"></script>
 </body>
 </html>

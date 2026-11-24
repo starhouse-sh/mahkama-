@@ -1,7 +1,11 @@
-const CACHE = 'mahkama-v17-no-nesting-ever';
+const CACHE = 'mahkama-v18-landing-admin';
 const FILES = [
   './',
   './index.html',
+  './app.html',
+  './create-daira.html',
+  './admin.html',
+  './forgot.html',
   './select-daira.html',
   './daira-config.html',
   './taalia.html',

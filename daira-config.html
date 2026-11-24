@@ -1,11 +1,11 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>بيانات الدائرة - D32_DB فقط</title>
+<title>بيانات الدائرة - D32_DB فقط - AUTO SYNC</title>
 <style>
 *{box-sizing:border-box;font-family:Tahoma}
 body{background:#0e1627;padding:10px;direction:rtl;margin:0}
@@ -19,11 +19,13 @@ input,select{width:100%;padding:12px;border:2px solid #888;border-radius:8px;fon
 .btn{padding:12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;width:100%;margin-top:10px;font-size:15px}
 .btn-save{background:#0A2342;color:#fff}
 .btn-clear{background:#b00020;color:#fff}
+.btn-sync{background:#16a34a;color:#fff}
+.btn-load{background:#1976D2;color:#fff}
 </style>
 </head>
 <body>
 <div class="card">
-<h2>⚙️ بيانات الدائرة - تعديل في أي وقت - D32_DB فقط</h2>
+<h2>⚙ بيانات الدائرة - تعديل في أي وقت - D32_DB فقط - AUTO</h2>
 
 <label>رقم الدائرة</label>
 <input id="dairaNumber" value="32">
@@ -37,7 +39,7 @@ input,select{width:100%;padding:12px;border:2px solid #888;border-radius:8px;fon
 <label>فترة الانعقاد</label>
 <select id="fatra"><option selected>صباحي</option><option>مسائي</option></select>
 
-<h3 style="background:#FFE4B5;padding:8px;border-radius:6px;margin:12px 0 6px">👨‍⚖️ الهيئة - الأسماء</h3>
+<h3 style="background:#FFE4B5;padding:8px;border-radius:6px;margin:12px 0 6px">👨⚖ الهيئة - الأسماء</h3>
 <div id="membersBox"></div>
 
 <label>وكيل النيابة</label>
@@ -47,9 +49,11 @@ input,select{width:100%;padding:12px;border:2px solid #888;border-radius:8px;fon
 <input id="amin" placeholder="اسم أمين السر">
 
 <button class="btn btn-save" onclick="saveConfig()">💾 حفظ / تعديل بيانات الدائرة</button>
+<button class="btn btn-sync" onclick="saveConfigAndUpload()">☁ حفظ + رفع للدرايف (عشان يظهر على الموبايل تلقائي)</button>
+<button class="btn btn-load" onclick="loadFromDrive()">🔄 تحميل من الدرايف (للموبايل)</button>
 <button class="btn btn-clear" onclick="clearConfig()">مسح بيانات الدائرة فقط</button>
 
-<div id="status" style="text-align:center;font-weight:bold;margin-top:10px;color:#0A2342"></div>
+<div id="status" style="text-align:center;font-weight:bold;margin-top:10px;color:#0A2342">جاري...</div>
 <pre id="preview" style="background:#0f1f3a;color:#C9A227;padding:8px;border-radius:6px;font-size:10px;max-height:150px;overflow:auto;margin-top:10px"></pre>
 </div>
 
@@ -64,7 +68,11 @@ var ROLES=[
   {code:'G',role:'العضو السابع'},
 ];
 
-const DB_NAME='D32_DB';
+const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+const DB_NAME='D'+CURRENT_DAIRA+'_DB';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
+const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
+
 function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 
 function build(){
@@ -79,17 +87,33 @@ function build(){
 async function getConfig(){
   try{
     let db=await openDB();
-    let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG'];
+    let keys=['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG','D'+CURRENT_DAIRA+'_DAIRA_CONFIG'];
     for(let k of keys){
       let val=await new Promise(res=>{let tx=db.transaction('d32store','readonly');let rq=tx.objectStore('d32store').get(k);rq.onsuccess=()=>res(rq.result);});
-      if(val){ try{ var c=JSON.parse(val); if(c && c.dairaNumber) return c; }catch(e){} }
+      if(val){ try{ var c=JSON.parse(val); if(c && (c.dairaNumber||c.members)) return c; }catch(e){} }
     }
   }catch(e){}
   return null;
 }
 
-async function load(){
-  var cfg=await getConfig(); if(!cfg) return;
+function collectCfg(){
+  var members=ROLES.map(function(r){return {code:r.code,role:r.role,name:document.getElementById('name_'+r.code).value.trim()};});
+  return {
+    dairaNumber:document.getElementById('dairaNumber').value.trim()||'32',
+    entag:document.getElementById('entag').value,
+    dawr:document.getElementById('dawr').value,
+    fatra:document.getElementById('fatra').value,
+    rais:members.find(m=>m.code=='A')?.name||'',
+    ra2is:members.find(m=>m.code=='A')?.name||'',
+    members:members,
+    a3daa:members.filter(m=>m.code!='A'&&m.name).map(m=>m.name).join('\n'),
+    wakil:document.getElementById('wakil').value.trim(),
+    amin:document.getElementById('amin').value.trim(),
+    savedAt:new Date().toLocaleString('ar-EG'),
+    _updatedAt: Date.now()
+  };
+}
+function fillForm(cfg){
   try{
     document.getElementById('dairaNumber').value=cfg.dairaNumber||'32';
     document.getElementById('entag').value=cfg.entag||'مدني مستأنف';
@@ -101,48 +125,75 @@ async function load(){
     document.getElementById('preview').textContent=JSON.stringify(cfg,null,2);
   }catch(e){}
 }
-
+async function saveToIDB(cfg){
+  let db=await openDB();
+  let tx=db.transaction('d32store','readwrite');
+  let st=tx.objectStore('d32store');
+  st.put(JSON.stringify(cfg),'D32_DAIRA_CONFIG');
+  st.put(JSON.stringify(cfg),'D32_CIRCLE');
+  st.put(JSON.stringify(cfg),'D32_CONFIG');
+  st.put(JSON.stringify(cfg),'D'+CURRENT_DAIRA+'_DAIRA_CONFIG');
+  return new Promise(res=>{tx.oncomplete=()=>res();});
+}
+async function load(){
+  var cfg=await getConfig();
+  if(cfg){ fillForm(cfg); document.getElementById('status').textContent='✅ محمل من الجهاز ده - '+cfg.savedAt; return true; }
+  document.getElementById('status').textContent='⏳ فاضي هنا - بجيب من الدرايف تلقائي...';
+  await loadFromDrive(true);
+  return false;
+}
 async function saveConfig(){
-  var members=ROLES.map(function(r){return {code:r.code,role:r.role,name:document.getElementById('name_'+r.code).value.trim()};});
-  var cfg={
-    dairaNumber:document.getElementById('dairaNumber').value.trim()||'32',
-    entag:document.getElementById('entag').value,
-    dawr:document.getElementById('dawr').value,
-    fatra:document.getElementById('fatra').value,
-    rais:members.find(m=>m.code=='A')?.name||'',
-    ra2is:members.find(m=>m.code=='A')?.name||'',
-    members:members,
-    a3daa:members.filter(m=>m.code!='A'&&m.name).map(m=>m.name).join('\n'),
-    wakil:document.getElementById('wakil').value.trim(),
-    amin:document.getElementById('amin').value.trim(),
-    savedAt:new Date().toLocaleString('ar-EG')
-  };
-
+  var cfg=collectCfg();
   try{
-    let db=await openDB();
-    let tx=db.transaction('d32store','readwrite');
-    let st=tx.objectStore('d32store');
-    st.put(JSON.stringify(cfg),'D32_DAIRA_CONFIG');
-    st.put(JSON.stringify(cfg),'D32_CIRCLE');
-    st.put(JSON.stringify(cfg),'D32_CONFIG');
-    tx.oncomplete=()=>{
-      document.getElementById('status').textContent='✅ تم الحفظ في D32_DB - الدائرة '+cfg.dairaNumber;
-      document.getElementById('preview').textContent=JSON.stringify(cfg,null,2);
-      alert('تم الحفظ بنجاح في D32_DB - كل القضايا موجودة زي ما هي');
-    };
+    await saveToIDB(cfg);
+    document.getElementById('status').textContent='✅ تم الحفظ في D32_DB - الدائرة '+cfg.dairaNumber;
+    document.getElementById('preview').textContent=JSON.stringify(cfg,null,2);
+    // حاول تنبه الـ parent
+    try{ parent.postMessage({type:'DAIRA_CONFIG_SAVED', cfg:cfg},'*'); }catch(e){}
+  }catch(e){ alert('خطأ حفظ D32_DB: '+e); }
+  return cfg;
+}
+async function saveConfigAndUpload(){
+  var cfg = await saveConfig();
+  document.getElementById('status').textContent='⏳ برفع بيانات الدائرة للدرايف...';
+  try{
+    let curRes = await fetch(CLOUD_URL,{cache:'no-store'});
+    let curTxt = await curRes.text();
+    let cur = {};
+    try{ cur = JSON.parse(curTxt); }catch(e){ cur={v3:[],ahkam:[]}; }
+    if(Array.isArray(cur)) cur={v3:cur,ahkam:[]};
+    let v3 = cur.v3||[];
+    let ahkam = cur.ahkam||[];
+    let payload = {v3:v3, ahkam:ahkam, dairaInfo:cfg, dairaConfig:cfg, _updatedAt:Date.now()};
+    await fetch(CLOUD_POST_URL,{method:'POST', body:JSON.stringify(payload)});
+    document.getElementById('status').textContent='✅ اترفع للدرايف - الموبايل هيجيبه تلقائي مع المزامنة';
   }catch(e){
-    alert('خطأ حفظ D32_DB: '+e);
+    document.getElementById('status').textContent='❌ فشل الرفع: '+e.message+' - بس اتحفظ محلي';
   }
 }
-
+async function loadFromDrive(silent){
+  try{
+    document.getElementById('status').textContent='⏳ بجيب من الدرايف...';
+    let res = await fetch(CLOUD_URL,{cache:'no-store'});
+    let txt = await res.text();
+    let j = JSON.parse(txt);
+    let info = j.dairaInfo || j.dairaConfig || j.config || null;
+    if(!info){ if(!silent) document.getElementById('status').textContent='⚠ الدرايف لسه مفيهوش بيانات دائرة - احفظ من اللاب بدوسة حفظ + رفع'; return; }
+    fillForm(info);
+    await saveToIDB(info);
+    document.getElementById('status').textContent='✅ اتحمل من الدرايف واتحفظ';
+    if(!silent) alert('✅ اتحمل من الدرايف');
+  }catch(e){
+    document.getElementById('status').textContent='❌ فشل: '+e.message;
+  }
+}
 async function clearConfig(){
   if(!confirm('مسح بيانات الدائرة فقط؟ مش هيمسح القضايا')) return;
   let db=await openDB();
   let tx=db.transaction('d32store','readwrite');
-  ['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG','D32_DAIRA_HISTORY','D32_DAIRA_NUMBER'].forEach(k=>tx.objectStore('d32store').delete(k));
+  ['D32_DAIRA_CONFIG','D32_CIRCLE','D32_DAIRA','D32_CONFIG','D32_DAIRA_HISTORY','D32_DAIRA_NUMBER','D'+CURRENT_DAIRA+'_DAIRA_CONFIG'].forEach(k=>tx.objectStore('d32store').delete(k));
   tx.oncomplete=()=>{location.reload();}
 }
-
 build(); setTimeout(load,200);
 </script>
 </body>

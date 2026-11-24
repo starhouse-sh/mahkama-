@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تواصل مع جهة الإدارة</title>
+<style>
+*{box-sizing:border-box;font-family:Tahoma} body{background:#0A2342;color:#fff;text-align:center;padding:20px}
+.card{background:#fff;color:#111;max-width:420px;margin:20px auto;padding:22px;border-radius:16px}
+input{width:100%;padding:12px;border:2px solid #ccc;border-radius:10px;margin:10px 0}
+.btn{width:100%;padding:14px;background:#0A2342;color:#fff;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:10px}
+.msg{font-weight:bold;margin-top:10px;min-height:20px}
+</style>
+</head>
+<body>
+<h2>📩 تواصل مع جهة الإدارة</h2>
+<div class="card">
+<p>نسيت باسورد دائرتك؟ ابعت طلب للإدارة</p>
+<label>رقم الدائرة</label>
+<input id="dairaNum" type="number" min="1" max="39" placeholder="مثال: 32">
+<button class="btn" onclick="sendReq()">إرسال طلب بتغيير الباسورد</button>
+<p class="msg" id="msg"></p>
+<p style="font-size:12px;color:#666">لو الأدمن وافق، هتفتح لك نافذة إعادة تعيين كلمة السر عند دخولك التالي</p>
+<a href="app.html">← رجوع للدخول</a>
+</div>
+<script>
+function sendReq(){
+  const msg=document.getElementById('msg');
+  const num=document.getElementById('dairaNum').value.trim();
+  if(!num){msg.style.color='#b00020';msg.textContent='اكتب رقم الدائرة';return;}
+  if(!navigator.onLine){msg.style.color='#b00020';msg.textContent='وصل النت لإرسال الطلب';return;}
+  let reqs=[]; try{reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){}
+  reqs.push({daira:num,status:'pending',time:new Date().toLocaleString('ar-EG')});
+  localStorage.setItem('admin_requests',JSON.stringify(reqs));
+  msg.style.color='#16a34a';msg.textContent='✅ تم إرسال الطلب للإدارة - استنى الموافقة';
+}
+</script>
+</body>
+</html>
