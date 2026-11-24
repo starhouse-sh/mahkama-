@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v18-5-persist-fix';
+const CACHE = 'mahkama-v18-6-no-redirect';
 const FILES = [
   './',
   './index.html',
