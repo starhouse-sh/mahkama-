@@ -75,7 +75,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <div style="display:flex;gap:8px;align-items:center;margin:14px 0 8px">
 <span style="color:#FFD700;font-weight:bold">رقم الدائرة:</span>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة" style="width:100px;padding:12px;border-radius:10px;border:none;text-align:center;font-size:16px;font-weight:bold">
-<span style="font-size:12px;color:#cbd5e1">(افتراضي من إنشائك)</span>
+<span style="font-size:12px;color:#cbd5e1">(من إنشائك)</span>
 </div>
 <input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
@@ -89,16 +89,11 @@ async function checkEnterDaira(){
     var d = await restoreDairaFromAnywhere();
     var numInput = document.getElementById('enterDairaNum');
     if(d){
-      // عندك دائرة محفوظة - مش هنظهر شاشة إدخال الرقم، هنروح لقفل الباسورد بس
-      // لكن لو ظهرت الشاشة دي لأي سبب، املاها افتراضي
       if(numInput) numInput.value = d;
-      // لا نظهر enterScreen - lockScreen هي اللي هتظهر
       return;
     } else {
-      // مفيش دائرة محفوظة - حاول تجيب آخر دائرة أنشأتها من localStorage
       var lastDaira = null;
       try{
-        // دور على أي daira_pass_*
         for(var i=1;i<=39;i++){
           if(localStorage.getItem('daira_pass_'+i)){
             lastDaira = String(i);
@@ -107,23 +102,16 @@ async function checkEnterDaira(){
         }
         if(!lastDaira) lastDaira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || getDairaFromCookie();
       }catch(e){}
-      
       document.getElementById('enterDairaScreen').style.display='flex';
       if(lastDaira && numInput){
         numInput.value = lastDaira;
-        // ركز على خانة الباسورد مباشرة
-        setTimeout(()=>{ 
-          var passInput = document.getElementById('enterDairaPass');
-          if(passInput) passInput.focus();
-        }, 300);
+        setTimeout(()=>{ var p=document.getElementById('enterDairaPass'); if(p) p.focus(); }, 300);
       } else {
-        // لو مفيش خالص - سيبها فاضية أو حط 32 افتراضي
         if(numInput && !numInput.value) numInput.value = '32';
       }
     }
   }catch(e){
     console.log('checkEnterDaira error', e);
-    // fallback - اظهر الشاشة برقم 32 افتراضي
     try{
       document.getElementById('enterDairaScreen').style.display='flex';
       var ni = document.getElementById('enterDairaNum');
@@ -131,6 +119,101 @@ async function checkEnterDaira(){
     }catch(e2){}
   }
 }
+async function enterExistingDaira(){
+  var numEl = document.getElementById('enterDairaNum');
+  var num = numEl ? numEl.value.trim() : '32';
+  var passEl = document.getElementById('enterDairaPass');
+  var pass = passEl ? passEl.value.trim() : '';
+  var msg = document.getElementById('enterDairaMsg');
+  var btn = document.querySelector('#enterDairaScreen button');
+  if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
+  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة (4 حروف على الأقل)'; return; }
+  if(!navigator.onLine){
+    var savedLocal = localStorage.getItem('daira_pass_'+num);
+    if(savedLocal && savedLocal === pass){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      hideAllLocksAndEnter(num);
+      return;
+    } else if(!savedLocal){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      hideAllLocksAndEnter(num);
+      return;
+    } else {
+      msg.textContent='📴 مفيش نت - والباسورد المحلي غير متطابق';
+      return;
+    }
+  }
+  try{
+    if(btn) { btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
+    msg.style.color='#ffeb3b';
+    msg.textContent='⏳ بيتأكد من الباسورد في الدرايف...';
+    const CLOUD_CHECK='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+num;
+    let r=await fetch(CLOUD_CHECK,{cache:'no-store'});
+    let t=await r.text();
+    let j={}; try{ j=JSON.parse(t); }catch(e){}
+    if(!j || j.error === 'not_found' || (!j.v3 && !j.dairaInfo && !j._password && !j.exists)){
+      msg.style.color='#ffcccc';
+      msg.textContent='الدائرة '+num+' مش موجودة - أنشئها من إنشاء دائرة جديدة';
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+      return;
+    }
+    let cloudPass = j._password || j.password || '';
+    if(cloudPass && cloudPass !== pass){
+      msg.style.color='#ffcccc';
+      msg.textContent='❌ الباسورد غلط للدائرة '+num;
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+      return;
+    }
+    saveDairaPersist(num, pass);
+    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+    try{ localStorage.setItem('daira_pass_'+num, pass); }catch(e){}
+    try{ localStorage.setItem('current_daira_pass', pass); }catch(e){}
+    msg.style.color='#a7f3d0';
+    msg.textContent='✅ تم التحقق - جاري الدخول...';
+    setTimeout(()=>hideAllLocksAndEnter(num), 300);
+  }catch(e){
+    console.log('Cloud check failed', e);
+    var savedLocal2 = localStorage.getItem('daira_pass_'+num);
+    if(savedLocal2 && savedLocal2 === pass){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
+      hideAllLocksAndEnter(num);
+    } else {
+      msg.style.color='#ffcccc';
+      msg.textContent='❌ فشل الاتصال: '+e.message;
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+    }
+  }
+}
+function hideAllLocksAndEnter(num){
+  try{
+    var enterScreen = document.getElementById('enterDairaScreen');
+    var lockScreen = document.getElementById('lockScreen');
+    if(enterScreen) enterScreen.style.display='none';
+    if(lockScreen) lockScreen.style.display='none';
+    try{ localStorage.setItem('current_daira', String(num)); localStorage.setItem('DAIRA', String(num)); }catch(e){}
+    var dNumEl = document.getElementById('dairaNum');
+    if(dNumEl) dNumEl.textContent = String(num);
+    try{ window.CURRENT_DAIRA = String(num); }catch(e){}
+    try{ document.title = 'نظام د' + num; }catch(e){}
+    if(typeof updateCounts === 'function'){ try{ updateCounts(); }catch(e){} }
+    if(typeof checkHealth === 'function'){ try{ checkHealth(); }catch(e){} }
+    if(typeof openPage === 'function'){
+      try{
+        var firstTab = document.querySelector('.tab.active') || document.querySelector('.tab');
+        openPage('mahdar.html', firstTab);
+      }catch(e){}
+    }
+    console.log('Entered daira', num, 'without reload');
+  }catch(e){
+    console.log('hideAllLocks err', e);
+    location.reload();
+  }
+}
+checkEnterDaira();
+</script>
 
 
 <div class="sidebar">
