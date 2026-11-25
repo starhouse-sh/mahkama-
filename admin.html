@@ -61,16 +61,17 @@ input{padding:8px;border:2px solid #ccc;border-radius:8px;font-size:12px;font-we
 <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
 <input id="newMasterInput" placeholder="غيّر الماستر الجديد" style="max-width:200px">
 <button class="btn btn-master" onclick="changeMaster()">🔑 تغيير الماستر</button>
-<button class="btn btn-view" onclick="loadAdmin()">🔄 تحديث الجدول</button>
+<button class="btn btn-view" onclick="loadAdmin()">🔄 تحديث الجدول</button> <button class="btn btn-ok" onclick="checkOne(32)">🔍 فحص دائرة 32</button> <button class="btn btn-master" onclick="checkAll()">🔍 فحص الكل 39</button>
 </div>
 </div>
 
+<div id="diagBox" style="background:#fff;border:2px solid #0A2342;border-radius:12px;padding:12px;margin:12px 16px;font-size:12px;line-height:1.8">جاري...</div>
 <div style="padding:0 16px">
 <h3>📋 جدول 39 دائرة - الإدارة الكاملة</h3>
 <div style="overflow:auto;max-height:70vh;border-radius:12px;border:1px solid #ddd">
 <table>
 <thead>
-<tr><th>رقم</th><th>الحالة</th><th>باسورد الموظف</th><th>عدد القضايا</th><th>آخر تحديث</th><th>إجراءات جهة الإدارة</th></tr>
+<tr><th>رقم</th><th>الحالة</th><th>بيانات الدائرة (القضاة)</th><th>باسورد الموظف</th><th>عدد القضايا</th><th>آخر تحديث</th><th>إجراءات</th></tr>
 </thead>
 <tbody id="dairaTable"><tr><td colspan="6">جاري التحميل...</td></tr></tbody>
 </table>
@@ -100,58 +101,118 @@ function loginAdmin(){
 }
 
 async function loadAdmin(){
-  document.getElementById('dairaTable').innerHTML='<tr><td colspan="6">⏳ بجيب 39 دائرة من الدرايف...</td></tr>';
+  // نعرض 39 صف فورا من غير ما نجيب بيانات - عشان الصفحة متعلقش
   let rows=[];
-  let totalCases=0;
-  let withPass=0;
-  
-  // هات الـ 39 دائرة كلها
-  for(let n=1;n<=39;n++){
-    try{
-      let r=await fetch(CLOUD+'?action=get&daira='+n+'&t='+Date.now(),{cache:'no-store'});
-      let t=await r.text();
-      let j={}; try{ j=JSON.parse(t);}catch(e){ rows.push({num:n,exists:false}); continue; }
-      if(!j || j.error==='not_found' || (!j.v3 && !j.dairaInfo && !j._password)){
-        rows.push({num:n,exists:false,count:0,pass:'',updated:''});
-      } else {
-        let count=Array.isArray(j.v3)?j.v3.length:0;
-        let pass=j._password||j.password||'';
-        let updated=j._updatedAt?new Date(j._updatedAt).toLocaleDateString('ar-EG'):'';
-        totalCases+=count;
-        if(pass) withPass++;
-        rows.push({num:n,exists:true,count:count,pass:pass,updated:updated,info:j.dairaInfo||{}});
-      }
-    }catch(e){
-      rows.push({num:n,exists:false,count:0,pass:'',updated:'',error:e.message});
-    }
-    // تحديث تدريجي كل 5 دوائر عشان المستخدم يشوف التقدم
-    if(n%5===0){
-      document.getElementById('dairaTable').innerHTML=rows.map(renderRow).join('')+`<tr><td colspan="6">⏳ جاري... ${n}/39</td></tr>`;
-    }
-  }
-  
-  document.getElementById('totalDairas').textContent=rows.filter(r=>r.exists).length;
-  document.getElementById('withPass').textContent=withPass;
-  document.getElementById('totalCases').textContent=totalCases;
+  for(let n=1;n<=39;n++){ rows.push({num:n,exists:null,count:0,pass:'',updated:'',checked:false}); }
+  document.getElementById('totalDairas').textContent='-';
+  document.getElementById('withPass').textContent='-';
+  document.getElementById('totalCases').textContent='-';
   document.getElementById('dairaTable').innerHTML=rows.map(renderRow).join('');
+  document.getElementById('diagBox').innerHTML='<b>جاهز.</b> دوس <b>فحص دائرة 32</b> الأول عشان نشوف الدرايف بيرد بإيه.';
+  // نفحص دائرة 32 تلقائي أول واحدة لأنها المهمة
+  checkOne(32);
 }
-
+async function checkOne(n){
+  let rowEl = document.getElementById('row-'+n);
+  if(rowEl) rowEl.innerHTML='<td colspan="6">⏳ بفحص دائرة '+n+' من الدرايف...</td>';
+  document.getElementById('diagBox').innerHTML='⏳ بفحص دائرة '+n+'...';
+  try{
+    let start=Date.now();
+    let r=await fetch(CLOUD+'?action=get&daira='+n,{cache:'no-store'});
+    let t=await r.text();
+    let ms=Date.now()-start;
+    let isHtml = t.trim().startsWith('<!DOCTYPE') || t.trim().startsWith('<html');
+    if(isHtml){
+      document.getElementById('diagBox').innerHTML='❌ <b>دائرة '+n+' رجعت HTML مش JSON</b><br>السكريبت مش منشور Anyone - افتح Google Apps Script > Deploy > New deployment > Execute as: Me - Who has access: Anyone<br><small>'+t.slice(0,200)+'</small>';
+      if(rowEl) rowEl.innerHTML='<td><b>'+n+'</b></td><td colspan="5" style="color:#b00020">❌ السكريبت مش منشور Anyone - شوف التشخيص فوق</td>';
+      return;
+    }
+    let j={}; let parseOk=true;
+    try{ j=JSON.parse(t); if(Array.isArray(j)) j={v3:j,ahkam:[]}; }catch(e){ parseOk=false; }
+    if(!parseOk){
+      document.getElementById('diagBox').innerHTML='❌ دائرة '+n+' رجعت مش JSON<br><pre>'+t.slice(0,500)+'</pre>';
+      if(rowEl) rowEl.innerHTML='<td><b>'+n+'</b></td><td colspan="5">❌ مش JSON</td>';
+      return;
+    }
+    // التشخيص الكامل لدائرة 32
+    let keys = Object.keys(j||{}).join(', ');
+    let v3len = Array.isArray(j.v3)?j.v3.length:0;
+    let ahkamLen = Array.isArray(j.ahkam)?j.ahkam.length:0;
+    let pass = j._password||j.password||'';
+    let hasInfo = !!j.dairaInfo;
+    document.getElementById('diagBox').innerHTML='✅ <b>دائرة '+n+' - الدرايف رد JSON في '+ms+'ms</b><br>'+
+      'حجم الرد: '+(t.length/1024).toFixed(1)+' KB | مفاتيح: '+keys+'<br>'+
+      'عدد القضايا v3: <b>'+v3len+'</b> | أحكام: '+ahkamLen+' | لها dairaInfo: '+(hasInfo?'نعم':'لا')+' | باسورد موظف: '+(pass?('موجود ('+pass.length+' حرف)'): 'مفيش')+' | بيانات دائرة: '+((j.dairaInfo||j.dairaConfig)?('رئيس: '+(j.dairaInfo?.raees||j.dairaConfig?.raees||'-')+' | يمين: '+(j.dairaInfo?.yameen||'-')+' | شمال: '+(j.dairaInfo?.shamal||'-')+' | أمين: '+(j.dairaInfo?.ameen||'-')):'مفيش')+' | error: '+(j.error||'مفيش')+'<br>'+
+      '<small>أول 300 حرف من الرد:</small><pre>'+t.slice(0,300).replace(/</g,'&lt;')+'</pre>';
+    
+    // حدث الصف
+    let exists = !!(j.v3 || j.dairaInfo || pass || j.error!=='not_found');
+    // لو السكريبت رجع {error: not_found} يبقى مش موجودة
+    if(j.error==='not_found') exists=false;
+    if(!exists){
+      if(rowEl) rowEl.innerHTML=renderRow({num:n,exists:false,count:0,pass:'',updated:'',checked:true});
+      return;
+    }
+    let updated = j._updatedAt?new Date(j._updatedAt).toLocaleDateString('ar-EG'):'-';
+    let _info = j.dairaInfo||j.dairaConfig||j.config||{};
+    if(rowEl) rowEl.innerHTML=renderRow({num:n,exists:true,count:v3len,pass:pass,updated:updated,checked:true,info:_info});
+    // حدث العدادات
+    try{
+      let curTotal = parseInt(document.getElementById('totalCases').textContent||'0')||0;
+      if(!isNaN(v3len)) document.getElementById('totalCases').textContent = (curTotal+v3len);
+    }catch(e){}
+  }catch(e){
+    document.getElementById('diagBox').innerHTML='❌ فشل فحص دائرة '+n+': '+e.message+'<br>تأكد من النت ومن رابط السكريبت';
+    if(rowEl) rowEl.innerHTML='<td><b>'+n+'</b></td><td colspan="5">❌ '+e.message+'</td>';
+  }
+}
+async function checkAll(){
+  if(!confirm('هتفحص 39 دائرة ورا بعض - ممكن ياخد 1-2 دقيقة لأن دائرة 32 لوحدها فيها 1599 قضية.\n\nتكمل؟')) return;
+  for(let n=1;n<=39;n++){
+    await checkOne(n);
+    await new Promise(r=>setTimeout(r,300));
+  }
+  alert('✅ خلص فحص 39 دائرة');
+}
 function renderRow(r){
-  let status = r.exists?'<span class="status-exists">✅ منشأة</span>':'<span class="status-empty">⬜ غير منشأة</span>';
-  let passShow = r.pass?'<span class="pass-dot">••••</span> <small>('+r.pass.length+' حرف)</small> <button class="btn btn-view" onclick="showPass('+r.num+')">👁</button>':'<small style="color:#888">مفيش - الموظف لسه معملش</small>';
+  let status = r.exists===null?'<span style="color:#888">⏳ لم تفحص</span>':(r.exists?'<span class="status-exists">✅ منشأة</span>':'<span class="status-empty">⬜ غير منشأة</span>');
+  let info = r.info||{};
+  let infoShow = '';
+  if(r.exists===null){ infoShow='<small>دوس فحص</small>'; }
+  else if(!r.exists){ infoShow='<small style="color:#888">—</small>'; }
+  else if(!info || Object.keys(info).length===0){ infoShow='<small style="color:#b00020">⚠️ مفيش بيانات دائرة<br>القضاة مش متسجلين</small><br><button class="btn btn-view" onclick="openDairaConfig('+r.num+')">✏ إدخال بيانات</button>'; }
+  else {
+    infoShow = '<div style="text-align:right;font-size:11px;line-height:1.6">';
+    if(info.raees) infoShow+='رئيس: <b>'+info.raees+'</b><br>';
+    if(info.yameen) infoShow+='يمين: '+info.yameen+'<br>';
+    if(info.shamal) infoShow+='شمال: '+info.shamal+'<br>';
+    if(info.ameen) infoShow+='أمين سر: '+info.ameen+'<br>';
+    if(info.maw3ed) infoShow+='موعـد: '+info.maw3ed+'<br>';
+    if(!info.raees && !info.yameen && !info.shamal) infoShow+='<small>دور: '+(info.dawr||'-')+' | فترة: '+(info.fatra||'-')+'</small>';
+    infoShow+='</div><button class="btn btn-view" onclick="openDairaConfig('+r.num+')">✏ تعديل</button>';
+  }
+  let passShow = r.exists===null?'<small>دوس فحص</small>':(r.pass?'<span class="pass-dot">••••</span> <small>('+r.pass.length+' حرف)</small> <button class="btn btn-view" onclick="showPass('+r.num+')">👁</button>':'<small style="color:#888">مفيش</small>');
+  let countShow = r.exists===null?'—':(r.count||0);
   let actions='';
-  if(!r.exists){
-    actions+=`<button class="btn btn-create" onclick="createDaira(${r.num})">➕ إنشاء</button>`;
+  if(r.exists===null){
+    actions+=`<button class="btn btn-view" onclick="checkOne(${r.num})">🔍 فحص</button>`;
+  } else if(!r.exists){
+    actions+=`<button class="btn btn-create" onclick="createDaira(${r.num})">➕ إنشاء</button> `;
+    actions+=`<button class="btn btn-view" onclick="checkOne(${r.num})">🔍 إعادة فحص</button>`;
   } else {
     actions+=`<button class="btn btn-view" onclick="showPass(${r.num})">👁 باسورد</button> `;
     actions+=`<button class="btn btn-lock" onclick="resetPass(${r.num})">🔄 تغيير</button> `;
-    actions+=`<button class="btn btn-no" onclick="deleteDaira(${r.num})">🗑️ مسح</button>`;
+    actions+=`<button class="btn btn-no" onclick="deleteDaira(${r.num})">🗑️ مسح</button> `;
+    actions+=`<button class="btn btn-view" onclick="checkOne(${r.num})">🔍 فحص</button>`;
   }
   actions+=`<br><button class="btn btn-master" onclick="loginAs(${r.num})">🔑 دخول بالماستر</button>`;
-  
-  return `<tr><td><b>${r.num}</b></td><td>${status}</td><td>${passShow}</td><td>${r.count||0}</td><td>${r.updated||'-'}</td><td>${actions}</td></tr>`;
+  return `<tr id="row-${r.num}"><td><b>${r.num}</b></td><td>${status}</td><td>${infoShow}</td><td>${passShow}</td><td>${countShow}</td><td>${r.updated||'-'}</td><td>${actions}</td></tr>`;
 }
-
+function openDairaConfig(num){
+  localStorage.setItem('current_daira', String(num));
+  localStorage.setItem('DAIRA', String(num));
+  window.open('daira-config.html?v='+Date.now(), '_blank');
+}
 async function createDaira(num){
   let empPass=prompt('إنشاء دائرة '+num+'\n\nأدخل باسورد الموظف (اللي الموظف هيدخل بيه):\n(سيبه فاضي لو عايز الموظف هو اللي يعمله أول مرة)');
   if(empPass===null) return;
@@ -169,8 +230,8 @@ async function createDaira(num){
 
 async function showPass(num){
   try{
-    let r=await fetch(CLOUD+'?action=get&daira='+num+'&t='+Date.now(),{cache:'no-store'});
-    let t=await r.text(); let j={}; try{ j=JSON.parse(t);}catch(e){ alert('فشل قراءة'); return; }
+    let r=await fetch(CLOUD+'?action=get&daira='+num,{cache:'no-store'});
+    let t=await r.text(); let j={}; try{ j=JSON.parse(t); if(Array.isArray(j)) j={v3:j,ahkam:[]}; }catch(e){ alert('فشل قراءة'); return; }
     let emp=j._password||j.password||'(مفيش)';
     let master=MASTER_PASSWORD;
     alert('دائرة '+num+'\n\nباسورد الموظف: '+emp+'\nباسورد الماستر (يفتح أي دائرة): '+master+'\n\nالماستر يفتح حتى لو الموظف عامل باسورد');

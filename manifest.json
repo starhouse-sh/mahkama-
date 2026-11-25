@@ -1,7 +1,7 @@
 {
-  "name": "نظام الدائرة - 39 دائرة + ماستر",
+  "name": "نظام د32 - إدارة القضايا",
   "short_name": "د32",
-  "start_url": "app.html?v=40",
+  "start_url": "select-daira.html",
   "display": "standalone",
   "background_color": "#0b1e3a",
   "theme_color": "#0b1e3a",
@@ -16,6 +16,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "id": "daira-v40-master"
+  ]
 }

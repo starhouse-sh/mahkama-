@@ -455,7 +455,14 @@ async function uploadToDrive(localArray, silent, options){
     if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    let _dairaInfo = null;
+    try{
+      _dairaInfo = JSON.parse(localStorage.getItem('D32_DAIRA_INFO')||localStorage.getItem('DAIRA_INFO_32')||localStorage.getItem('daira_info')||'null');
+    }catch(e){}
+    if(!_dairaInfo){
+      try{ let _raw = await idbGet('D32_DAIRA_CONFIG')||await idbGet('D32_DAIRA_INFO')||await idbGet('D32_CIRCLE')||await idbGet('D32_CONFIG'); if(_raw) _dairaInfo=JSON.parse(_raw); }catch(e){}
+    }
+    const payload = {v3:localArray, ahkam:ahArr, dairaInfo:_dairaInfo||{}, dairaConfig:_dairaInfo||{}, _updatedAt: Date.now()};
     // أهم إصلاح: خد الباسورد من اللوكال الأول، لو مش موجود خد من الكلاود - عشان الموبايل واللاب يبقوا نفس الباسورد
     let localPass = null;
     try{ localPass = localStorage.getItem('daira_pass_'+CURRENT_DAIRA) || localStorage.getItem('current_daira_pass'); }catch(e){}
@@ -489,6 +496,19 @@ async function syncBidirectionalSmart(silent){
     if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
+    // === حفظ بيانات الدائرة (أسماء القضاة) من الدرايف لكل المفاتيح ===
+    try{
+      let _info = j.dairaInfo || j.dairaConfig || j.config || j._dairaInfo || null;
+      if(_info && typeof _info === 'object' && Object.keys(_info).length>0){
+        let _infoStr = JSON.stringify(_info);
+        await idbSet('D32_DAIRA_CONFIG', _infoStr);
+        await idbSet('D32_DAIRA_INFO', _infoStr);
+        await idbSet('D32_CIRCLE', _infoStr);
+        await idbSet('D32_CONFIG', _infoStr);
+        try{ localStorage.setItem('D32_DAIRA_INFO', _infoStr); localStorage.setItem('DAIRA_INFO_'+CURRENT_DAIRA, _infoStr); localStorage.setItem('daira_info', _infoStr); }catch(e){}
+        try{ window.dispatchEvent(new CustomEvent('DAIRA_INFO_UPDATED',{detail:_info})); }catch(e){}
+      }
+    }catch(e){ console.log('dairaInfo sync err',e); }
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
     try{
