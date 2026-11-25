@@ -2,9 +2,14 @@
 <html dir="rtl" lang="ar">
 <head>
 <script>
-if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
-  location.href = 'select-daira.html';
-}
+// تم إلغاء صفحة اختيار الدائرة - افتراضي دائرة 32
+(function(){
+  if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
+    localStorage.setItem('current_daira','32');
+    localStorage.setItem('DAIRA','32');
+    console.log('Default daira 32 set - select-daira bypassed');
+  }
+})();
 </script>
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
@@ -201,24 +206,7 @@ window.addEventListener('message',async(e)=>{
   }
 });
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
-function openPage(f,el){
-  // منع فتح index.html جوه iframe
-  if(f.includes('index.html') || f.includes('select-daira.html')){
-    console.warn('Blocked nesting', f);
-    return;
-  }
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('pageTitle').textContent=f;
-  const frame = document.getElementById('frame');
-  // Offline: متضيفش timestamp عشان الكاش يلاقيها بـ ignoreSearch
-  if(navigator.onLine){
-    frame.src=f+'?safe=1&v='+Date.now();
-  } else {
-    frame.src=f; // من غير query عشان يلاقيها في الكاش مباشرة
-  }
-  setTimeout(updateCounts,500);
-}
+function openPage(f,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('pageTitle').textContent=f;document.getElementById('frame').src=f+'?safe=1&v='+Date.now();setTimeout(updateCounts,500);}
 async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
 async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
 async function uploadToDrive(localArray, silent, options){
