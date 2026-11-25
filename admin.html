@@ -2,111 +2,230 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>لوحة إدارة الدوائر - الأدمن</title>
+<title>لوحة إدارة الدوائر - 39 دائرة + ماستر</title>
 <style>
-*{box-sizing:border-box;font-family:Tahoma} body{margin:0;background:#f5f7fa;color:#0A2342}
-header{background:#0A2342;color:#E8B93C;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1000px;margin:18px auto;padding:0 16px}
-.card{background:#fff;border-radius:12px;padding:18px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-.card b{font-size:34px;display:block}
-.req{max-width:1000px;margin:0 auto;padding:0 16px}
-.req-item{background:#fef3c7;border:2px solid #E8B93C;border-radius:12px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.btn{padding:10px 18px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
-.btn-ok{background:#16a34a;color:#fff}.btn-no{background:#dc2626;color:#fff}.btn-view{background:#2563eb;color:#fff}.btn-lock{background:#ea580c;color:#fff}.btn-del{background:#dc2626;color:#fff}
+*{box-sizing:border-box;font-family:Tahoma} body{margin:0;background:#f0f2f5;color:#0A2342}
+header{background:#0A2342;color:#FFD700;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header b{font-size:16px}
+.master-badge{background:#FFD700;color:#000;padding:6px 12px;border-radius:20px;font-weight:bold;font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:1200px;margin:18px auto;padding:0 16px}
+@media(max-width:700px){ .cards{grid-template-columns:1fr 1fr} }
+.card{background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.card b{font-size:28px;display:block;color:#0A2342}
+.card small{color:#666;font-size:11px}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
-th,td{padding:10px;text-align:center;border-bottom:1px solid #eee;font-size:13px}
-#login{max-width:380px;margin:80px auto;background:#fff;padding:24px;border-radius:14px;text-align:center}
-input{width:100%;padding:12px;border:2px solid #ccc;border-radius:10px;margin:10px 0}
-#adminBody{display:none}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid #eee;font-size:12px}
+th{background:#0A2342;color:#FFD700;font-size:11px}
+tr:hover{background:#fffbe6}
+.btn{padding:6px 10px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:11px;margin:1px}
+.btn-ok{background:#16a34a;color:#fff}.btn-no{background:#dc2626;color:#fff}.btn-view{background:#2563eb;color:#fff}.btn-lock{background:#ea580c;color:#fff}.btn-master{background:#7c3aed;color:#fff}.btn-create{background:#0A2342;color:#FFD700;border:1px solid #FFD700}
+input{padding:8px;border:2px solid #ccc;border-radius:8px;font-size:12px;font-weight:bold;width:100%}
+#login{max-width:400px;margin:60px auto;background:#fff;padding:24px;border-radius:14px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+#adminBody{display:none;max-width:1200px;margin:0 auto;padding-bottom:30px}
+.status-exists{color:#16a34a;font-weight:bold}.status-empty{color:#888}
+.pass-dot{letter-spacing:3px}
+.master-info{background:#fff3cd;border:2px solid #FFD700;border-radius:12px;padding:12px;margin:12px 16px;text-align:center}
 </style>
 </head>
 <body>
-<header><div>⚖️ لوحة إدارة الدوائر - الأدمن</div><div style="font-size:13px">تصميم: مسعد ياسين</div></header>
-<div id="login">
-<h3>🔒 دخول الأدمن</h3>
-<p style="font-size:13px;color:#666">صفحة الأدمن للمدير فقط</p>
-<input id="adminPass" type="password" placeholder="باسورد الأدمن">
-<button class="btn btn-view" style="width:100%" onclick="loginAdmin()">دخول</button>
-<p id="loginMsg" style="color:#b00020;font-weight:bold"></p>
-<p style="font-size:11px;color:#888">باسورد الأدمن الافتراضي: admin123 - غيّره من الكود</p>
+<header>
+<div>⚖️ لوحة إدارة 39 دائرة - جهة الإدارة</div>
+<div style="display:flex;gap:8px;align-items:center">
+<span class="master-badge">🔑 الماستر: <span id="masterShow">Admin@2026</span></span>
+<span style="font-size:12px">مسعد ياسين</span>
 </div>
+</header>
+
+<div id="login">
+<h3>🔒 دخول جهة الإدارة</h3>
+<p style="font-size:13px;color:#666">الباسورد الأساسي يفتح أي دائرة</p>
+<input id="adminPass" type="password" placeholder="باسورد الإدارة (الماستر أو admin123)">
+<button class="btn btn-view" style="width:100%;padding:12px;font-size:14px" onclick="loginAdmin()">دخول للإدارة</button>
+<p id="loginMsg" style="color:#b00020;font-weight:bold"></p>
+<p style="font-size:11px;color:#888;margin-top:10px">الماستر الافتراضي: <b>Admin@2026</b> - يفتح أي دائرة حتى لو لها باسورد موظف<br>admin123 للدخول للوحة فقط</p>
+</div>
+
 <div id="adminBody">
 <div class="cards">
-<div class="card"><span>إجمالي الدوائر</span><b id="totalDairas">-</b></div>
-<div class="card"><span>طلبات معلقة</span><b id="pendingCount">-</b></div>
+<div class="card"><span>إجمالي الدوائر المنشأة</span><b id="totalDairas">-</b><small>من 39</small></div>
+<div class="card"><span>دوائر لها باسورد موظف</span><b id="withPass">-</b><small>محمية</small></div>
+<div class="card"><span>إجمالي القضايا</span><b id="totalCases">-</b><small>قضية</small></div>
+<div class="card"><span>الباسورد الماستر</span><b style="font-size:16px" id="masterCard">Admin@2026</b><small>يفتح أي دائرة</small></div>
 </div>
-<div class="req"><h3>طلبات تغيير الباسورد</h3><div id="reqList"><p style="color:#666">لا توجد طلبات معلقة</p></div></div>
-<div style="max-width:1000px;margin:10px auto;padding:0 16px">
-<h3>جميع الدوائر المنشأة</h3>
-<div style="overflow:auto"><table><thead><tr><th>رقم الدائرة</th><th>دور الانعقاد</th><th>فترة الانعقاد</th><th>عدد القضايا</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody id="dairaTable"><tr><td colspan="6">جاري التحميل من الدرايف...</td></tr></tbody></table></div>
-<button class="btn btn-view" style="margin-top:14px" onclick="loadAdmin()">🔄 تحديث</button>
+
+<div class="master-info">
+<b>🔑 نظام الباسورد الجديد:</b><br>
+<span style="font-size:12px">• كل دائرة لها <b>باسورد واحد فقط للموظف</b> يعمله الموظف نفسه<br>
+• فيه <b>باسورد ماستر أساسي</b> (<span id="masterInfo">Admin@2026</span>) يفتح أي دائرة حتى لو الموظف عامل باسورد - للطوارئ ونسيان الباسورد<br>
+• لو الموظف نزل التطبيق على جهاز جديد، التطبيق هيشوف إن الدائرة لها باسورد ويطلب إدخاله</span><br>
+<div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+<input id="newMasterInput" placeholder="غيّر الماستر الجديد" style="max-width:200px">
+<button class="btn btn-master" onclick="changeMaster()">🔑 تغيير الماستر</button>
+<button class="btn btn-view" onclick="loadAdmin()">🔄 تحديث الجدول</button>
 </div>
 </div>
+
+<div style="padding:0 16px">
+<h3>📋 جدول 39 دائرة - الإدارة الكاملة</h3>
+<div style="overflow:auto;max-height:70vh;border-radius:12px;border:1px solid #ddd">
+<table>
+<thead>
+<tr><th>رقم</th><th>الحالة</th><th>باسورد الموظف</th><th>عدد القضايا</th><th>آخر تحديث</th><th>إجراءات جهة الإدارة</th></tr>
+</thead>
+<tbody id="dairaTable"><tr><td colspan="6">جاري التحميل...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+
 <script>
 const ADMIN_PASS='admin123';
+const DEFAULT_MASTER='Admin@2026';
+let MASTER_PASSWORD=localStorage.getItem('admin_master_password')||DEFAULT_MASTER;
 const CLOUD='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
+
+document.getElementById('masterShow').textContent=MASTER_PASSWORD;
+document.getElementById('masterCard').textContent=MASTER_PASSWORD;
+document.getElementById('masterInfo').textContent=MASTER_PASSWORD;
+
 function loginAdmin(){
-  const v=document.getElementById('adminPass').value;
-  if(v===ADMIN_PASS){document.getElementById('login').style.display='none';document.getElementById('adminBody').style.display='block';loadAdmin();}
-  else document.getElementById('loginMsg').textContent='باسورد الأدمن غلط';
-}
-async function loadAdmin(){
-  // قراءة الطلبات من الدرايف أولاً - عشان تظهر من أي جهاز
-  let reqs=[];
-  try{
-    let r=await fetch(CLOUD+'?action=get&daira=ADMIN',{cache:'no-store'});
-    let t=await r.text(); let j={}; try{j=JSON.parse(t);}catch(e){}
-    if(j.adminRequests && Array.isArray(j.adminRequests)) reqs=j.adminRequests;
-  }catch(e){}
-  if(reqs.length===0){ try{reqs=JSON.parse(localStorage.getItem('admin_requests')||'[]');}catch(e){} }
-  // احفظ نسخة محلية
-  window._adminReqs=reqs;
-  document.getElementById('pendingCount').textContent=reqs.filter(r=>r.status==='pending').length;
-  let html='';
-  reqs.filter(r=>r.status==='pending').forEach((r,i)=>{
-    html+=`<div class="req-item"><div><b>الدائرة ${r.daira} تطلب تغيير الباسورد</b><br><small>${r.time||''}</small></div><div><button class="btn btn-ok" onclick="decide(${i},'approved')">✅ موافقة</button> <button class="btn btn-no" onclick="decide(${i},'rejected')">❌ رفض</button></div></div>`;
-  });
-  if(html) document.getElementById('reqList').innerHTML=html;
-  // جدول الدوائر - هات بيانات كل دائرة من الدرايف مباشرة
-  let registry=[];
-  try{registry=JSON.parse(localStorage.getItem('admin_registry')||'[]');}catch(e){}
-  // جرب تجيب من الدرايف كل الدوائر من 1 لـ 39 - اللي ليها ملف هتظهر
-  try{
-    document.getElementById('dairaTable').innerHTML='<tr><td colspan="6">⏳ بجيب بيانات الدوائر من الدرايف...</td></tr>';
-    let fetched=[];
-    for(let n=1;n<=39;n++){
-      try{
-        let r=await fetch(CLOUD+'?action=get&daira='+n,{cache:'no-store'});
-        let t=await r.text(); let j={}; try{j=JSON.parse(t);}catch(e){continue;}
-        if(!j || j.error) continue;
-        let info=j.dairaInfo||j.dairaConfig||j.config||null;
-        let v3=j.v3||[];
-        // لو الدائرة ليها بيانات أو قضايا، اعتبرها موجودة
-        if(info || (Array.isArray(v3) && v3.length>0)){
-          fetched.push({num:String(n),dawr:info?.dawr||'—',fatra:info?.fatra||'—',count:Array.isArray(v3)?v3.length:0,status:'نشطة',info:info});
-        }
-      }catch(e){}
-    }
-    if(fetched.length>0) registry=fetched;
-  }catch(e){}
-  if(registry.length===0) registry=[{num:'32',dawr:'الأسبوع الثاني',fatra:'صباحي',count:1599,status:'نشطة'}];
-  document.getElementById('totalDairas').textContent=registry.length;
-  document.getElementById('dairaTable').innerHTML=registry.map(r=>`<tr><td>${r.num}</td><td>${r.dawr}</td><td>${r.fatra}</td><td>${r.count||0}</td><td>${r.status}</td><td><button class="btn btn-view" onclick="alert('عرض دائرة ${r.num}')">عرض</button> <button class="btn btn-lock" onclick="toggleLock('${r.num}')">قفل</button></td></tr>`).join('');
-}
-async function decide(idx,decision){
-  let reqs=window._adminReqs||JSON.parse(localStorage.getItem('admin_requests')||'[]');
-  if(reqs[idx]){
-    reqs[idx].status=decision;
-    // حدث الدرايف
-    try{ await fetch(CLOUD+'?daira=ADMIN',{method:'POST',body:JSON.stringify({v3:[],ahkam:[],adminRequests:reqs,_updatedAt:Date.now()})}); }catch(e){}
-    localStorage.setItem('admin_requests',JSON.stringify(reqs));
-    localStorage.setItem('admin_decision_'+reqs[idx].daira, decision);
-    // سجل القرار في ملف الدائرة نفسها عشان المستخدم يشوفه من أي جهاز
-    try{ await fetch(CLOUD+'?daira='+reqs[idx].daira,{method:'POST',body:JSON.stringify({v3:[],ahkam:[],adminDecision:decision,_updatedAt:Date.now()})}); }catch(e){}
-    alert(decision==='approved'?'✅ تمت الموافقة - المستخدم هيشوف نافذة إعادة تعيين':'❌ تم رفض الطلب'); loadAdmin();
+  const v=document.getElementById('adminPass').value.trim();
+  if(v===ADMIN_PASS || v===MASTER_PASSWORD || v===localStorage.getItem('admin_master_password')){
+    document.getElementById('login').style.display='none';
+    document.getElementById('adminBody').style.display='block';
+    loadAdmin();
+  } else {
+    document.getElementById('loginMsg').textContent='باسورد الإدارة غلط - جرب admin123 أو الماستر';
   }
 }
-function toggleLock(num){alert('تم قفل/فتح الدائرة '+num+' - سيظهر للمستخدم: الدائرة مقفولة من الإدارة');}
+
+async function loadAdmin(){
+  document.getElementById('dairaTable').innerHTML='<tr><td colspan="6">⏳ بجيب 39 دائرة من الدرايف...</td></tr>';
+  let rows=[];
+  let totalCases=0;
+  let withPass=0;
+  
+  // هات الـ 39 دائرة كلها
+  for(let n=1;n<=39;n++){
+    try{
+      let r=await fetch(CLOUD+'?action=get&daira='+n+'&t='+Date.now(),{cache:'no-store'});
+      let t=await r.text();
+      let j={}; try{ j=JSON.parse(t);}catch(e){ rows.push({num:n,exists:false}); continue; }
+      if(!j || j.error==='not_found' || (!j.v3 && !j.dairaInfo && !j._password)){
+        rows.push({num:n,exists:false,count:0,pass:'',updated:''});
+      } else {
+        let count=Array.isArray(j.v3)?j.v3.length:0;
+        let pass=j._password||j.password||'';
+        let updated=j._updatedAt?new Date(j._updatedAt).toLocaleDateString('ar-EG'):'';
+        totalCases+=count;
+        if(pass) withPass++;
+        rows.push({num:n,exists:true,count:count,pass:pass,updated:updated,info:j.dairaInfo||{}});
+      }
+    }catch(e){
+      rows.push({num:n,exists:false,count:0,pass:'',updated:'',error:e.message});
+    }
+    // تحديث تدريجي كل 5 دوائر عشان المستخدم يشوف التقدم
+    if(n%5===0){
+      document.getElementById('dairaTable').innerHTML=rows.map(renderRow).join('')+`<tr><td colspan="6">⏳ جاري... ${n}/39</td></tr>`;
+    }
+  }
+  
+  document.getElementById('totalDairas').textContent=rows.filter(r=>r.exists).length;
+  document.getElementById('withPass').textContent=withPass;
+  document.getElementById('totalCases').textContent=totalCases;
+  document.getElementById('dairaTable').innerHTML=rows.map(renderRow).join('');
+}
+
+function renderRow(r){
+  let status = r.exists?'<span class="status-exists">✅ منشأة</span>':'<span class="status-empty">⬜ غير منشأة</span>';
+  let passShow = r.pass?'<span class="pass-dot">••••</span> <small>('+r.pass.length+' حرف)</small> <button class="btn btn-view" onclick="showPass('+r.num+')">👁</button>':'<small style="color:#888">مفيش - الموظف لسه معملش</small>';
+  let actions='';
+  if(!r.exists){
+    actions+=`<button class="btn btn-create" onclick="createDaira(${r.num})">➕ إنشاء</button>`;
+  } else {
+    actions+=`<button class="btn btn-view" onclick="showPass(${r.num})">👁 باسورد</button> `;
+    actions+=`<button class="btn btn-lock" onclick="resetPass(${r.num})">🔄 تغيير</button> `;
+    actions+=`<button class="btn btn-no" onclick="deleteDaira(${r.num})">🗑️ مسح</button>`;
+  }
+  actions+=`<br><button class="btn btn-master" onclick="loginAs(${r.num})">🔑 دخول بالماستر</button>`;
+  
+  return `<tr><td><b>${r.num}</b></td><td>${status}</td><td>${passShow}</td><td>${r.count||0}</td><td>${r.updated||'-'}</td><td>${actions}</td></tr>`;
+}
+
+async function createDaira(num){
+  let empPass=prompt('إنشاء دائرة '+num+'\n\nأدخل باسورد الموظف (اللي الموظف هيدخل بيه):\n(سيبه فاضي لو عايز الموظف هو اللي يعمله أول مرة)');
+  if(empPass===null) return;
+  if(empPass && empPass.length<4){ alert('الباسورد لازم 4 حروف على الأقل'); return; }
+  
+  if(!confirm('هتنشئ دائرة '+num+'\nباسورد الموظف: '+(empPass||'(فاضي - الموظف يعمله)')+'\nالماستر: '+MASTER_PASSWORD+' يفتحها برضو\n\nمتأكد؟')) return;
+  
+  try{
+    let payload={v3:[],ahkam:[],dairaInfo:{dairaNumber:String(num),dawr:'الأسبوع الثاني',fatra:'صباحي',_createdBy:'admin',_createdAt:Date.now()},_password:empPass||'',_masterPassword:MASTER_PASSWORD,_updatedAt:Date.now()};
+    let r=await fetch(CLOUD+'?daira='+num,{method:'POST',body:JSON.stringify(payload)});
+    alert('✅ تم إنشاء دائرة '+num);
+    loadAdmin();
+  }catch(e){ alert('❌ فشل: '+e.message); }
+}
+
+async function showPass(num){
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira='+num+'&t='+Date.now(),{cache:'no-store'});
+    let t=await r.text(); let j={}; try{ j=JSON.parse(t);}catch(e){ alert('فشل قراءة'); return; }
+    let emp=j._password||j.password||'(مفيش)';
+    let master=MASTER_PASSWORD;
+    alert('دائرة '+num+'\n\nباسورد الموظف: '+emp+'\nباسورد الماستر (يفتح أي دائرة): '+master+'\n\nالماستر يفتح حتى لو الموظف عامل باسورد');
+  }catch(e){ alert('فشل: '+e.message); }
+}
+
+async function resetPass(num){
+  let newPass=prompt('تغيير باسورد دائرة '+num+'\n\nأدخل الباسورد الجديد للموظف (أو سيبه فاضي لمسح الباسورد):');
+  if(newPass===null) return;
+  if(newPass && newPass.length>0 && newPass.length<4){ alert('لازم 4 حروف'); return; }
+  if(!confirm('هتغير باسورد دائرة '+num+' إلى: '+(newPass||'(فاضي)')+'\nمتأكد؟')) return;
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira='+num,{cache:'no-store'});
+    let t=await r.text(); let j={}; try{ j=JSON.parse(t);}catch(e){ j={v3:[],ahkam:[]}; }
+    let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:newPass||'',_masterPassword:MASTER_PASSWORD,_updatedAt:Date.now()};
+    await fetch(CLOUD+'?daira='+num,{method:'POST',body:JSON.stringify(payload)});
+    alert('✅ تم تغيير باسورد دائرة '+num);
+    loadAdmin();
+  }catch(e){ alert('❌ فشل: '+e.message); }
+}
+
+async function deleteDaira(num){
+  if(!confirm('⚠️ هتمسح دائرة '+num+' نهائي من الدرايف؟\nكل القضايا هتتمسح!\nمتأكد؟')) return;
+  if(!confirm('تأكيد أخير - مسح دائرة '+num+' نهائي؟')) return;
+  try{
+    let payload={v3:[],ahkam:[],_deleted:true,_updatedAt:Date.now()};
+    // نمسح بإننا نبعت v3 فاضي - السكريبت هيمسح؟
+    await fetch(CLOUD+'?daira='+num,{method:'POST',body:JSON.stringify({v3:[],ahkam:[],_password:'',_deleted:true,_updatedAt:Date.now()})});
+    alert('✅ تم مسح دائرة '+num+' (فضيت)');
+    loadAdmin();
+  }catch(e){ alert('❌ فشل: '+e.message); }
+}
+
+function loginAs(num){
+  if(confirm('هتدخل دائرة '+num+' بالباسورد الماستر: '+MASTER_PASSWORD+'\n\nالماستر يفتح أي دائرة - للطوارئ\n\nتفتح؟')){
+    localStorage.setItem('current_daira',String(num));
+    localStorage.setItem('DAIRA',String(num));
+    localStorage.setItem('daira_pass_'+num,MASTER_PASSWORD);
+    localStorage.setItem('current_daira_pass',MASTER_PASSWORD);
+    localStorage.setItem('is_master_login','1');
+    window.open('app.html?v='+Date.now(),'_blank');
+  }
+}
+
+function changeMaster(){
+  let newM=document.getElementById('newMasterInput').value.trim();
+  if(!newM || newM.length<4){ alert('الماستر لازم 4 حروف على الأقل'); return; }
+  if(!confirm('هتغير الماستر من '+MASTER_PASSWORD+' إلى '+newM+'\n\nالماستر الجديد هيفتح أي دائرة\nمتأكد؟')) return;
+  MASTER_PASSWORD=newM;
+  localStorage.setItem('admin_master_password',newM);
+  document.getElementById('masterShow').textContent=newM;
+  document.getElementById('masterCard').textContent=newM;
+  document.getElementById('masterInfo').textContent=newM;
+  alert('✅ تم تغيير الماستر إلى: '+newM+'\n\nاحفظه كويس - ده اللي هيفتح أي دائرة لو نسيوا الباسورد');
+}
 </script>
 </body>
 </html>

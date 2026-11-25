@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دخول طوارئ - دائرة 32</title>
+<style>
+body{font-family:Tahoma;background:#0A2342;color:#fff;padding:20px;text-align:center}
+.card{background:#fff;color:#111;max-width:400px;margin:20px auto;padding:20px;border-radius:16px}
+input{width:100%;padding:14px;margin:10px 0;border-radius:10px;border:2px solid #ccc;text-align:center;font-weight:bold;font-size:16px}
+button{width:100%;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;margin:5px 0}
+.msg{font-weight:bold;margin:10px 0;min-height:20px}
+pre{background:#f5f5f5;padding:10px;border-radius:8px;font-size:11px;direction:ltr;text-align:left;overflow:auto;max-height:200px}
+</style>
+</head>
+<body>
+<div style="font-size:40px">⚖️</div>
+<h2>دائرة 32 - دخول طوارئ (بدون كاش)</h2>
+<p style="color:#cbd5e1;font-size:13px">الصفحة دي بتتأكد من الدرايف مباشرة - مفيش Service Worker</p>
+<div class="card">
+<input id="dairaNum" value="32" readonly style="background:#eee">
+<input id="pass" type="text" placeholder="اكتب باسورد دائرة 32 هنا (ظاهر عشان تتأكد)">
+<button onclick="login()">🔓 دخول مباشر</button>
+<button onclick="showCloud()" style="background:#1976D2;color:#fff">🔍 شوف الباسورد اللي في الدرايف</button>
+<div id="msg" class="msg"></div>
+<pre id="raw" style="display:none"></pre>
+<button id="forceBtn" onclick="forceUpdate()" style="display:none;background:#16a34a;color:#fff">🔧 حدث الدرايف بالباسورد ده وخشه</button>
+<div style="margin-top:15px;font-size:12px">
+<button onclick="clearAll()" style="background:#dc2626;color:#fff;font-size:12px">🗑️ امسح كل الكاش والباسوردات المحفوظة</button>
+</div>
+</div>
+<script>
+const CLOUD='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
+async function showCloud(){
+  const num=document.getElementById('dairaNum').value.trim();
+  const msg=document.getElementById('msg');
+  const raw=document.getElementById('raw');
+  msg.style.color='#0A2342'; msg.textContent='⏳ بجيب من الدرايف...';
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira='+num+'&t='+Date.now(),{cache:'no-store'});
+    let t=await r.text();
+    raw.style.display='block'; raw.textContent=t.slice(0,3000);
+    let j={}; try{ j=JSON.parse(t);}catch(e){ msg.textContent='❌ الدرايف رجع HTML مش JSON - السكريبت مش منشور Anyone'; return; }
+    let cp=j._password||j.password||j.pass||'';
+    msg.innerHTML='الباسورد في الدرايف: <b style="color:green;direction:ltr">'+(cp?cp:'(فاضي)')+'</b><br>طوله: '+(cp?cp.length:0)+' حرف<br><small>جرب تكتب ده بالظبط</small>';
+    if(cp){
+      document.getElementById('pass').value=cp;
+      document.getElementById('forceBtn').style.display='none';
+    }
+  }catch(e){ msg.textContent='❌ فشل: '+e.message; }
+}
+async function login(){
+  const num=document.getElementById('dairaNum').value.trim()||'32';
+  const entered=document.getElementById('pass').value;
+  const msg=document.getElementById('msg');
+  const raw=document.getElementById('raw');
+  if(!entered || entered.length<3){ msg.textContent='اكتب الباسورد'; return; }
+  msg.style.color='#ff9800'; msg.textContent='⏳ بيتأكد من الدرايف...';
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira='+num+'&t='+Date.now(),{cache:'no-store'});
+    let t=await r.text();
+    raw.style.display='block'; raw.textContent=t.slice(0,2000);
+    let j={}; try{ j=JSON.parse(t);}catch(e){ msg.textContent='❌ الدرايف رجع مش JSON: '+t.slice(0,200); return; }
+    let cloudPass=(j._password||j.password||j.pass||'').trim();
+    let enteredTrim=entered.trim();
+    
+    if(!cloudPass){
+      msg.style.color='#16a34a'; msg.textContent='⚠️ الدرايف فاضي - هحفظ الباسورد ده وادخلك';
+      localStorage.setItem('current_daira',num);
+      localStorage.setItem('DAIRA',num);
+      localStorage.setItem('daira_pass_'+num,enteredTrim);
+      localStorage.setItem('current_daira_pass',enteredTrim);
+      sessionStorage.setItem('daira_unlocked','1');
+      setTimeout(()=>{ location.href='app.html?v=34&emergency=1'; },800);
+      return;
+    }
+    
+    if(enteredTrim===cloudPass){
+      msg.style.color='#16a34a'; msg.textContent='✅ الباسورد صح - جاري الدخول...';
+      localStorage.setItem('current_daira',num);
+      localStorage.setItem('DAIRA',num);
+      localStorage.setItem('daira_pass_'+num,enteredTrim);
+      localStorage.setItem('current_daira_pass',enteredTrim);
+      sessionStorage.setItem('daira_unlocked','1');
+      document.cookie='current_daira='+num+';max-age=31536000;path=/';
+      try{ var req=indexedDB.open('DAIRA_PERSIST',1); req.onupgradeneeded=function(e){ var db=e.target.result; if(!db.objectStoreNames.contains('s')) db.createObjectStore('s'); }; req.onsuccess=function(e){ var db=e.target.result; var tx=db.transaction('s','readwrite'); tx.objectStore('s').put(num,'current_daira'); tx.objectStore('s').put(enteredTrim,'daira_pass_'+num); }; }catch(e){}
+      setTimeout(()=>{ location.href='app.html?v=34&emergency=1'; },800);
+    } else {
+      msg.style.color='#dc2626';
+      msg.innerHTML='❌ الباسورد غلط<br>اللي كتبته: <b>'+enteredTrim+'</b> (طول '+enteredTrim.length+')<br>اللي في الدرايف: <b style="color:green">'+cloudPass+'</b> (طول '+cloudPass.length+')<br><br>جرب تنسخ اللي في الدرايف بالظبط<br>أو دوس تحديث';
+      document.getElementById('forceBtn').style.display='block';
+    }
+  }catch(e){
+    msg.style.color='#dc2626'; msg.textContent='❌ فشل اتصال: '+e.message;
+  }
+}
+async function forceUpdate(){
+  const num=document.getElementById('dairaNum').value.trim();
+  const entered=document.getElementById('pass').value.trim();
+  if(!entered || entered.length<4){ alert('اكتب باسورد 4 حروف'); return; }
+  if(!confirm('هتحدث باسورد الدرايف لدائرة '+num+' إلى: '+entered+' ؟')) return;
+  const msg=document.getElementById('msg');
+  msg.textContent='⏳ بحدث الدرايف...';
+  try{
+    let r=await fetch(CLOUD+'?action=get&daira='+num,{cache:'no-store'});
+    let t=await r.text(); let j={}; try{ j=JSON.parse(t);}catch(e){ j={v3:[],ahkam:[]}; }
+    let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:entered,_updatedAt:Date.now()};
+    await fetch(CLOUD+'?daira='+num,{method:'POST',body:JSON.stringify(payload)});
+    msg.style.color='#16a34a'; msg.textContent='✅ تم التحديث - دلوقتي جرب دخول';
+    localStorage.setItem('daira_pass_'+num,entered);
+    localStorage.setItem('current_daira_pass',entered);
+  }catch(e){ msg.textContent='❌ فشل: '+e.message; }
+}
+function clearAll(){
+  if(!confirm('هتمسح كل الباسوردات المحفوظة والكاش؟')) return;
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+    if('caches' in window){ caches.keys().then(keys=>{ keys.forEach(k=>caches.delete(k)); }); }
+    indexedDB.deleteDatabase('DAIRA_PERSIST');
+    document.cookie='current_daira=;max-age=0;path=/';
+    alert('✅ اتمسح - اعمل Reload للصفحة');
+    location.reload();
+  }catch(e){ alert('فشل: '+e.message); }
+}
+</script>
+</body>
+</html>

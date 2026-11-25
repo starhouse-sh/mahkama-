@@ -14,6 +14,10 @@ function saveDairaPersist(num, pass){
     req.onsuccess=function(e){ var db=e.target.result; var tx=db.transaction('s','readwrite'); tx.objectStore('s').put(String(num),'current_daira'); if(pass) tx.objectStore('s').put(pass,'daira_pass_'+num); };
   }catch(e){}
 }
+const DEFAULT_MASTER_PASSWORD='Admin@2026';
+function getMasterPassword(){
+  try{ return localStorage.getItem('admin_master_password') || DEFAULT_MASTER_PASSWORD; }catch(e){ return DEFAULT_MASTER_PASSWORD; }
+}
 function getDairaFromCookie(){
   try{ var m=document.cookie.match(/(?:^|; )current_daira=([^;]*)/); return m?decodeURIComponent(m[1]):null; }catch(e){ return null; }
 }
@@ -126,8 +130,19 @@ async function enterExistingDaira(){
   var pass = passEl ? passEl.value.trim() : '';
   var msg = document.getElementById('enterDairaMsg');
   var btn = document.querySelector('#enterDairaScreen button');
+  const MASTER = getMasterPassword();
+  
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
   if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة (4 حروف على الأقل)'; return; }
+  
+  // الماستر يفتح أي دائرة
+  if(pass === MASTER){
+    saveDairaPersist(num, pass);
+    try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
+    hideAllLocksAndEnter(num);
+    return;
+  }
+  
   if(!navigator.onLine){
     var savedLocal = localStorage.getItem('daira_pass_'+num);
     if(savedLocal && savedLocal === pass){
@@ -136,6 +151,7 @@ async function enterExistingDaira(){
       hideAllLocksAndEnter(num);
       return;
     } else if(!savedLocal){
+      // لو مفيش لوكال ومفيش نت، احفظه وادخل (أول مرة)
       saveDairaPersist(num, pass);
       try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
       hideAllLocksAndEnter(num);
@@ -148,21 +164,45 @@ async function enterExistingDaira(){
   try{
     if(btn) { btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
     msg.style.color='#ffeb3b';
-    msg.textContent='⏳ بيتأكد من الباسورد في الدرايف...';
+    msg.textContent='⏳ بيتأكد من باسورد الدائرة...';
     const CLOUD_CHECK='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+num;
     let r=await fetch(CLOUD_CHECK,{cache:'no-store'});
     let t=await r.text();
     let j={}; try{ j=JSON.parse(t); }catch(e){}
     if(!j || j.error === 'not_found' || (!j.v3 && !j.dairaInfo && !j._password && !j.exists)){
       msg.style.color='#ffcccc';
-      msg.textContent='الدائرة '+num+' مش موجودة - أنشئها من إنشاء دائرة جديدة';
+      msg.textContent='الدائرة '+num+' مش موجودة - أنشئها من صفحة الإدارة';
       if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
       return;
     }
-    let cloudPass = j._password || j.password || '';
+    let cloudPass = (j._password || j.password || '').trim();
+    let cloudMaster = (j._masterPassword || '').trim();
+    let effectiveMaster = cloudMaster || MASTER;
+    
+    if(pass === effectiveMaster){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
+      msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر';
+      setTimeout(()=>hideAllLocksAndEnter(num), 300);
+      return;
+    }
+    
+    if(!cloudPass){
+      // الدائرة ملهاش باسورد موظف - أول موظف يعمل باسورد
+      try{
+        let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:pass,_masterPassword:effectiveMaster,_updatedAt:Date.now()};
+        await fetch('https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+num,{method:'POST',body:JSON.stringify(payload)});
+      }catch(e){}
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      msg.style.color='#a7f3d0'; msg.textContent='✅ تم إنشاء باسورد للدائرة - جاري الدخول...';
+      setTimeout(()=>hideAllLocksAndEnter(num), 400);
+      return;
+    }
+    
     if(cloudPass && cloudPass !== pass){
       msg.style.color='#ffcccc';
-      msg.textContent='❌ الباسورد غلط للدائرة '+num;
+      msg.innerHTML='❌ الباسورد غلط للدائرة '+num+'<br><small>جرب باسورد الموظف أو الماستر</small>';
       if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
       return;
     }
@@ -187,6 +227,7 @@ async function enterExistingDaira(){
     }
   }
 }
+
 function hideAllLocksAndEnter(num){
   try{
     var enterScreen = document.getElementById('enterDairaScreen');
@@ -585,9 +626,19 @@ async function unlockApp(){
   const msg = document.getElementById('lockMsg');
   const btn = document.querySelector('#lockScreen button');
   const decision = localStorage.getItem('admin_decision_'+daira);
+  const MASTER = getMasterPassword();
   
   if(!entered || entered.length<3){
     msg.style.color='#ffcccc'; msg.textContent='اكتب الباسورد';
+    return;
+  }
+  
+  // الماستر يفتح أي دائرة حتى لو لها باسورد موظف
+  if(entered === MASTER){
+    try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
+    try{ localStorage.setItem('daira_pass_'+daira, entered); }catch(e){}
+    msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر - جهة الإدارة';
+    setTimeout(()=>hideAllLocksAndEnter(daira), 400);
     return;
   }
   
@@ -600,38 +651,56 @@ async function unlockApp(){
     return;
   }
   
-  // لو الباسورد متسجل لوكال و مطابق - ادخل على طول (سريع)
+  // لو الباسورد متسجل لوكال و مطابق - ادخل
   if(entered && saved && entered===saved){
     try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
     hideAllLocksAndEnter(daira);
     return;
   }
   
-  // لو مفيش باسورد لوكال أو مش مطابق - تأكد من الدرايف (مهم للموبايل الجديد)
+  // تأكد من الدرايف - مهم للموبايل الجديد
   try{
     if(btn){ btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
     msg.style.color='#ffeb3b';
-    msg.textContent='⏳ بيتأكد من باسورد الدرايف...';
+    msg.textContent='⏳ بيتأكد من باسورد الدائرة...';
     
     const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+daira;
     let r=await fetch(CLOUD_URL,{cache:'no-store'});
     let t=await r.text();
     let j={}; try{ j=JSON.parse(t); }catch(e){}
     
-    let cloudPass = j._password || j.password || '';
+    let cloudPass = (j._password || j.password || j.pass || '').trim();
+    let cloudMaster = (j._masterPassword || '').trim();
+    let effectiveMaster = cloudMaster || MASTER;
     
-    // لو مفيش باسورد في الدرايف (دائرة قديمة) - احفظ اللي كتبه
-    if(!cloudPass){
+    // الماستر من الدرايف برضو يفتح
+    if(entered === effectiveMaster){
       localStorage.setItem('daira_pass_'+daira, entered);
       localStorage.setItem('current_daira_pass', entered);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      hideAllLocksAndEnter(daira);
+      try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
+      msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر';
+      setTimeout(()=>hideAllLocksAndEnter(daira), 300);
       return;
     }
     
-    // قارن بباسورد الدرايف
+    // لو الدائرة ملهاش باسورد موظف - أول مرة، الموظف يعمل باسورد
+    if(!cloudPass){
+      // لو الدائرة جديدة، احفظ الباسورد اللي كتبه كـ باسورد الموظف
+      try{
+        let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:entered,_masterPassword:effectiveMaster,_updatedAt:Date.now()};
+        await fetch('https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+daira,{method:'POST',body:JSON.stringify(payload)});
+      }catch(e){ console.log('save first pass failed',e); }
+      
+      localStorage.setItem('daira_pass_'+daira, entered);
+      localStorage.setItem('current_daira_pass', entered);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      msg.style.color='#a7f3d0'; msg.textContent='✅ تم إنشاء باسورد للدائرة - جاري الدخول...';
+      setTimeout(()=>hideAllLocksAndEnter(daira), 400);
+      return;
+    }
+    
+    // الدائرة لها باسورد موظف - لازم يدخله أو الماستر
     if(entered === cloudPass){
-      // صح - احفظه لوكال للموبايل عشان المرة الجاية يدخل بسرعة
       localStorage.setItem('daira_pass_'+daira, entered);
       localStorage.setItem('current_daira_pass', entered);
       try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
@@ -640,18 +709,17 @@ async function unlockApp(){
       setTimeout(()=>hideAllLocksAndEnter(daira), 300);
     } else {
       msg.style.color='#ffcccc';
-      msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+      msg.innerHTML='❌ الباسورد غلط<br><small>جرب باسورد الموظف أو الماستر: '+effectiveMaster+'</small>';
       if(btn){ btn.disabled=false; btn.textContent='دخول'; }
     }
   }catch(e){
-    // فشل الاتصال - جرب اللوكال كـ fallback
     console.log('unlock cloud check failed', e);
     if(entered && saved && entered===saved){
       try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
       hideAllLocksAndEnter(daira);
     } else {
       msg.style.color='#ffcccc';
-      msg.textContent='❌ فشل الاتصال: '+e.message+' - تأكد من النت وحاول تاني';
+      msg.textContent='❌ فشل الاتصال: '+e.message+' - تأكد من النت';
       if(btn){ btn.disabled=false; btn.textContent='دخول'; }
     }
   }
