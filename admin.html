@@ -67,9 +67,28 @@ async function loadAdmin(){
     html+=`<div class="req-item"><div><b>الدائرة ${r.daira} تطلب تغيير الباسورد</b><br><small>${r.time||''}</small></div><div><button class="btn btn-ok" onclick="decide(${i},'approved')">✅ موافقة</button> <button class="btn btn-no" onclick="decide(${i},'rejected')">❌ رفض</button></div></div>`;
   });
   if(html) document.getElementById('reqList').innerHTML=html;
-  // جدول الدوائر - من السجل المحلي + الدرايف
-  let registry=[]; try{registry=JSON.parse(localStorage.getItem('admin_registry')||'[]');}catch(e){}
-  // دائرة افتراضية 32 للعرض
+  // جدول الدوائر - هات بيانات كل دائرة من الدرايف مباشرة
+  let registry=[];
+  try{registry=JSON.parse(localStorage.getItem('admin_registry')||'[]');}catch(e){}
+  // جرب تجيب من الدرايف كل الدوائر من 1 لـ 39 - اللي ليها ملف هتظهر
+  try{
+    document.getElementById('dairaTable').innerHTML='<tr><td colspan="6">⏳ بجيب بيانات الدوائر من الدرايف...</td></tr>';
+    let fetched=[];
+    for(let n=1;n<=39;n++){
+      try{
+        let r=await fetch(CLOUD+'?action=get&daira='+n,{cache:'no-store'});
+        let t=await r.text(); let j={}; try{j=JSON.parse(t);}catch(e){continue;}
+        if(!j || j.error) continue;
+        let info=j.dairaInfo||j.dairaConfig||j.config||null;
+        let v3=j.v3||[];
+        // لو الدائرة ليها بيانات أو قضايا، اعتبرها موجودة
+        if(info || (Array.isArray(v3) && v3.length>0)){
+          fetched.push({num:String(n),dawr:info?.dawr||'—',fatra:info?.fatra||'—',count:Array.isArray(v3)?v3.length:0,status:'نشطة',info:info});
+        }
+      }catch(e){}
+    }
+    if(fetched.length>0) registry=fetched;
+  }catch(e){}
   if(registry.length===0) registry=[{num:'32',dawr:'الأسبوع الثاني',fatra:'صباحي',count:1599,status:'نشطة'}];
   document.getElementById('totalDairas').textContent=registry.length;
   document.getElementById('dairaTable').innerHTML=registry.map(r=>`<tr><td>${r.num}</td><td>${r.dawr}</td><td>${r.fatra}</td><td>${r.count||0}</td><td>${r.status}</td><td><button class="btn btn-view" onclick="alert('عرض دائرة ${r.num}')">عرض</button> <button class="btn btn-lock" onclick="toggleLock('${r.num}')">قفل</button></td></tr>`).join('');
