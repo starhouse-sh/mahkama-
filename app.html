@@ -555,12 +555,17 @@ migrate().then(()=>{
 <script>
 (function(){
   try{
-    const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
-    if(!daira) return;
+    const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+    // لو session مفتوح قبل كده - لا تظهر القفل
     if(sessionStorage.getItem('daira_unlocked')==='1') return;
+    // لو مفيش دائرة محفوظة خالص - سيب enterDairaScreen هي اللي تظهر
+    if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
+      // هنسيب checkEnterDaira يقرر
+      return;
+    }
     document.getElementById('lockDairaNum').textContent = daira;
     const lock = document.getElementById('lockScreen');
-    lock.style.display='flex';
+    if(lock) lock.style.display='flex';
     // تحقق من قرار الأدمن (موافقة على تغيير باسورد)
     const decision = localStorage.getItem('admin_decision_'+daira);
     if(decision==='approved'){
@@ -569,12 +574,19 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
-function unlockApp(){
-  const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
+async function unlockApp(){
+  const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
   const entered = document.getElementById('lockPass').value.trim();
   const msg = document.getElementById('lockMsg');
+  const btn = document.querySelector('#lockScreen button');
   const decision = localStorage.getItem('admin_decision_'+daira);
+  
+  if(!entered || entered.length<3){
+    msg.style.color='#ffcccc'; msg.textContent='اكتب الباسورد';
+    return;
+  }
+  
   if(decision==='approved' && entered && entered.length>=4){
     localStorage.setItem('daira_pass_'+daira, entered);
     localStorage.setItem('current_daira_pass', entered);
@@ -583,11 +595,61 @@ function unlockApp(){
     hideAllLocksAndEnter(daira);
     return;
   }
-  if(entered && entered===saved){
+  
+  // لو الباسورد متسجل لوكال و مطابق - ادخل على طول (سريع)
+  if(entered && saved && entered===saved){
     try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
     hideAllLocksAndEnter(daira);
-  } else {
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+    return;
+  }
+  
+  // لو مفيش باسورد لوكال أو مش مطابق - تأكد من الدرايف (مهم للموبايل الجديد)
+  try{
+    if(btn){ btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
+    msg.style.color='#ffeb3b';
+    msg.textContent='⏳ بيتأكد من باسورد الدرايف...';
+    
+    const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+daira;
+    let r=await fetch(CLOUD_URL,{cache:'no-store'});
+    let t=await r.text();
+    let j={}; try{ j=JSON.parse(t); }catch(e){}
+    
+    let cloudPass = j._password || j.password || '';
+    
+    // لو مفيش باسورد في الدرايف (دائرة قديمة) - احفظ اللي كتبه
+    if(!cloudPass){
+      localStorage.setItem('daira_pass_'+daira, entered);
+      localStorage.setItem('current_daira_pass', entered);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      hideAllLocksAndEnter(daira);
+      return;
+    }
+    
+    // قارن بباسورد الدرايف
+    if(entered === cloudPass){
+      // صح - احفظه لوكال للموبايل عشان المرة الجاية يدخل بسرعة
+      localStorage.setItem('daira_pass_'+daira, entered);
+      localStorage.setItem('current_daira_pass', entered);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      msg.style.color='#a7f3d0';
+      msg.textContent='✅ تم التحقق - جاري الدخول...';
+      setTimeout(()=>hideAllLocksAndEnter(daira), 300);
+    } else {
+      msg.style.color='#ffcccc';
+      msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    }
+  }catch(e){
+    // فشل الاتصال - جرب اللوكال كـ fallback
+    console.log('unlock cloud check failed', e);
+    if(entered && saved && entered===saved){
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
+      hideAllLocksAndEnter(daira);
+    } else {
+      msg.style.color='#ffcccc';
+      msg.textContent='❌ فشل الاتصال: '+e.message+' - تأكد من النت وحاول تاني';
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    }
   }
 }
 </script>
