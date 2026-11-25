@@ -1,7 +1,7 @@
 {
   "name": "نظام د32 - إدارة القضايا",
   "short_name": "د32",
-  "start_url": "index-fixed.html?v=26",
+  "start_url": "app.html?v=27",
   "display": "standalone",
   "background_color": "#0b1e3a",
   "theme_color": "#0b1e3a",
@@ -17,5 +17,5 @@
       "type": "image/png"
     }
   ],
-  "id": "daira-v26-no-select"
+  "id": "daira-v27-login-fix"
 }

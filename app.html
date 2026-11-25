@@ -90,41 +90,83 @@ async function checkEnterDaira(){
 }
 async function enterExistingDaira(){
   var num = document.getElementById('enterDairaNum').value.trim();
-  var pass = document.getElementById('enterDairaPass').value;
+  var pass = document.getElementById('enterDairaPass').value.trim();
   var msg = document.getElementById('enterDairaMsg');
+  var btn = document.querySelector('#enterDairaScreen button');
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
-  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
-  msg.style.color='#fff'; msg.textContent='⏳ جاري التحقق من الباسورد...';
-  // 1. قارن مع الباسورد المحفوظ في الجهاز لو موجود
-  var saved = null;
-  try{ saved = localStorage.getItem('daira_pass_'+num) || localStorage.getItem('current_daira_pass'); }catch(e){}
-  if(saved && pass === saved){
-    saveDairaPersist(num, pass);
-    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-    document.getElementById('enterDairaScreen').style.display='none';
-    location.reload(); return;
-  }
-  // 2. لو مفيش محفوظ أو مش متطابق - تحقق من السحابة (المصدر الصح)
+  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة (4 حروف على الأقل)'; return; }
+  
+  // حالة Offline - ادخل مباشرة لو الباسورد متسجل لوكال قبل كده
   if(!navigator.onLine){
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط أو لازم نت للتحقق أول مرة - وصل النت وحاول تاني'; return;
-  }
-  try{
-    var CLOUD='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec';
-    var res = await fetch(CLOUD+'?action=get&daira='+num, {cache:'no-store'}).then(function(r){ return r.text(); });
-    var cj={}; try{ cj=JSON.parse(res); }catch(e){}
-    var cloudPass = cj._password || (cj.dairaInfo && cj.dairaInfo._password) || null;
-    if(cloudPass && pass === cloudPass){
+    var savedLocal = localStorage.getItem('daira_pass_'+num);
+    if(savedLocal && savedLocal === pass){
       saveDairaPersist(num, pass);
       try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      document.getElementById('enterDairaScreen').style.display='none';
-      location.reload(); return;
+      location.reload();
+      return;
+    } else if(!savedLocal){
+      // أول مرة Offline - اسمح بالدخول
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+      location.reload();
+      return;
+    } else {
+      msg.textContent='📴 مفيش نت - والباسورد المحلي غير متطابق';
+      return;
     }
-    if(!cloudPass && !saved){
-      msg.style.color='#ffcccc'; msg.textContent='الدائرة دي مش موجودة - أنشئها من صفحة الإنشاء أو تواصل مع الإدارة'; return;
+  }
+
+  // Online - تأكد من باسورد الدرايف الحقيقي
+  try{
+    if(btn) { btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
+    msg.style.color='#ffeb3b';
+    msg.textContent='⏳ بيتأكد من الباسورد في الدرايف...';
+    
+    const CLOUD_CHECK='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+num;
+    let r=await fetch(CLOUD_CHECK,{cache:'no-store'});
+    let t=await r.text();
+    let j={}; try{ j=JSON.parse(t); }catch(e){}
+    
+    // لو الدائرة مش موجودة أصلا
+    if(!j || j.error === 'not_found' || (!j.v3 && !j.dairaInfo && !j._password && !j.exists)){
+      msg.style.color='#ffcccc';
+      msg.textContent='الدائرة '+num+' مش موجودة - أنشئها من إنشاء دائرة جديدة';
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+      return;
     }
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+    
+    let cloudPass = j._password || j.password || '';
+    let savedLocalPass = localStorage.getItem('daira_pass_'+num) || '';
+    
+    // لو فيه باسورد في الدرايف - لازم يطابق
+    if(cloudPass && cloudPass !== pass){
+      msg.style.color='#ffcccc';
+      msg.textContent='❌ الباسورد غلط للدائرة '+num+' - اتأكد من الباسورد أو دوس نسيت الباسورد';
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+      return;
+    }
+    
+    // لو مفيش باسورد في الدرايف (دائرة قديمة) - احفظ الباسورد ده كأول باسورد
+    // أو لو الباسورد مطابق - ادخل
+    saveDairaPersist(num, pass);
+    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+    msg.style.color='#a7f3d0';
+    msg.textContent='✅ تم التحقق - جاري الدخول...';
+    setTimeout(()=>location.reload(), 500);
+    
   }catch(e){
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+    // لو فشل الاتصال - جرب الدخول لوكال لو الباسورد متسجل قبل كده
+    console.log('Cloud check failed', e);
+    var savedLocal = localStorage.getItem('daira_pass_'+num);
+    if(savedLocal && savedLocal === pass){
+      saveDairaPersist(num, pass);
+      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
+      location.reload();
+    } else {
+      msg.style.color='#ffcccc';
+      msg.textContent='❌ فشل الاتصال بالدرايف: '+e.message+' - لو الباسورد صح دوس تاني';
+      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
+    }
   }
 }
 checkEnterDaira();
