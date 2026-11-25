@@ -415,7 +415,11 @@ async function uploadToDrive(localArray, silent, options){
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
     const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
-    if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
+    // أهم إصلاح: خد الباسورد من اللوكال الأول، لو مش موجود خد من الكلاود - عشان الموبايل واللاب يبقوا نفس الباسورد
+    let localPass = null;
+    try{ localPass = localStorage.getItem('daira_pass_'+CURRENT_DAIRA) || localStorage.getItem('current_daira_pass'); }catch(e){}
+    if(localPass) payload._password = localPass;
+    else if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
     if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
