@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v23-offline-fixed';
+const CACHE = 'mahkama-v24-ignore-search';
 const FILES = [
   './',
   './index.html',
@@ -53,9 +53,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('message', e => {
   if(e.data && e.data.type === 'CACHE_ALL'){
-    e.waitUntil(
-      caches.open(CACHE).then(cache => cache.addAll(FILES).catch(()=>{}))
-    );
+    e.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES).catch(()=>{})));
   }
 });
 
@@ -63,12 +61,8 @@ self.addEventListener('fetch', e => {
   if(e.request.url.includes('script.google.com') || e.request.url.includes('googleusercontent')){
     return;
   }
-  // لو الطلب هو index.html نفسه، رجعه من الكاش بس، متعملش لوب
-  const url = new URL(e.request.url);
-  const isHTML = e.request.headers.get('accept')?.includes('text/html') || url.pathname.endsWith('.html');
-  
   e.respondWith(
-    caches.match(e.request).then(cached => {
+    caches.match(e.request, {ignoreSearch: true}).then(cached => {
       if(cached) return cached;
       return fetch(e.request).then(res => {
         if(res.ok && e.request.method === 'GET' && e.request.url.startsWith(self.location.origin)){
@@ -77,16 +71,12 @@ self.addEventListener('fetch', e => {
         }
         return res;
       }).catch(async () => {
-        // Offline - حاول تجيب نفس الصفحة المطلوبة من الكاش، مش index.html
-        const reqCache = await caches.match(e.request);
-        if(reqCache) return reqCache;
-        // لو الصفحة مش متخزنة خالص، رجع صفحة فاضية تقول Offline، مش صفحة تحميل التطبيق
-        if(isHTML){
-          // رجع mahdar.html كـ fallback للصفحات الجانبية، مش index.html
-          const fallback = await caches.match('./mahdar.html');
-          if(fallback) return fallback;
-          // لو حتى mahdar مش موجود، رجع response بسيط
-          return new Response('<html dir=rtl><body style="font-family:Tahoma;text-align:center;padding:40px"><h3>📴 وضع Offline</h3><p>الصفحة دي مش متخزنة للعمل بدون نت</p><p>افتح التطبيق مرة واحدة بالنت عشان تتخزن كل الصفحات</p></body></html>', {headers:{'Content-Type':'text/html'}});
+        // Offline: جرب تجيب نفس الصفحة من الكاش حتى لو فيها ?safe=1
+        const fromCache = await caches.match(e.request, {ignoreSearch: true});
+        if(fromCache) return fromCache;
+        // لو صفحة HTML ومش لاقيها، رجع رسالة بسيطة مش mahdar
+        if(e.request.headers.get('accept')?.includes('text/html')){
+          return new Response('<!DOCTYPE html><html dir=rtl><head><meta charset=utf-8></head><body style="font-family:Tahoma;text-align:center;padding:40px"><h3>📴 Offline - الصفحة غير مخزنة</h3><p>افتح التطبيق مرة بالنت عشان تتخزن</p><p>'+e.request.url+'</p></body></html>', {headers:{'Content-Type':'text/html; charset=utf-8'}});
         }
         return new Response('', {status: 404});
       });

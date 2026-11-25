@@ -202,36 +202,22 @@ window.addEventListener('message',async(e)=>{
 });
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
 function openPage(f,el){
+  // منع فتح index.html جوه iframe
   if(f.includes('index.html') || f.includes('select-daira.html')){
-    console.warn('Blocked nesting index inside iframe:', f);
+    console.warn('Blocked nesting', f);
     return;
   }
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');
   document.getElementById('pageTitle').textContent=f;
   const frame = document.getElementById('frame');
+  // Offline: متضيفش timestamp عشان الكاش يلاقيها بـ ignoreSearch
   if(navigator.onLine){
     frame.src=f+'?safe=1&v='+Date.now();
   } else {
-    frame.src=f+'?safe=1';
+    frame.src=f; // من غير query عشان يلاقيها في الكاش مباشرة
   }
-  // حماية إضافية: لو الـ iframe حمل صفحة تحميل التطبيق، امنعها
-  frame.onload = function(){
-    try{
-      const doc = frame.contentDocument || frame.contentWindow.document;
-      if(doc && doc.body && doc.body.innerHTML.includes('تحميل التطبيق') && doc.body.innerHTML.includes('نظام إدارة قضايا الدوائر')){
-        console.warn('Detected landing page inside iframe - blocking nesting');
-        // رجع للمحاضر بدل اللاندنج
-        if(f !== 'mahdar.html'){
-          frame.src = 'mahdar.html?safe=1';
-          document.getElementById('pageTitle').textContent = 'mahdar.html (Offline fallback)';
-        }
-      }
-    }catch(e){
-      // cross-origin, ignore
-    }
-  };
-  setTimeout(updateCounts,300);
+  setTimeout(updateCounts,500);
 }
 async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
 async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
@@ -265,7 +251,6 @@ async function forceUpload(silent){
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
 async function syncBidirectionalSmart(silent){
-  if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
   let lastSyncBefore = Number(await getLastSync()||0);
   try{
     if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
@@ -277,50 +262,6 @@ async function syncBidirectionalSmart(silent){
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
-    // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
-    try{
-      let cloudAhkam = j.ahkam && Array.isArray(j.ahkam) ? j.ahkam : [];
-      if(cloudAhkam.length>1 && Array.isArray(cloudAhkam[1])) cloudAhkam = cloudAhkam[1];
-      if(cloudAhkam.length>0){
-        let localAhRaw = await idbGet('D32_AHKAM') || '[]';
-        let localAh = [];
-        try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
-        // إصلاح العدد 875 بدل 951: لو السحابة أكبر، السحابة هي الصح - خدها كلها
-        // الدمج القديم بـ رقم/سنة كان بيدوس أحكام على بعض
-        let mergedAh;
-        if(cloudAhkam.length >= localAh.length){
-          // السحابة فيها كل الأحكام (951) - استخدمها كأساس
-          // وادمج عليها أي حكم محلي جديد مش موجود في السحابة بالـ id فقط
-          let cloudIds = new Set(cloudAhkam.map(a=> a.id!=null ? String(a.id) : ''));
-          let extraLocal = localAh.filter(a=> a.id!=null && !cloudIds.has(String(a.id)));
-          mergedAh = [...cloudAhkam, ...extraLocal];
-        } else {
-          // المحلي أكبر - ادمج بالـ id فقط، مش برقم/سنة
-          let ahMap = new Map();
-          localAh.forEach(a=>{ if(a.id!=null) ahMap.set(String(a.id), a); else ahMap.set('noid_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a); });
-          cloudAhkam.forEach(a=>{
-            if(a.id!=null){
-              let k = String(a.id);
-              if(!ahMap.has(k)) ahMap.set(k, a);
-              else if(Number(a._updatedAt||0) > Number(ahMap.get(k)._updatedAt||0)) ahMap.set(k, a);
-            } else {
-              ahMap.set('noid_cloud_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a);
-            }
-          });
-          mergedAh = [...ahMap.values()];
-        }
-        await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
-      }
-    }catch(e){ console.log('ahkam sync err', e); }
-    // --- إصلاح بيانات الدائرة ---
-    try{
-      let info = j.dairaInfo || j.dairaConfig || j.config || null;
-      if(info){
-        await idbSet('D32_DAIRA_CONFIG', JSON.stringify(info));
-        await idbSet('D32_CIRCLE', JSON.stringify(info));
-        await idbSet('D32_CONFIG', JSON.stringify(info));
-      }
-    }catch(e){}
     let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
@@ -340,37 +281,12 @@ async function syncBidirectionalSmart(silent){
       if(ok) await setLastSync();
     }else{await setLastSync();}
     updateCounts();
-    // مترجعش تحميل الـ iframe في المزامنة عشان ميعملش تداخل - سيبه زي ما هو
-    // let f=document.getElementById('frame');
+    let f=document.getElementById('frame'); if(f) f.src=f.src.split('?')[0]+'?safe=1&v='+Date.now();
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
-migrate().then(()=>{
-  updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
-  // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
-  if(!navigator.onLine){
-    const h=document.getElementById('health');
-    if(h) h.textContent='📴 وضع Offline - شغال من الجهاز - لما النت يرجع دوس مزامنة ذكية';
-  } else {
-    setTimeout(()=>syncBidirectionalSmart(true),2500);
-  }
-  // تخزين تلقائي لكل الصفحات من غير ما تفتحها يدوي
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.ready.then(reg => {
-      if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
-      // سجل الـ SW لو مش مسجل
-    }).catch(()=>{});
-    // لو الـ SW مش مسجل، سجله
-    navigator.serviceWorker.getRegistration().then(r => {
-      if(!r) navigator.serviceWorker.register('./sw.js').then(reg => {
-        if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
-      }).catch(()=>{});
-    });
-  }
-  window.addEventListener('online', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='🌐 النت رجع - دوس مزامنة ذكية'; });
-  window.addEventListener('offline', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='📴 وضع Offline - شغال من الجهاز'; });
-});
+migrate().then(()=>{updateCounts();checkHealth();openPage('mahdar.html',document.querySelector('.tab.active'));setTimeout(()=>syncBidirectionalSmart(true),2500);});
 </script>
 <script src="pwa-install.js"></script>
 </body>
