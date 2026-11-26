@@ -3,60 +3,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>بيانات الدائرة - FIXED SYNC</title>
+<title>بيانات الدائرة</title>
 <style>
 *{box-sizing:border-box;font-family:Tahoma}
-body{background:#f5f5f5;padding:12px;direction:rtl}
-.card{background:#fff;border-radius:12px;padding:16px;max-width:600px;margin:auto;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-h2{text-align:center;color:#0A2342;margin-bottom:12px}
-label{display:block;margin:10px 0 4px;font-weight:bold;font-size:13px;color:#333}
-input,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px}
-textarea{height:80px}
+body{background:#f5f5f5;padding:12px;direction:rtl;margin:0}
+.card{background:#fff;border-radius:14px;padding:18px;max-width:700px;margin:10px auto;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+h2{text-align:center;color:#0A2342;margin:0 0 16px;font-size:18px}
+label{display:block;margin:12px 0 5px;font-weight:bold;font-size:13px;color:#0A2342}
+input,select,textarea{width:100%;padding:11px;border:1.5px solid #ccc;border-radius:8px;font-size:14px;background:#fff}
+textarea{height:60px;resize:vertical}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:12px;font-size:14px}
-.btn-save{background:#0A2342;color:#FFD700}
-.btn-sync{background:#16a34a;color:#fff}
-.btn-load{background:#1976D2;color:#fff}
-.small{font-size:11px;color:#666;text-align:center;margin-top:8px}
+@media(max-width:600px){ .row{grid-template-columns:1fr} }
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:18px;font-size:15px;background:#0A2342;color:#FFD700}
+.btn:disabled{opacity:.6}
+.daira-num{font-size:20px;color:#FFD700;background:#0A2342;display:inline-block;padding:6px 16px;border-radius:20px}
 </style>
 </head>
 <body>
 <div class="card">
-<h2>⚙ بيانات الدائرة <span id="dNum"></span></h2>
+<h2>بيانات الدائرة <span class="daira-num" id="dNum"></span></h2>
 
 <label>رقم الدائرة</label>
-<input id="num" type="text" placeholder="مثال: 32">
-
-<label>موعد الانعقاد</label>
-<input id="maw3ed" type="text" placeholder="مثال: الأحد والثلاثاء">
+<input id="dairaNumber" type="text" readonly style="background:#f0f2f5;text-align:center;font-weight:bold">
 
 <div class="row">
-<div><label>رئيس الدائرة</label><input id="raees" type="text"></div>
-<div><label>عضو يمين</label><input id="yameen" type="text"></div>
+<div>
+<label>دور الانعقاد</label>
+<select id="dawr">
+<option value="">اختر</option>
+<option value="الأسبوع الأول">الأسبوع الأول</option>
+<option value="الأسبوع الثاني">الأسبوع الثاني</option>
+<option value="الأسبوع الثالث">الأسبوع الثالث</option>
+<option value="الأسبوع الرابع">الأسبوع الرابع</option>
+</select>
 </div>
-<div class="row">
-<div><label>عضو شمال</label><input id="shamal" type="text"></div>
-<div><label>أمين السر</label><input id="ameen" type="text"></div>
+<div>
+<label>فترة الانعقاد</label>
+<select id="fatra">
+<option value="">اختر</option>
+<option value="صباحي">صباحي</option>
+<option value="مسائي">مسائي</option>
+</select>
+</div>
 </div>
 
-<label>ملاحظات / أسماء أخرى</label>
-<textarea id="notes"></textarea>
+<label>رئيس الدائرة</label>
+<input id="raees" type="text">
 
-<button class="btn btn-save" onclick="saveLocal()">💾 حفظ على الجهاز ده</button>
-<button class="btn btn-sync" onclick="saveAndUpload()">☁ حفظ ورفع للدرايف (عشان يظهر على الموبايل)</button>
-<button class="btn btn-load" onclick="loadFromDrive()">🔄 تحميل من الدرايف</button>
+<label>العضو الثاني</label>
+<input id="odw2" type="text">
 
-<div class="small" id="status">جاري تحميل...</div>
-<div class="small">السبب اللي كان مخلي الموبايل فاضي: الصفحة القديمة كانت بتحفظ في localStorage بتاع اللاب فقط، ومبتترفعش للدرايف. النسخة دي بترفعها للدرايف عشان تظهر في كل الأجهزة.</div>
+<label>العضو الثالث</label>
+<input id="odw3" type="text">
+
+<label>العضو الرابع</label>
+<input id="odw4" type="text">
+
+<label>العضو الخامس</label>
+<input id="odw5" type="text">
+
+<label>العضو السادس</label>
+<input id="odw6" type="text">
+
+<label>العضو السابع</label>
+<input id="odw7" type="text">
+
+<label>اسم رئيس النيابة</label>
+<input id="raeesNiyaba" type="text">
+
+<label>اسم أمين السر</label>
+<input id="ameenSerr" type="text">
+
+<button class="btn" id="saveBtn" onclick="saveDaira()">حفظ بيانات الدائرة</button>
 </div>
 
 <script>
-const CURRENT_DAIRA = localStorage.getItem('current_daira') || '32';
+const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
 document.getElementById('dNum').textContent = CURRENT_DAIRA;
-const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
-const CLOUD_POST_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
+document.getElementById('dairaNumber').value = CURRENT_DAIRA;
+
+const CLOUD_GET = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
+const CLOUD_POST = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
 const LS_KEY = 'D'+CURRENT_DAIRA+'_DAIRA_INFO';
-const IDB_KEY = 'D'+CURRENT_DAIRA+'_DAIRA_INFO';
+const IDB_KEYS = ['D'+CURRENT_DAIRA+'_DAIRA_INFO','D'+CURRENT_DAIRA+'_DAIRA_CONFIG','D32_DAIRA_INFO','D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG'];
 
 function openDB(){
   return new Promise((res,rej)=>{
@@ -94,101 +123,151 @@ async function idbGet(k){
 
 function getFormData(){
   return {
-    num: document.getElementById('num').value.trim(),
-    maw3ed: document.getElementById('maw3ed').value.trim(),
+    dairaNumber: CURRENT_DAIRA,
+    num: CURRENT_DAIRA,
+    dawr: document.getElementById('dawr').value.trim(),
+    fatra: document.getElementById('fatra').value.trim(),
     raees: document.getElementById('raees').value.trim(),
-    yameen: document.getElementById('yameen').value.trim(),
-    shamal: document.getElementById('shamal').value.trim(),
-    ameen: document.getElementById('ameen').value.trim(),
-    notes: document.getElementById('notes').value.trim(),
+    yameen: document.getElementById('odw2').value.trim(),
+    shamal: document.getElementById('odw3').value.trim(),
+    members: [
+      document.getElementById('raees').value.trim(),
+      document.getElementById('odw2').value.trim(),
+      document.getElementById('odw3').value.trim(),
+      document.getElementById('odw4').value.trim(),
+      document.getElementById('odw5').value.trim(),
+      document.getElementById('odw6').value.trim(),
+      document.getElementById('odw7').value.trim()
+    ],
+    odw2: document.getElementById('odw2').value.trim(),
+    odw3: document.getElementById('odw3').value.trim(),
+    odw4: document.getElementById('odw4').value.trim(),
+    odw5: document.getElementById('odw5').value.trim(),
+    odw6: document.getElementById('odw6').value.trim(),
+    odw7: document.getElementById('odw7').value.trim(),
+    raeesNiyaba: document.getElementById('raeesNiyaba').value.trim(),
+    ameenSerr: document.getElementById('ameenSerr').value.trim(),
+    ameen: document.getElementById('ameenSerr').value.trim(),
     _updatedAt: Date.now(),
     daira: CURRENT_DAIRA
   };
 }
+
 function setFormData(d){
   if(!d) return;
-  document.getElementById('num').value = d.num||d.dairaNum||'';
-  document.getElementById('maw3ed').value = d.maw3ed||d.mawed||d.date||'';
-  document.getElementById('raees').value = d.raees||d.president||'';
-  document.getElementById('yameen').value = d.yameen||'';
-  document.getElementById('shamal').value = d.shamal||'';
-  document.getElementById('ameen').value = d.ameen||'';
-  document.getElementById('notes').value = d.notes||'';
+  if(d.dawr) document.getElementById('dawr').value = d.dawr;
+  if(d.fatra) document.getElementById('fatra').value = d.fatra;
+  document.getElementById('raees').value = d.raees || (Array.isArray(d.members)?d.members[0]:'') || '';
+  if(Array.isArray(d.members) && d.members.length>=7){
+    document.getElementById('odw2').value = d.members[1]||'';
+    document.getElementById('odw3').value = d.members[2]||'';
+    document.getElementById('odw4').value = d.members[3]||'';
+    document.getElementById('odw5').value = d.members[4]||'';
+    document.getElementById('odw6').value = d.members[5]||'';
+    document.getElementById('odw7').value = d.members[6]||'';
+  } else {
+    document.getElementById('odw2').value = d.odw2 || d.yameen || '';
+    document.getElementById('odw3').value = d.odw3 || d.shamal || '';
+    document.getElementById('odw4').value = d.odw4 || '';
+    document.getElementById('odw5').value = d.odw5 || '';
+    document.getElementById('odw6').value = d.odw6 || '';
+    document.getElementById('odw7').value = d.odw7 || '';
+  }
+  document.getElementById('raeesNiyaba').value = d.raeesNiyaba || '';
+  document.getElementById('ameenSerr').value = d.ameenSerr || d.ameen || '';
 }
 
-async function saveLocal(){
-  let data = getFormData();
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-  try{ await idbSet(IDB_KEY, JSON.stringify(data)); }catch(e){}
-  // للتوافق مع النسخ القديمة
-  localStorage.setItem('DAIRA_INFO_'+CURRENT_DAIRA, JSON.stringify(data));
-  localStorage.setItem('daira_info', JSON.stringify(data));
-  document.getElementById('status').textContent='✅ اتحفظ على الجهاز ده - '+new Date().toLocaleString();
-  try{ parent.postMessage({type:'D32_DAIRA_INFO_UPDATED',data:data},'*'); }catch(e){}
+async function saveLocalOnly(data){
+  let str=JSON.stringify(data);
+  try{ localStorage.setItem(LS_KEY, str); }catch(e){}
+  try{ localStorage.setItem('DAIRA_INFO_'+CURRENT_DAIRA, str); }catch(e){}
+  try{ localStorage.setItem('daira_info', str); }catch(e){}
+  for(let k of IDB_KEYS){
+    try{ await idbSet(k, str); }catch(e){}
+  }
+}
+
+async function uploadToDrive(data){
+  try{
+    let curRes=await fetch(CLOUD_GET,{cache:'no-store'});
+    let curTxt=await curRes.text();
+    let cur={};
+    try{ cur=JSON.parse(curTxt); }catch(e){ cur={v3:[],ahkam:[]}; }
+    if(Array.isArray(cur)) cur={v3:cur,ahkam:[]};
+    let payload={
+      v3:cur.v3||[],
+      ahkam:cur.ahkam||[],
+      dairaInfo:data,
+      dairaConfig:data,
+      _password:cur._password||cur.password||localStorage.getItem('current_daira_pass')||'',
+      _masterPassword:cur._masterPassword||localStorage.getItem('admin_master_password')||'Admin@2026',
+      _updatedAt:Date.now()
+    };
+    await fetch(CLOUD_POST,{method:'POST',body:JSON.stringify(payload)});
+    return true;
+  }catch(e){ throw e; }
 }
 
 async function loadLocal(){
   let raw = localStorage.getItem(LS_KEY) || localStorage.getItem('DAIRA_INFO_'+CURRENT_DAIRA) || localStorage.getItem('daira_info');
   if(raw){
-    try{ setFormData(JSON.parse(raw)); document.getElementById('status').textContent='✅ محمل من الجهاز ده'; return true; }catch(e){}
+    try{ let d=JSON.parse(raw); setFormData(d); return true; }catch(e){}
   }
-  try{
-    let idbRaw = await idbGet(IDB_KEY);
-    if(idbRaw){ setFormData(JSON.parse(idbRaw)); document.getElementById('status').textContent='✅ محمل من IndexedDB'; return true; }
-  }catch(e){}
-  document.getElementById('status').textContent='⚠ فاضي - اكتب البيانات ودوس حفظ ورفع للدرايف';
+  for(let k of IDB_KEYS){
+    try{
+      let idbRaw=await idbGet(k);
+      if(idbRaw){ let d=JSON.parse(idbRaw); setFormData(d); return true; }
+    }catch(e){}
+  }
   return false;
 }
 
-async function loadFromDrive(){
-  document.getElementById('status').textContent='⏳ بجيب من الدرايف...';
+async function loadFromDriveSilent(){
   try{
-    let res = await fetch(CLOUD_URL,{cache:'no-store'});
-    let txt = await res.text();
-    let j = JSON.parse(txt);
-    let info = j.dairaInfo || j.dairaConfig || j.daira_config || j.config || j._dairaInfo || null;
-    if(!info && j._dairaInfo) info=j._dairaInfo;
-    // بعض النسخ بتحفظها جوه v3 كأول عنصر؟ لا - هنحاول نقراها من حقل منفصل
-    if(info){
+    let res=await fetch(CLOUD_GET,{cache:'no-store'});
+    let txt=await res.text();
+    let j=JSON.parse(txt);
+    if(Array.isArray(j)) j={v3:j,ahkam:[]};
+    let info=j.dairaInfo||j.dairaConfig||null;
+    if(info && Object.keys(info).length>0){
       setFormData(info);
-      await saveLocal();
-      document.getElementById('status').textContent='✅ اتحمل من الدرايف - '+new Date(info._updatedAt||Date.now()).toLocaleString();
-    } else {
-      // لو السكريبت القديم مش بيرجع dairaInfo، جرب نقراها من ملف منفصل لو موجود
-      document.getElementById('status').textContent='⚠ الدرايف مفيهوش بيانات دائرة لسه - احفظ من اللاب الأول بدوسة حفظ ورفع للدرايف';
+      await saveLocalOnly(info);
+      return true;
     }
-  }catch(e){
-    document.getElementById('status').textContent='❌ فشل التحميل من الدرايف: '+e.message;
-  }
+  }catch(e){}
+  return false;
 }
 
-async function saveAndUpload(){
-  let data = getFormData();
-  await saveLocal();
-  document.getElementById('status').textContent='⏳ برفع للدرايف...';
+async function saveDaira(){
+  let btn=document.getElementById('saveBtn');
+  btn.disabled=true;
+  let data=getFormData();
+  await saveLocalOnly(data);
+  if(navigator.onLine){
+    try{ await uploadToDrive(data); localStorage.removeItem('DAIRA_DIRTY_'+CURRENT_DAIRA); }catch(e){ localStorage.setItem('DAIRA_DIRTY_'+CURRENT_DAIRA,'1'); }
+  } else {
+    localStorage.setItem('DAIRA_DIRTY_'+CURRENT_DAIRA,'1');
+  }
+  btn.disabled=false;
+  try{ parent.postMessage({type:'D32_DAIRA_INFO_UPDATED',data:data},'*'); }catch(e){}
+  if(window.history.length>1){ try{ window.close(); }catch(e){} }
+}
+
+window.addEventListener('online', async ()=>{
+  let dirty=localStorage.getItem('DAIRA_DIRTY_'+CURRENT_DAIRA);
+  if(!dirty) return;
   try{
-    // نجيب البيانات الحالية من الدرايف عشان منحذفش القضايا
-    let curRes = await fetch(CLOUD_URL,{cache:'no-store'});
-    let curTxt = await curRes.text();
-    let cur = {};
-    try{ cur = JSON.parse(curTxt); }catch(e){ cur={v3:[],ahkam:[]}; }
-    if(Array.isArray(cur)) cur={v3:cur,ahkam:[]};
-    let v3 = cur.v3||[];
-    let ahkam = cur.ahkam||[];
-    let payload = {v3:v3, ahkam:ahkam, dairaInfo:data, dairaConfig:data, _password:cur._password||cur.password||localStorage.getItem('current_daira_pass')||'', _masterPassword:cur._masterPassword||localStorage.getItem('admin_master_password')||'Admin@2026', _updatedAt:Date.now()};
-    // حماية الأحكام
-    if(ahkam.length===0 && cur.ahkam && cur.ahkam.length>0) payload.ahkam=cur.ahkam;
-    await fetch(CLOUD_POST_URL,{method:'POST', body:JSON.stringify(payload)});
-    document.getElementById('status').textContent='✅ اترفع للدرايف - دلوقتي افتح الموبايل ودوس تحميل من الدرايف';
-  }catch(e){
-    document.getElementById('status').textContent='❌ فشل الرفع: '+e.message+' - بس اتحفظ محلي';
-  }
-}
+    let raw=localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    let data=JSON.parse(raw);
+    await uploadToDrive(data);
+    localStorage.removeItem('DAIRA_DIRTY_'+CURRENT_DAIRA);
+  }catch(e){}
+});
 
-(async()=>{ await loadLocal(); 
-  // حاول تحمل من الدرايف تلقائي لو المحلي فاضي
-  let hasLocal = localStorage.getItem(LS_KEY);
-  if(!hasLocal) setTimeout(loadFromDrive,1500);
+(async()=>{
+  await loadLocal();
+  if(navigator.onLine){ await loadFromDriveSilent(); }
 })();
 </script>
 </body>
