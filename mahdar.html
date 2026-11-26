@@ -89,7 +89,13 @@ header{background:#0f1f3a;color:#fff;padding:10px;border-radius:10px}
 </div>
 
 <script>
-const DB_NAME='D32_DB';
+// FIX: رقم الدائرة ديناميكي مش ثابت 32
+function getCurrentDairaNum(){
+  try{
+    return localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || (window.parent && window.parent.localStorage ? window.parent.localStorage.getItem('current_daira') : null) || '32';
+  }catch(e){ return '32'; }
+}
+const DB_NAME='D'+getCurrentDairaNum()+'_DB';
 function openDB(){return new Promise((res,rej)=>{let r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=e=>{let db=e.target.result;if(!db.objectStoreNames.contains('cases'))db.createObjectStore('cases');if(!db.objectStoreNames.contains('ahkam'))db.createObjectStore('ahkam');if(!db.objectStoreNames.contains('d32store'))db.createObjectStore('d32store');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 var DATA=[];
 var TEMP_HAYA = null;
@@ -107,35 +113,135 @@ function datesEqual(a,b){a=cleanDate(a);b=cleanDate(b);return a&&b&&a===b;}
 function toArabicNum(str){if(!str)return'';return String(str).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);}
 function getCurrentYearLogic(){var now=new Date();var y=now.getMonth()==11?now.getFullYear()+1:now.getFullYear();return toArabicNum(y);}
 var DAIRA_CACHE=null;
+function cleanName(v){
+  if(v===null||v===undefined) return '';
+  if(typeof v==='string'){
+    if(v==='[object Object]'||v.indexOf('[object Object]')>=0) return '';
+    return v.trim();
+  }
+  if(typeof v==='object'){
+    return cleanName(v.name||v.raees||v.text||v.value||'');
+  }
+  return String(v).trim();
+}
+// FIX: يقرأ من كل الأماكن وبكل الصيغتين - القديمة والجديدة
+function normalizeDairaInfo(s, dairaNum){
+  if(!s) return null;
+  if(typeof s==='string'){ try{ s=JSON.parse(s); }catch(e){ return null; } }
+  // members ممكن تكون: ['اسم1','اسم2'] أو [{name,code}] أو [{name}] أو مفصولة
+  var membersRaw = s.members || s.membersObj || [];
+  var names = [];
+  if(Array.isArray(membersRaw)){
+    membersRaw.forEach(function(m){
+      if(typeof m==='string') names.push(cleanName(m));
+      else if(m && typeof m==='object') names.push(cleanName(m.name||m.raees||m.text||m.value));
+    });
+  }
+  // لو members فاضية، جرب الحقول المنفصلة بتاعة daira-config الجديدة
+  if(!names.filter(function(n){return n;}).length){
+    names = [
+      cleanName(s.raees),
+      cleanName(s.odw2 || s.yameen),
+      cleanName(s.odw3 || s.shamal),
+      cleanName(s.odw4),
+      cleanName(s.odw5),
+      cleanName(s.odw6),
+      cleanName(s.odw7)
+    ];
+  }
+  // نظف [object Object] من كل الأسماء
+  names = names.map(cleanName);
+  return {
+    num: cleanName(s.dairaNumber||s.num||s.daira||dairaNum||'32') || '32',
+    list: names.filter(function(n){return n;}), // للمحضر: كل الأسماء الموجودة
+    j1: names[0]||'',
+    j2: names[1]||'',
+    j3: names[2]||'',
+    j4: names[3]||'',
+    j5: names[4]||'',
+    j6: names[5]||'',
+    j7: names[6]||'',
+    neyaba: cleanName(s.raeesNiyaba||s.wakil||s.neyaba||s.raeesNeyabaName||''),
+    amin: cleanName(s.ameenSerr||s.amin||s.ameen||s.secretary||''),
+    dawr: cleanName(s.dawr||''),
+    fatra: cleanName(s.fatra||'')
+  };
+}
 async function getDaira(){
   if(TEMP_HAYA) return TEMP_HAYA;
   if(DAIRA_CACHE) return DAIRA_CACHE;
+  var dairaNum = getCurrentDairaNum();
+  var keys = ['D'+dairaNum+'_DAIRA_INFO','D'+dairaNum+'_DAIRA_CONFIG','D32_DAIRA_INFO','D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG'];
+  // 1) localStorage (نفس الصفحة + parent)
+  try{
+    var storages = [localStorage];
+    try{ if(window.parent && window.parent!==window && window.parent.localStorage) storages.push(window.parent.localStorage); }catch(e){}
+    for(var si=0; si<storages.length; si++){
+      for(var ki=0; ki<keys.length; ki++){
+        try{
+          var raw = storages[si].getItem(keys[ki]) || storages[si].getItem('DAIRA_INFO_'+dairaNum) || storages[si].getItem('daira_info');
+          if(raw){
+            var norm = normalizeDairaInfo(raw, dairaNum);
+            if(norm && (norm.list.length>0 || norm.neyaba || norm.amin)){
+              DAIRA_CACHE = norm;
+              return DAIRA_CACHE;
+            }
+          }
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+  // 2) IndexedDB - كل المفاتيح
   try{
     let db=await openDB();
     let tx=db.transaction('d32store','readonly');
-    let rq=tx.objectStore('d32store').get('D32_DAIRA_CONFIG');
-    let val=await new Promise(r=>{rq.onsuccess=()=>r(rq.result); rq.onerror=()=>r(null);});
-    if(val){
-      let s=JSON.parse(val);
-      let members = s.members || [];
-      DAIRA_CACHE={
-        num:s.dairaNumber||'32',
-        list: members.map(m=>m.name).filter(n=>n && n.trim()!=''),
-        j1: members.find(m=>m.code=='A')?.name || '',
-        j2: members.find(m=>m.code=='B')?.name || '',
-        j3: members.find(m=>m.code=='C')?.name || '',
-        j4: members.find(m=>m.code=='D')?.name || '',
-        j5: members.find(m=>m.code=='E')?.name || '',
-        j6: members.find(m=>m.code=='F')?.name || '',
-        j7: members.find(m=>m.code=='G')?.name || '',
-        neyaba:s.wakil||'',
-        amin:s.amin||''
-      };
-      return DAIRA_CACHE;
+    for(var k=0;k<keys.length;k++){
+      try{
+        let rq=tx.objectStore('d32store').get(keys[k]);
+        let val=await new Promise(r=>{rq.onsuccess=()=>r(rq.result); rq.onerror=()=>r(null);});
+        if(val){
+          var norm2 = normalizeDairaInfo(val, dairaNum);
+          if(norm2 && (norm2.list.length>0 || norm2.neyaba || norm2.amin)){
+            DAIRA_CACHE = norm2;
+            return DAIRA_CACHE;
+          }
+        }
+      }catch(e){}
     }
   }catch(e){}
-  return {num:'32',list:[],j1:'',j2:'',j3:'',j4:'',j5:'',j6:'',j7:'',neyaba:'',amin:''};
+  // 3) Drive - لو مفيش محلي، جيب من السيرفر
+  try{
+    var url='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+dairaNum;
+    var res=await fetch(url,{cache:'no-store'});
+    var txt=await res.text();
+    var j=JSON.parse(txt);
+    if(Array.isArray(j)) j={v3:j,ahkam:[]};
+    var info=j.dairaInfo||j.dairaConfig||null;
+    if(info){
+      var norm3 = normalizeDairaInfo(info, dairaNum);
+      if(norm3 && (norm3.list.length>0 || norm3.neyaba || norm3.amin)){
+        DAIRA_CACHE = norm3;
+        // خزنها محلي عشان بعد كده
+        try{ localStorage.setItem('D'+dairaNum+'_DAIRA_INFO', JSON.stringify(info)); }catch(e){}
+        return DAIRA_CACHE;
+      }
+    }
+  }catch(e){}
+  return {num:dairaNum,list:[],j1:'',j2:'',j3:'',j4:'',j5:'',j6:'',j7:'',neyaba:'',amin:''};
 }
+// لما بيانات الدائرة تتعدل من صفحة بيانات الدائرة، حدث المحضر فورا
+window.addEventListener('message', function(e){
+  if(e.data && (e.data.type==='DAIRA_INFO_REFRESH' || e.data.type==='D32_DAIRA_INFO_UPDATED' || e.data.type==='D32_CIRCLE_UPDATED')){
+    DAIRA_CACHE = null;
+    TEMP_HAYA = null;
+    var incoming = e.data.data || e.data.info;
+    if(incoming){
+      var norm = normalizeDairaInfo(incoming, getCurrentDairaNum());
+      if(norm) DAIRA_CACHE = norm;
+    }
+    renderMahdar();
+  }
+});
 let mahaderList=[];let mahaderIdx=0;
 
 async function buildMahdarHTML(ap, idx){
@@ -234,7 +340,6 @@ var dairaAr=toArabicNum(info.num);
 </div>`;
 }
 async function renderMahdar(){var ap=mahaderList[mahaderIdx]||null; document.getElementById('mhDisplay').innerHTML=await buildMahdarHTML(ap, mahaderIdx); document.getElementById('mhNavInfo').textContent=mahaderList.length? 'رول '+(mahaderIdx+1)+' من '+mahaderList.length:'نموذج';document.getElementById('mhPrintCount').textContent=mahaderList.length||0;}
-// ================== مطابق 100% لكود الجلسات - نسخ طبق الأصل ==================
 function getCasesForDate(s){
   var t=parseDateStr(s); if(!t) return[]; var seen={}; var list=[];
   DATA.forEach((ap, fileIdx)=>{
@@ -249,7 +354,6 @@ function getCasesForDate(s){
 }
 
 function getCasesForDate_OrderedList(s){
-  // نفس تقسيم كود الجلسات: متداول أولا ثم تحقيق
   var rawList=getCasesForDate(s);
   if(!rawList.length) return [];
   var motadawel=[], tahqiq=[];
@@ -262,7 +366,6 @@ function getCasesForDate_OrderedList(s){
   });
   motadawel.sort((a,b)=>(a.fileOrder||0)-(b.fileOrder||0));
   tahqiq.sort((a,b)=> (a.ap._fileIndex||0)-(b.ap._fileIndex||0));
-  // النهائي: متداول ثم تحقيق - نفس الجلسات بالظبط
   return [...motadawel,...tahqiq];
 }
 
