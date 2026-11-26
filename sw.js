@@ -1,4 +1,5 @@
-const CACHE = 'mahkama-v50-offline-fix';
+const CACHE = 'mahkama-v60-auto-update';
+const VERSION = 'v60-2026-05-13';
 const FILES = [
   './',
   './app.html',
@@ -15,7 +16,6 @@ const FILES = [
   './kashf.html',
   './rolat.html',
   './tajdid_taagel.html',
-  './rolat.html',
   './tadeil.html',
   './edkhal.html',
   './taalia.html',
@@ -31,6 +31,7 @@ const FILES = [
   './SANAWAT-QADAIYA.html',
   './ealan.html',
   './manifest.json',
+  './version.json',
   './daira-core.js',
   './pwa-install.js',
   './scales-192.png',
@@ -40,9 +41,7 @@ const FILES = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(cache => {
-      return cache.addAll(FILES).catch(err => {
-        console.log('cache addAll failed', err);
-        // جرب ملف ملف عشان واحد فاشل ميوقفش الكل
+      return cache.addAll(FILES.map(f=> f + '?v=' + VERSION)).catch(()=>{
         return Promise.allSettled(FILES.map(f => cache.add(f).catch(()=>{})));
       });
     }).then(()=> self.skipWaiting())
@@ -59,57 +58,55 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
-  // جوجل سكريبت سيبه يروح للنت مباشر
   if(url.includes('script.google.com') || url.includes('googleusercontent') || url.includes('googleapis')){
     return;
   }
-
-  // لو الطلب لنفس الدومين (التطبيق)
   if(e.request.method === 'GET' && url.startsWith(self.location.origin)){
     e.respondWith((async () => {
       try{
-        // أول حاجة جرب الكاش مع تجاهل الـ ?v= 
-        let cached = await caches.match(e.request, {ignoreSearch: true});
-        if(cached) {
-          // في الخلفية حدث الكاش لو فيه نت
+        // حاول النت أولا للـ HTML عشان يجيب التحديث
+        if(e.request.headers.get('accept')?.includes('text/html') || e.request.mode==='navigate'){
           if(navigator.onLine){
             try{
-              let fresh = await fetch(e.request);
+              let fresh = await fetch(e.request, {cache:'no-store'});
               if(fresh.ok){
                 let cache = await caches.open(CACHE);
                 cache.put(e.request, fresh.clone());
-                // وكمان احفظه من غير ?v= عشان الـ offline
-                let reqNoSearch = new Request(e.request.url.split('?')[0]);
-                cache.put(reqNoSearch, fresh.clone());
+                try{ cache.put(new Request(e.request.url.split('?')[0]), fresh.clone()); }catch(err){}
+                return fresh;
               }
             }catch(err){}
           }
+        }
+        // كاش مع تجاهل ?v=
+        let cached = await caches.match(e.request, {ignoreSearch:true});
+        if(cached) {
+          if(navigator.onLine && e.request.url.includes('.html')){
+            // حدث في الخلفية
+            fetch(e.request, {cache:'no-store'}).then(async res=>{
+              if(res.ok){
+                let cache = await caches.open(CACHE);
+                cache.put(e.request, res.clone());
+                cache.put(new Request(e.request.url.split('?')[0]), res.clone());
+              }
+            }).catch(()=>{});
+          }
           return cached;
         }
-        // لو مفيش كاش، جرب النت
         let res = await fetch(e.request);
         if(res.ok){
           let cache = await caches.open(CACHE);
           cache.put(e.request, res.clone());
-          // احفظ نسخة من غير بارامترات
-          try{
-            let reqNoSearch = new Request(e.request.url.split('?')[0]);
-            cache.put(reqNoSearch, res.clone());
-          }catch(err){}
         }
         return res;
       }catch(err){
-        // مفيش نت ومفيش كاش مطابق - رجع أقرب حاجة
-        let fallback = await caches.match(e.request, {ignoreSearch: true});
+        let fallback = await caches.match(e.request, {ignoreSearch:true});
         if(fallback) return fallback;
-        // لو بيطلب صفحة html، رجع app.html أو index.html
-        if(e.request.headers.get('accept')?.includes('text/html') || e.request.mode === 'navigate'){
-          let appCache = await caches.match('./app.html');
+        if(e.request.headers.get('accept')?.includes('text/html') || e.request.mode==='navigate'){
+          let appCache = await caches.match('./app.html', {ignoreSearch:true});
           if(appCache) return appCache;
-          let indexCache = await caches.match('./index.html');
-          if(indexCache) return indexCache;
-          let root = await caches.match('./');
-          if(root) return root;
+          let idx = await caches.match('./index-fixed.html', {ignoreSearch:true});
+          if(idx) return idx;
         }
         throw err;
       }
@@ -117,11 +114,13 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// رسالة لتخزين كل الصفحات
 self.addEventListener('message', e => {
-  if(e.data && e.data.type === 'CACHE_ALL'){
-    caches.open(CACHE).then(cache => {
-      cache.addAll(FILES.map(f => f.split('?')[0])).catch(()=>{});
+  if(e.data && e.data.type==='SKIP_WAITING'){
+    self.skipWaiting();
+  }
+  if(e.data && e.data.type==='CACHE_ALL'){
+    caches.open(CACHE).then(cache=>{
+      cache.addAll(FILES.map(f=> f.split('?')[0])).catch(()=>{});
     });
   }
 });

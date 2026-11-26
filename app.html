@@ -68,6 +68,65 @@ body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
 </style>
+
+<script>
+// AUTO_UPDATE_V60 - تحديث تلقائي لما النت يرجع
+(function(){
+  const APP_VER='v60-2026-05-13';
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js?v='+APP_VER).then(reg=>{
+        // فحص فوري
+        try{ reg.update(); }catch(e){}
+        // كل 2 دقيقة لو أونلاين
+        setInterval(()=>{ if(navigator.onLine){ try{ reg.update(); }catch(e){} } }, 120000);
+        // لما النت يرجع
+        window.addEventListener('online', ()=>{ 
+          setTimeout(()=>{ try{ reg.update(); }catch(e){} }, 1000);
+          // كمان افحص version.json
+          checkVersionFile();
+        });
+        reg.addEventListener('updatefound', ()=>{
+          const nw = reg.installing;
+          if(!nw) return;
+          nw.addEventListener('statechange', ()=>{
+            if(nw.state==='installed' && navigator.serviceWorker.controller){
+              // نسخة جديدة جاهزة - حدث تلقائي
+              console.log('New version found, auto updating...');
+              nw.postMessage({type:'SKIP_WAITING'});
+            }
+          });
+        });
+      }).catch(()=>{});
+      let reloading=false;
+      navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+        if(reloading) return;
+        reloading=true;
+        window.location.reload();
+      });
+    });
+    
+    async function checkVersionFile(){
+      try{
+        let r=await fetch('./version.json?v='+Date.now(), {cache:'no-store'});
+        let j=await r.json();
+        let lastVer=localStorage.getItem('app_last_version');
+        if(lastVer && lastVer!==j.version){
+          console.log('Version file changed', lastVer, '->', j.version);
+          let reg=await navigator.serviceWorker.getRegistration();
+          if(reg) await reg.update();
+        }
+        localStorage.setItem('app_last_version', j.version);
+      }catch(e){}
+    }
+    // فحص version.json كل 5 دقائق
+    setInterval(()=>{ if(navigator.onLine) checkVersionFile(); }, 300000);
+    // أول مرة
+    if(navigator.onLine) setTimeout(checkVersionFile, 3000);
+  }
+})();
+</script>
+
 </head>
 <body>
 
