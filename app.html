@@ -110,6 +110,7 @@ checkEnterDaira();
 <div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
 <div class="tab" onclick="openPage('galasat.html',this)">🗓 الجلسات</div>
 <div class="tab blue" onclick="openPage('mofradat.html',this)">📁 المفردات</div>
+<div class="tab" onclick="openPage('warradat-mofradat.html',this)">📦 وردت المفردات</div>
 <div class="tab" onclick="openPage('kashf.html',this)">📋 كشف تأجيلات أحوال</div>
 <div class="tab" onclick="openPage('rolat.html',this)">📜 رولات القضاه</div>
 <div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
@@ -117,7 +118,6 @@ checkEnterDaira();
 <div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
-<div class="tab" onclick="openPage('mahgouz.html',this)">⚖ المحجوز - أحكام فقط</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
 <div class="tab navy" onclick="openPage('tasleem_ahkam.html',this)">📋 تسليم أحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
@@ -295,22 +295,12 @@ function openPage(f,el){
 function exitApp(){
   try{
     if(confirm('هل تريد الخروج من التطبيق؟')){
-      // حاول تقفل التبويب لو اتفتح كـ PWA
       try{ window.close(); }catch(e){}
-      // لو على الموبايل، رجع للتاريخ واقفل
-      try{
-        if(history.length>1){
-          history.go(-history.length);
-        }
-      }catch(e){}
-      // محاولة أخيرة: افتح صفحة فاضية
+      try{ if(history.length>1){ history.go(-history.length); } }catch(e){}
       setTimeout(()=>{ try{ location.href='about:blank'; }catch(e){} }, 300);
     }
-  }catch(e){
-    try{ window.close(); }catch(e2){}
-  }
+  }catch(e){ try{ window.close(); }catch(e2){} }
 }
-// منع زر الرجوع يرجع صفحة صفحة - خليه يسأل خروج لو في أول صفحة
 (function(){
   try{
     history.pushState({exit:1}, '', location.href);
@@ -356,6 +346,7 @@ async function checkHealth(){
     document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
   }catch(e){
     document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+    alert('فشل الفحص: '+e.message);
   }
 }
 async function uploadToDrive(localArray, silent, options){
@@ -386,6 +377,31 @@ async function forceUpload(silent){
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
+}
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  let arr = await getCasesArray();
+  let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+  if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد فتح صفحة المحجوز للمراجعة؟')){
+    openPage('mahgouz.html', document.querySelector('.tab.active'));
+  }
+}
+async function downloadBackupJson(){
+  await exportAll();
 }
 async function syncBidirectionalSmart(silent){
   if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
@@ -467,48 +483,6 @@ async function syncBidirectionalSmart(silent){
     // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
-async function forceReplaceDrive(){
-  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
-  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
-  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
-  if(ok){
-    await clearDeletedIds();
-    await setLastSync();
-    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
-    updateCounts(); checkHealth();
-  } else {
-    alert('❌ فشل الرفع');
-  }
-}
-async function cleanWrongMahgozFromLab(){
-  try{
-    let arr = await getCasesArray();
-    let before = arr.length;
-    // امسح أي قضية محجوزة غلط بدون تاريخ حكم
-    let cleaned = arr.filter(o=>{
-      // لو الحالة محجوز وتاريخ الحكم فاضي أو فيه مشكلة - سيبه مؤقتا، بس لو فيه فلاج خطأ
-      return true;
-    });
-    // الفكرة الأصلية كانت مسح محجوز خطأ من المعمل - نعمل فحص بسيط
-    let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
-    if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد مراجعة المحجوز فقط؟ سيتم فتح صفحة المحجوز')){
-      openPage('mahgouz.html', document.querySelector('.tab.active'));
-    }
-  }catch(e){ alert('خطأ: '+e.message); }
-}
-async function exportAll(){ 
-  let arr = await getCasesArray();
-  let blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a'); a.href=url; a.download='D'+CURRENT_DAIRA+'_backup_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url);
-}
-async function downloadBackupJson(){
-  await exportAll();
-}
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
