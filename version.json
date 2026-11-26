@@ -1,11 +1,11 @@
 {
-  "version": "v77-final-exit-backup",
+  "version": "v78-warradat-mofradat",
   "date": "2026-11-27",
-  "cache": "mahkama-v72-final-exit-backup",
+  "cache": "mahkama-v75-warradat-mofradat",
   "files_changed": [
     "app.html",
-    "daira-config.html",
-    "sw.js",
-    "index-fixed.html"
+    "warradat-mofradat.html",
+    "mofradat.html",
+    "version.json"
   ]
 }
