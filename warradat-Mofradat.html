@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>د32 - ورود المفردات - موبايل</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
+body{background:#0e1627;direction:rtl;padding:3px}
+header{background:#0f1f3a;color:#ffd966;padding:12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
+.card{background:#fff;padding:5px;border-radius:8px;margin-top:5px}
+.btn{padding:10px 14px;border:none;border-radius:10px;font-weight:bold;cursor:pointer;font-size:13px;min-height:44px}
+.btn-navy{background:#0A2342;color:#fff}.btn-green{background:#16a34a;color:#fff;width:100%}.btn-gold{background:#C9A227;color:#000}
+.input{padding:5px 2px;border:1.5px solid #999;border-radius:6px;text-align:center;font-weight:bold;width:100%;font-size:12px;min-height:32px}
+.table-wrap{overflow:auto;max-height:75vh;border:1.5px solid #0A2342;border-radius:8px;-webkit-overflow-scrolling:touch;width:100%}
+table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:380px;max-width:100%}
+th{position:sticky;top:0;background:#0A2342;color:#ffd966;padding:5px 2px;font-size:8.5px;border:1px solid #000;z-index:2;line-height:1.1}
+td{padding:3px 1px;border:1px solid #ccc;text-align:center;font-size:9.5px;height:38px;background:#fff;line-height:1.1;word-break:break-word}
+.badge{padding:2px 4px;border-radius:8px;font-weight:bold;font-size:8px;display:inline-block;line-height:1}
+.badge-warradat{background:#16a34a;color:#fff}.badge-lamtard{background:#b00020;color:#fff}.badge-linked{background:#C9A227;color:#000}
+.row-num{background:#FFE4B5;font-weight:bold}
+#log{font-size:13px;font-weight:bold;color:#16a34a;min-height:20px;text-align:center;padding:4px;background:#fffbe6;border:1px solid #0A2342;border-radius:6px;margin:5px 0}
+</style>
+</head>
+<body>
+<header>
+<div>📦 ورود المفردات - موبايل + Drive<br><small id="cntInfo" style="color:#fff">جاري...</small></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;width:100%">
+<button class="btn btn-navy" onclick="loadFromDrive()" style="flex:1">🔄 تحديث من Drive</button>
+<button class="btn btn-gold" onclick="goHome()" style="flex:1">🏠 رئيسية</button>
+</div>
+</header>
+<div id="log"></div>
+<div class="card">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0">
+<button class="btn btn-green" onclick="applyAll()">✅ تطبيق الكل</button>
+<button class="btn btn-gold" onclick="addRows(5)">➕ ٥ صفوف</button>
+</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th style="width:20px">✓</th><th style="width:20px">م</th><th style="width:50px">رقم</th><th style="width:30px">سنة</th><th style="width:100px">الجزئي</th><th style="width:50px">أساسية</th><th style="width:50px">المفردات</th><th style="width:35px">✔</th>
+</tr>
+</thead>
+<tbody id="bulkBody"></tbody>
+</table>
+</div>
+</div>
+<script>
+var DATA=[]; var DATA_AHKAM=[];
+var CURRENT_DAIRA = '32';
+try{ CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || (window.parent && window.parent.localStorage ? window.parent.localStorage.getItem('current_daira') : null) || '32'; }catch(e){}
+var CLOUD_GET = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA;
+var CLOUD_POST = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+CURRENT_DAIRA;
+function goHome(){ try{ if(window.parent && window.parent.openPage){ window.parent.openPage('mahdar.html', null); } }catch(e){} }
+function toAr(n){return String(n==null?'':n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function toArText(s){return String(s==null?'':s).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,function(c){return '٠١٢٣٤٥٦٧٨٩'.indexOf(c);}).replace(/[^0-9]/g,'');}
+function cleanDate(s){if(!s)return'';s=String(s).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3)return'';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2)ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function parseDateStr(s){var cd=cleanDate(s);if(!cd)return null;var p=cd.split('/');return{str:cd,y:parseInt(p[0]),mo:parseInt(p[1]),d:parseInt(p[2])};}
+function displayMof(m){m=String(m||'').trim();if(m==='مطلوبة'||m==='مطلوب') return 'لم ترد'; if(!m) return ''; return m;}
+function normalizeAwal(s){return String(s||'').trim().replace(/\s+/g,'').replace(/[\.،,]/g,'');}
+function getGroupKey(ap){return normalizeAwal(ap.raqmAwal||'')+'|'+normalizeAwal(ap.sanaAwal||'')+'|'+normalizeAwal(ap.mahkama||'');}
+function isShatb(ap){if(!ap) return false;let halat=String(ap.halat||ap.hala||'').trim();if(halat.indexOf('شطب')>-1) return true;let qarar=String(ap.qarar||ap.qar||'').trim();if(qarar.indexOf('شطب')>-1) return true;if(ap.jalsat){for(let j of ap.jalsat){let q=String(j.qarar||'').trim();let h=String(j.halat||j.hala||'').trim();if(q.indexOf('شطب')>-1 || h.indexOf('شطب')>-1) return true;}}return false;}
+function loadFromDrive(){
+  document.getElementById('cntInfo').textContent='📡 تحميل...';
+  // جرب من الأب (IndexedDB) الأول - أسرع وأوفلاين
+  try{
+    if(window.parent && window.parent!==window){
+      window.parent.postMessage({type:'D32_GET', key:'D32_V3'}, '*');
+      // استنى رد الأب ثانية، لو مجاش هننزل من Drive
+      setTimeout(function(){ if(!DATA.length) loadFromCloud(); }, 800);
+      return;
+    }
+  }catch(e){}
+  loadFromCloud();
+}
+window.addEventListener('message', function(e){
+  if(e.data && e.data.type==='D32_VAL' && e.data.key==='D32_V3'){
+    try{
+      var raw = e.data.val || '[]';
+      var v3 = typeof raw==='string' ? JSON.parse(raw) : raw;
+      if(Array.isArray(v3) && v3.length){
+        if(v3[1] && Array.isArray(v3[1])) v3=v3[1];
+        DATA=v3.map(function(x,i){x.id=x.id||i+1; if(!x.jalsat) x.jalsat=[]; return x;});
+        document.getElementById('cntInfo').textContent='الجهاز: '+DATA.length+' قضية';
+        refreshAllRows();
+        // كمل الأحكام من Drive لو محتاج
+        loadAhkamOnly();
+        return;
+      }
+    }catch(err){}
+    loadFromCloud();
+  }
+  if(e.data && e.data.type==='D32_VAL' && e.data.key==='D32_AHKAM'){
+    try{ var ah = typeof e.data.val==='string' ? JSON.parse(e.data.val||'[]') : e.data.val; if(Array.isArray(ah) && ah[1] && Array.isArray(ah[1])) ah=ah[1]; DATA_AHKAM=ah||[]; }catch(err){}
+  }
+});
+function loadAhkamOnly(){
+  try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:'D32_GET', key:'D32_AHKAM'}, '*'); }catch(e){}
+}
+function loadFromCloud(){
+  document.getElementById('cntInfo').textContent='📡 تحميل من Drive...';
+  fetch(CLOUD_GET,{cache:'no-store'}).then(function(r){return r.text();}).then(function(txt){
+    try{
+      var j=JSON.parse(txt); var v3=[]; var ah=[];
+      if(Array.isArray(j)) v3=j; else if(j.v3 && Array.isArray(j.v3)){v3=j.v3; ah=j.ahkam||[];} else if(j.data && j.data['متداول']){v3=j.data['متداول']; ah=j.data['احكام']||[];}
+      if(v3[1] && Array.isArray(v3[1])) v3=v3[1]; if(ah[1] && Array.isArray(ah[1])) ah=ah[1];
+      DATA=v3.map(function(x,i){x.id=x.id||i+1; if(!x.jalsat) x.jalsat=[]; return x;}); DATA_AHKAM=ah;
+      document.getElementById('cntInfo').textContent='Drive: '+DATA.length+' قضية'; refreshAllRows();
+    }catch(e){document.getElementById('cntInfo').textContent='❌ '+e.message;}
+  }).catch(function(err){document.getElementById('cntInfo').textContent='❌ '+err.message;});
+}
+function saveToParentAndCloud(toSend){
+  // 1) حدث الأب (IndexedDB) فورا
+  try{
+    if(window.parent && window.parent!==window){
+      // ابعت كل الداتا المحدثة للأب يحفظها
+      // هنبعت الـ toSend بس، والأب هيدمجها في D32_SET بتاعه
+      // هنا بنبعت النسخة الكاملة المحدثة
+      var full = DATA.slice();
+      window.parent.postMessage({type:'D32_SET', key:'D32_V3', val: JSON.stringify(full)}, '*');
+    }
+  }catch(e){}
+  // 2) ارفع للدرايف
+  return fetch(CLOUD_POST, {method:'POST', body: JSON.stringify({v3: DATA, ahkam: DATA_AHKAM, _updatedAt: Date.now()})}).then(function(r){return r.text();}).catch(function(e){ throw e; });
+}
+function getLastAsasiaSession(raqm,sana){
+  raqm=toEn(raqm); sana=toEn(sana); if(!raqm||!sana) return null;
+  var candidates=DATA.filter(function(ap){return toEn(ap.raqm)===raqm && toEn(ap.sana)===sana && !ap.dammTo;});
+  if(!candidates.length) return null;
+  candidates.sort(function(a,b){
+    var da=parseDateStr(a.galsaAsasia||''); var db=parseDateStr(b.galsaAsasia||'');
+    var ta=da? new Date(da.y,da.mo-1,da.d).getTime():0; var tb=db? new Date(db.y,db.mo-1,db.d).getTime():0;
+    if(tb!==ta) return tb-ta; return (b._updatedAt||0)-(a._updatedAt||0);
+  }); return candidates[0];
+}
+function distinctAppealsByKey(key){
+  var list=DATA.filter(function(ap){return getGroupKey(ap)===key && normalizeAwal(ap.raqmAwal);});
+  var map={}; list.forEach(function(ap){var k=toEn(ap.raqm)+'|'+toEn(ap.sana); if(!map[k] || (ap._updatedAt||0)>(map[k]._updatedAt||0)) map[k]=ap;}); return Object.values(map);
+}
+function findOriginalAndEffective(distinctList){
+  if(!distinctList.length) return {trueOriginal:null, effectiveOriginal:null};
+  var sorted=distinctList.slice().sort(function(a,b){var sa=parseInt(toEn(a.sana)||0), sb=parseInt(toEn(b.sana)||0); if(sa!==sb) return sa-sb; var ra=parseInt(toEn(a.raqm)||0), rb=parseInt(toEn(b.raqm)||0); return ra-rb;});
+  var trueOriginal=sorted[0]; var effectiveOriginal=sorted.find(function(ap){return !isShatb(getLastAsasiaSession(ap.raqm, ap.sana) || ap);}) || trueOriginal;
+  return {trueOriginal:trueOriginal, effectiveOriginal:effectiveOriginal};
+}
+function handleEnterRaqm(e, idx){ if(e.key==='Enter'){ e.preventDefault(); var sEl=document.getElementById('s-'+idx); if(sEl) sEl.focus(); } }
+function handleEnterSana(e, idx){
+  if(e.key==='Enter'){
+    e.preventDefault(); lookup(idx);
+    var next=idx+1; var nextR=document.getElementById('r-'+next);
+    if(!nextR){ addRows(1); setTimeout(function(){ var el=document.getElementById('r-'+next); if(el) el.focus(); }, 80); } else { nextR.focus(); }
+  }
+}
+function clearRow(idx){
+  var r=document.getElementById('r-'+idx); if(r) r.value='';
+  var s=document.getElementById('s-'+idx); if(s) s.value='';
+  var jz=document.getElementById('jz-'+idx); if(jz) jz.textContent='-';
+  var ga=document.getElementById('ga-'+idx); if(ga) ga.textContent='-';
+  var mf=document.getElementById('mf-'+idx); if(mf){ mf.textContent='-'; delete mf.dataset.apId; }
+  var ch=document.getElementById('ch-'+idx); if(ch) ch.checked=false;
+}
+function createRow(idx){
+  var tr=document.createElement('tr'); tr.id='row-'+idx;
+  tr.innerHTML='<td><input type="checkbox" id="ch-'+idx+'" checked></td><td class="row-num">'+toAr(idx+1)+'</td><td><input class="input" id="r-'+idx+'" inputmode="numeric" onkeydown="handleEnterRaqm(event,'+idx+')" onblur="lookup('+idx+')" placeholder="رقم"></td><td><input class="input" id="s-'+idx+'" inputmode="numeric" onkeydown="handleEnterSana(event,'+idx+')" onblur="lookup('+idx+')" placeholder="سنة"></td><td id="jz-'+idx+'" style="font-size:8px;text-align:right">-</td><td id="ga-'+idx+'" style="font-size:8px">-</td><td id="mf-'+idx+'">-</td><td><button class="btn" style="background:#16a34a;color:#fff;font-size:10px;min-height:28px;padding:4px" onclick="applySingle('+idx+')">✅</button></td>';
+  return tr;
+}
+function renderRows(n){var tbody=document.getElementById('bulkBody'); tbody.innerHTML=''; for(var i=0;i<n;i++) tbody.appendChild(createRow(i));}
+function addRows(n){var tbody=document.getElementById('bulkBody'); var cur=tbody.children.length; for(var i=cur;i<cur+n;i++) tbody.appendChild(createRow(i));}
+function lookup(idx){
+  var raqmEl=document.getElementById('r-'+idx); var sanaEl=document.getElementById('s-'+idx); if(!raqmEl||!sanaEl) return;
+  var raqm=raqmEl.value.trim(); var sana=sanaEl.value.trim(); if(!raqm||!sana) return;
+  var found=getLastAsasiaSession(raqm,sana);
+  var jzEl=document.getElementById('jz-'+idx); var gaEl=document.getElementById('ga-'+idx); var mfEl=document.getElementById('mf-'+idx);
+  if(!found){ if(jzEl) jzEl.textContent='غير موجود'; if(gaEl) gaEl.textContent='-'; if(mfEl) mfEl.textContent='-'; return; }
+  if(jzEl){ var rA=toArText(found.raqmAwal||'').trim(); var sA=toArText(found.sanaAwal||'').trim(); var mk=(found.mahkama||'').trim(); var txt=(rA||'-')+' / '+(sA||'-'); if(mk && mk!='-') txt+=' '+mk; jzEl.textContent=txt; }
+  if(gaEl) gaEl.textContent=toArText(found.galsaAsasia||'-');
+  var mf=displayMof(found.mofradat||found.mof||'');
+  if(mfEl){ mfEl.innerHTML=mf?'<span class="badge '+(mf==='وردت'?'badge-warradat':mf.indexOf('وردت في')>-1?'badge-linked':'badge-lamtard')+'">'+mf+'</span>':'-'; mfEl.dataset.apId=found.id; }
+}
+function refreshAllRows(){var tbody=document.getElementById('bulkBody'); for(var i=0;i<tbody.children.length;i++) lookup(i);}
+function applySingle(idx){
+  var apIdEl=document.getElementById('mf-'+idx); if(!apIdEl||!apIdEl.dataset.apId){alert('اكتب الرقم والسنة أولا');return;}
+  var apId=apIdEl.dataset.apId; var ap=DATA.find(function(x){return String(x.id)===String(apId);}); if(!ap) return;
+  var key=getGroupKey(ap); var distinct=distinctAppealsByKey(key); var res=findOriginalAndEffective(distinct); var effectiveOriginal=res.effectiveOriginal||ap;
+  var toSendMap={}; var effLatest=getLastAsasiaSession(effectiveOriginal.raqm, effectiveOriginal.sana);
+  if(effLatest){ var k1=toEn(effLatest.raqm)+'|'+toEn(effLatest.sana); effLatest.mofradat='وردت';effLatest.mof='وردت';effLatest._updatedAt=Date.now(); toSendMap[k1]=effLatest; }
+  if(toEn(ap.raqm)!==toEn(effectiveOriginal.raqm)||toEn(ap.sana)!==toEn(effectiveOriginal.sana)){
+    var targetLatest=getLastAsasiaSession(ap.raqm, ap.sana);
+    if(targetLatest){ var k2=toEn(targetLatest.raqm)+'|'+toEn(targetLatest.sana); if(!toSendMap[k2]){ targetLatest.mofradat='وردت في الاستئناف '+effectiveOriginal.raqm+' / '+effectiveOriginal.sana; targetLatest.mof=targetLatest.mofradat; targetLatest._updatedAt=Date.now(); toSendMap[k2]=targetLatest; } }
+  }
+  var toSend=Object.values(toSendMap);
+  document.getElementById('log').textContent='⏳ حفظ '+toSend.length+'...';
+  saveToParentAndCloud(toSend).then(function(){
+    document.getElementById('log').textContent='✅ تم حفظ '+toSend.length;
+    clearRow(idx); var el=document.getElementById('r-'+idx); if(el) el.focus();
+  }).catch(function(e){document.getElementById('log').textContent='❌ '+e.message;});
+}
+function applyAll(){
+  var tbody=document.getElementById('bulkBody'); var listToProcess=[]; var idxMap=[];
+  for(var i=0;i<tbody.children.length;i++){
+    var ch=document.getElementById('ch-'+i); if(ch &&!ch.checked) continue;
+    var apIdEl=document.getElementById('mf-'+i); if(!apIdEl||!apIdEl.dataset.apId) continue;
+    var ap=DATA.find(function(x){return String(x.id)===String(apIdEl.dataset.apId);});
+    if(ap){ listToProcess.push(ap); idxMap.push(i); }
+  }
+  if(!listToProcess.length){alert('مفيش قضايا محددة');return;}
+  var groups={}; listToProcess.forEach(function(ap){var key=getGroupKey(ap); if(!key || key==='||') return; if(!groups[key]) groups[key]=[]; groups[key].push(ap);});
+  var toSendMap={};
+  for(var key in groups){
+    var distinct=distinctAppealsByKey(key);
+    var res=findOriginalAndEffective(distinct); var effectiveOriginal=res.effectiveOriginal; if(!effectiveOriginal) continue;
+    var effLatest=getLastAsasiaSession(effectiveOriginal.raqm, effectiveOriginal.sana);
+    if(effLatest){ var k=toEn(effLatest.raqm)+'|'+toEn(effLatest.sana); effLatest.mofradat='وردت';effLatest.mof='وردت';effLatest._updatedAt=Date.now(); toSendMap[k]=effLatest; }
+    distinct.forEach(function(apItem){
+      var latest=getLastAsasiaSession(apItem.raqm, apItem.sana); if(!latest) return;
+      if(toEn(latest.raqm)===toEn(effectiveOriginal.raqm)&&toEn(latest.sana)===toEn(effectiveOriginal.sana)) return;
+      var kk=toEn(latest.raqm)+'|'+toEn(latest.sana);
+      latest.mofradat='وردت في الاستئناف '+effectiveOriginal.raqm+' / '+effectiveOriginal.sana; latest.mof=latest.mofradat; latest._updatedAt=Date.now(); toSendMap[kk]=latest;
+    });
+  }
+  var toSend=Object.values(toSendMap);
+  if(!toSend.length){alert('مفيش حاجة');return;}
+  if(!confirm('تطبيق ورود على '+toSend.length+' قضية؟ (انت كاتب '+listToProcess.length+' والمجموعة كاملة '+toSend.length+')')) return;
+  document.getElementById('log').textContent='⏳ حفظ '+toSend.length+'...';
+  saveToParentAndCloud(toSend).then(function(){
+    document.getElementById('log').textContent='✅ تم حفظ '+toSend.length;
+    idxMap.forEach(function(idx){ clearRow(idx); });
+    var first=document.querySelector('input[id^="r-"]'); if(first) first.focus();
+  }).catch(function(e){document.getElementById('log').textContent='❌ '+e.message;});
+}
+(function(){renderRows(15); setTimeout(function(){loadFromDrive();},500);})();
+</script>
+</body>
+</html>
