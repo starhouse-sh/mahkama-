@@ -1,5 +1,5 @@
-const CACHE = 'mahkama-v61-fix-daira';
-const VERSION = 'v61-2026-05-13-fix';
+const CACHE = 'mahkama-v60-auto-update';
+const VERSION = 'v60-2026-05-13';
 const FILES = [
   './',
   './app.html',
@@ -10,6 +10,7 @@ const FILES = [
   './create-daira.html',
   './mahdar.html',
   './galasat.html',
+  './mahgouz.html',
   './ahkam.html',
   './estelam.html',
   './mofradat.html',
