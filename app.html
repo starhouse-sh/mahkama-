@@ -132,7 +132,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 
 <!-- شاشة دخول - تجيب رقم الدائرة اللي أنشأتها افتراضي -->
 <div id="enterDairaScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:1000000;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
-<div style="font-size:48px">⚖️</div>
+<div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <div style="display:flex;gap:8px;align-items:center;margin:14px 0 8px">
@@ -315,7 +315,6 @@ function hideAllLocksAndEnter(num){
 checkEnterDaira();
 </script>
 
-
 <div class="sidebar">
 <h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
@@ -330,6 +329,7 @@ checkEnterDaira();
 <div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
+<div class="tab" onclick="openPage('mahgouz.html',this)">⚖ المحجوز - أحكام فقط</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
 <div class="tab navy" onclick="openPage('tasleem_ahkam.html',this)">📋 تسليم أحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
@@ -668,7 +668,7 @@ migrate().then(()=>{
 
 <!-- قفل بباسورد في كل فتحة - V18 -->
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
-<div style="font-size:48px">⚖️</div>
+<div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
 <input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
