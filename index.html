@@ -19,6 +19,7 @@ nav a.active{color:#C9A227;border-bottom:2px solid #C9A227;padding-bottom:4px}
 .hero p{font-size:15px;color:#e8e8e8;margin-bottom:22px}
 .btn-download{background:#E8B93C;color:#0A2342;border:none;padding:16px 36px;border-radius:10px;font-size:20px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .btn-download:hover{background:#f8d775}
+.btn-mahgouz{background:#fff;color:#0A2342;border:2px solid #E8B93C;padding:14px 30px;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:10px;text-decoration:none;margin-right:10px}
 .tagline{margin-top:16px;font-size:15px;color:#fff}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1000px;margin:-10px auto 30px;padding:20px}
 .card{background:#fff;border-radius:14px;padding:22px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.07)}
@@ -31,13 +32,14 @@ footer{background:#0A2342;color:#E8B93C;text-align:center;padding:18px;font-weig
 </head>
 <body>
 <header>
-<div class="logo"><span>⚖️</span> نظام الدائرة</div>
+<div class="logo"><span>⚖</span> نظام الدائرة</div>
 <nav><a href="#" class="active">الرئيسية</a><a href="#features">المميزات</a><a href="#install">كيفية التثبيت</a><a href="#contact">تواصل معنا</a></nav>
 <a class="btn-login" href="app.html">تسجيل الدخول</a>
 </header>
 <section class="hero">
 <h1>نظام إدارة قضايا الدوائر</h1>
 <button class="btn-download" id="installBtn">⬇ تحميل التطبيق</button>
+<a class="btn-mahgouz" href="mahgouz.html">⚖ المحجوز</a>
 <p class="tagline">✨ سيستم كامل لإدارة الجلسات مدعوم بالذكاء الاصطناعي</p>
 <p style="font-size:13px;color:#cbd5e1">بعد التثبيت، أنشئ دائرتك في دقيقة وابدأ إدارة قضاياك</p>
 </section>
@@ -45,6 +47,7 @@ footer{background:#0A2342;color:#E8B93C;text-align:center;padding:18px;font-weig
 <div class="card"><div class="icon" style="background:#dbeafe">📅</div><h3>إدارة الجلسات</h3><p>تنظيم وجدولة الجلسات بسهولة عبر تقويم متكامل وتذكيرات تلقائية للحضور والمواعيد</p></div>
 <div class="card"><div class="icon" style="background:#fef3c7">📄</div><h3>تتبع القضايا</h3><p>مراقبة القضايا وتحديثاتها خطوة بخطوة بشكل لحظي، متداول وأحكام وتعلية في مكان واحد</p></div>
 <div class="card"><div class="icon" style="background:#ede9fe">🧠</div><h3>تقارير ذكية</h3><p>تقارير وتحليلات ذكية مدعومة بالذكاء الاصطناعي لدعم القرار ومتابعة أداء الدائرة</p></div>
+<div class="card" onclick="location.href='mahgouz.html'" style="cursor:pointer"><div class="icon" style="background:#fee2e2">⚖</div><h3>المحجوز - أحكام فقط</h3><p>عرض المحجوز من جدول الأحكام فقط حسب الشهر والسنة، مع الضم والواتساب</p></div>
 </section>
 <section id="install" style="max-width:800px;margin:0 auto 30px;padding:0 20px">
 <div style="background:#fff;border-radius:14px;padding:20px">
