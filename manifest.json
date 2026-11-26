@@ -1,11 +1,23 @@
 {
-  "name": "نظام د32 - إدارة القضايا",
+  "name": "نظام الدائرة - 39 دائرة + ماستر - يشتغل بدون نت",
   "short_name": "د32",
-  "start_url": "select-daira.html",
+  "id": "daira-v50-offline",
+  "start_url": "app.html",
   "display": "standalone",
-  "background_color": "#0b1e3a",
-  "theme_color": "#0b1e3a",
+  "background_color": "#0A2342",
+  "theme_color": "#0A2342",
+  "scope": "./",
   "icons": [
+    {
+      "src": "scales-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "scales-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",

@@ -59,8 +59,8 @@ let deferredPrompt=null;
 const btn=document.getElementById('installBtn');
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
 btn.onclick=async()=>{
-  if(deferredPrompt){deferredPrompt.prompt();const {outcome}=await deferredPrompt.userChoice;deferredPrompt=null; if(outcome==='accepted'){location.href='app.html';} }
-  else { location.href='app.html'; }
+  if(deferredPrompt){deferredPrompt.prompt();const {outcome}=await deferredPrompt.userChoice;deferredPrompt=null; if(outcome==='accepted'){location.href='create-daira.html';} }
+  else { location.href='create-daira.html'; }
 };
 if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 </script>
