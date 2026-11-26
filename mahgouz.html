@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المحجوز - د32 - أحكام فقط</title>
+<style>
+*{box-sizing:border-box;font-family:Tahoma}body{background:#d0d8e2;padding:4px;margin:0;direction:rtl}
+header{background:#0f1f3a;color:#ffd966;padding:10px;border-radius:8px;text-align:center;font-weight:900;font-size:18px;position:sticky;top:0;z-index:20}
+.card{background:#fff;padding:8px;border-radius:10px;margin-top:6px;box-shadow:0 2px 6px rgba(0,0,0,.15);width:100%;overflow-x:auto}
+.btn-big{display:block;width:50%!important;margin:8px auto!important;height:65px!important;line-height:65px;background:#0f1f3a;color:#ffd966;text-align:center;font-size:20px!important;font-weight:900;border-radius:10px;border:none;cursor:pointer}
+.btn-big.blue{background:#1976d2}.input-half{width:50%!important;height:45px!important;font-size:18px!important;padding:6px;border:2px solid #888;border-radius:6px;display:block;margin:6px auto;text-align:center}
+.titleBar{background:#0f1f3a;color:#fff;padding:8px;border-radius:6px;text-align:center;font-weight:900;font-size:16px}
+table.mahgouz{width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed;font-size:10px}
+table.mahgouz th,table.mahgouz td{border:1px solid #000;padding:2px;text-align:center;vertical-align:top;font-size:9px}
+table.mahgouz th{background:#0f1f3a;color:#ffd966}
+.raqm-item{background:#f8fafc;border:1px solid #999;border-radius:4px;padding:2px;margin:2px 0;font-weight:bold;font-size:9px;width:98%;margin:2px auto;direction:ltr}
+.th-sub{font-size:7.5px;color:#fff;display:block;line-height:1.2;margin-top:2px}
+.th-sub2{font-size:6.5px;color:#ffd966;display:block;line-height:1.1;margin-top:1px;font-weight:900}
+</style></head><body>
+<header>⚖ المحجوز - أحكام فقط - <span id="cntHead">0</span> | <span id="statusHead" style="font-size:10px;background:#fff;color:#0f1f3a;padding:2px 6px;border-radius:10px">⏳</span></header>
+<div class="card" style="text-align:center"><div class="titleBar">المحجوز - من جدول الأحكام فقط</div>
+<label>شهر:</label><input id="m" class="input-half" type="number"><label>سنة:</label><input id="y" class="input-half" type="number">
+<button class="btn-big blue" onclick="doSearchMahgouz()">🔍 بحث</button>
+<button class="btn-big" style="background:#6b21a8" onclick="showAllMonths()">📅 كل الشهور</button>
+<button class="btn-big" style="background:#25D366;height:50px!important;line-height:50px;font-size:16px!important" onclick="sendWhatsApp()">📲 واتساب</button>
+<button class="btn-big" style="background:#333;height:35px!important;line-height:35px;font-size:12px!important" onclick="loadFromDrive(true)">🔄 تحديث</button>
+<div id="info" style="margin-top:8px;background:#fffae6;padding:6px;border-radius:6px;font-size:12px"></div></div>
+<div id="res" class="card" style="text-align:center">📡 تحميل الأحكام...</div>
+<script>
+var DATA_MAHGOUZ=[], LAST_CODES=null;
+function toEnNum(s){return String(s||'').replace(/[٠-٩]/g,function(c){return '٠١٢٣٤٥٦٧٨٩'.indexOf(c);}).replace(/[^0-9]/g,'');}
+function toAr(n){return String(n).replace(/\d/g,function(d){return '٠١٢٣٤٥٦٧٨٩'[d];});}
+function toEn(s){return String(s||'').replace(/[٠-٩]/g,function(c){return '٠١٢٣٤٥٦٧٨٩'.indexOf(c);}).replace(/[^0-9]/g,'');}
+function cleanDate(s){if(!s) return '';s=String(s).replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d);}).replace(/-/g,'/').trim();var m=s.match(/\d+/g);if(!m||m.length<3) return '';var d,mo,ye;if(m[0].length==4){ye=m[0];mo=m[1];d=m[2];}else{d=m[0];mo=m[1];ye=m[2];if(ye.length==2) ye='20'+ye;}return ye+'/'+String(mo).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+function getAllDates(x){
+  var arr=[]; var fields=['tarikhHokm','tarHokm','tarHokmAwal','tar','galsa','galsaAsasia'];
+  for(var i=0;i<fields.length;i++){ if(x[fields[i]]) arr.push(x[fields[i]]); }
+  if(x.jalsat){ for(var j=0;j<x.jalsat.length;j++){ if(x.jalsat[j].tarikh) arr.push(x.jalsat[j].tarikh); if(x.jalsat[j].tar) arr.push(x.jalsat[j].tar); } }
+  return arr;
+}
+function matchesMonthYear(x,mVal,yVal){
+  var dates=getAllDates(x);
+  for(var i=0;i<dates.length;i++){
+    var txt=String(dates[i]);
+    var found=txt.match(/\d{1,4}[\/\-\.\s]+\d{1,2}[\/\-\.\s]+\d{1,4}/g);
+    if(found){ for(var f=0;f<found.length;f++){ var c=cleanDate(found[f]); if(!c) continue; var p=c.split('/'); if(parseInt(p[1])==mVal && parseInt(p[0])==yVal) return true; } }
+    var c2=cleanDate(txt); if(c2){ var p2=c2.split('/'); if(parseInt(p2[1])==mVal && parseInt(p2[0])==yVal) return true; }
+  }
+  return false;
+}
+function getCodeM(x){return (x.code||'').toString().trim().toUpperCase()||'بدون';}
+function normalizeRaqm(s){return toEn(s).trim();}
+function isDammQarar(txt){txt=String(txt||''); return txt.indexOf('ضم')>-1;}
+function getExplicitDammList(x){
+  var list=[]; var seen={};
+  function addItem(item){
+    if(!item || !item.raqm) return;
+    var k=normalizeRaqm(item.raqm)+'/'+normalizeRaqm(item.sana);
+    if(seen[k]) return;
+    if(normalizeRaqm(item.raqm)===normalizeRaqm(x.raqm) && normalizeRaqm(item.sana)===normalizeRaqm(x.sana)) return;
+    seen[k]=true; list.push(item);
+  }
+  if(x.dammList && x.dammList.length){
+    x.dammList.forEach(function(d){ if(typeof d==='object') addItem(d); });
+  }
+  for(var i=0;i<DATA_MAHGOUZ.length;i++){
+    var y=DATA_MAHGOUZ[i]; if(!y.dammTo) continue;
+    var dammToStr=String(y.dammTo);
+    if(dammToStr.indexOf(String(x.raqm))>-1 && dammToStr.indexOf(String(x.sana))>-1) addItem(y);
+    if(typeof y.dammTo==='object'){ if(normalizeRaqm(y.dammTo.raqm)===normalizeRaqm(x.raqm) && normalizeRaqm(y.dammTo.sana)===normalizeRaqm(x.sana)) addItem(y); }
+  }
+  if(x.dammTo){
+    var parentRaqm='', parentSana='';
+    if(typeof x.dammTo==='object'){ parentRaqm=x.dammTo.raqm; parentSana=x.dammTo.sana; }
+    else { var m=String(x.dammTo).match(/\d+/g); if(m && m.length>=2){ parentRaqm=m[0]; parentSana=m[1]; } }
+    if(parentRaqm){
+      for(var j=0;j<DATA_MAHGOUZ.length;j++){ var z=DATA_MAHGOUZ[j]; if(!z.dammTo) continue; var zp=String(z.dammTo); if(zp.indexOf(parentRaqm)>-1 && zp.indexOf(parentSana)>-1) addItem(z); }
+      for(var k=0;k<DATA_MAHGOUZ.length;k++){ var p=DATA_MAHGOUZ[k]; if(normalizeRaqm(p.raqm)===normalizeRaqm(parentRaqm) && normalizeRaqm(p.sana)===normalizeRaqm(parentSana)) addItem(p); }
+    }
+  }
+  if(x.jalsat){
+    for(var s=0;s<x.jalsat.length;s++){
+      var qar=String(x.jalsat[s].qarar||x.jalsat[s].qarr||'');
+      if(isDammQarar(qar)){
+        var nums=qar.match(/\d+\s*\/\s*\d+/g);
+        if(nums){ nums.forEach(function(n){ var parts=n.split('/'); var r=normalizeRaqm(parts[0]); var ss=normalizeRaqm(parts[1]); for(var d=0;d<DATA_MAHGOUZ.length;d++){ if(normalizeRaqm(DATA_MAHGOUZ[d].raqm)===r && normalizeRaqm(DATA_MAHGOUZ[d].sana)===ss) addItem(DATA_MAHGOUZ[d]); } }); }
+      }
+    }
+  }
+  return list;
+}
+function getDammList(x){ return getExplicitDammList(x); }
+function getRaqmHtml(x){
+  var base=toAr(x.raqm)+" / "+toAr(x.sana);
+  var damm=getDammList(x);
+  if(!damm.length) return '<div style="direction:ltr;text-align:center">'+base+'</div>';
+  var html='<div style="direction:ltr;text-align:center;font-weight:900">'+base+'</div>';
+  for(var i=0;i<damm.length;i++){
+    var d=damm[i];
+    var txt=toAr(d.raqm)+" / "+toAr(d.sana);
+    html+='<div style="direction:ltr;text-align:center;margin:2px auto;width:fit-content;border-top:1px solid #999;padding-top:2px;color:#b00020">+ '+txt+'</div>';
+  }
+  return html;
+}
+var CURRENT_DAIRA_MAHGOUZ = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+var CLOUD_GET_MAHGOUZ = 'https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+CURRENT_DAIRA_MAHGOUZ;
+function handleMahgouzData(txt){
+  var j=JSON.parse(txt); var ah=j.ahkam||[]; if(ah[1]&&Array.isArray(ah[1])) ah=ah[1]; if(j.data && j.data['احكام']) ah=j.data['احكام']; if(ah[1]&&Array.isArray(ah[1])) ah=ah[1];
+  var map={};
+  for(var k=0;k<ah.length;k++){
+    var x=ah[k]; if(!x||!x.raqm) continue;
+    var rk=String(x.raqm).trim()+'/'+String(x.sana).trim();
+    var curTar=cleanDate(x.tarikhHokm||x.tarHokm||x.tar||'');
+    if(!map[rk]){
+      map[rk]=x;
+    }else{
+      var existTar=cleanDate(map[rk].tarikhHokm||map[rk].tarHokm||map[rk].tar||'');
+      var existUpd=map[rk]._updatedAt||0;
+      var newUpd=x._updatedAt||0;
+      if(curTar && existTar && curTar > existTar){ map[rk]=x; }
+      else if(curTar && !existTar){ map[rk]=x; }
+      else if(newUpd > existUpd){ map[rk]=x; }
+    }
+  }
+  var uniq=Object.values(map);
+  DATA_MAHGOUZ=uniq;
+  document.getElementById('cntHead').textContent=toAr(uniq.length);
+  document.getElementById('statusHead').textContent='✅ '+toAr(uniq.length);
+  document.getElementById('info').textContent='✅ الأحكام: '+toAr(uniq.length);
+  document.getElementById('res').innerHTML='<div style="color:green">✅ جاهز - '+toAr(uniq.length)+' ملف</div>';
+  try{localStorage.setItem('d32_backup_mahgouz',JSON.stringify(uniq));}catch(e){}
+}
+function loadFromDrive(force){
+  document.getElementById('statusHead').textContent='📡 تحميل...';
+  if(force){try{localStorage.removeItem('d32_backup_mahgouz');}catch(e){}}
+  fetch(CLOUD_GET_MAHGOUZ,{cache:'no-store'}).then(function(r){return r.text();}).then(function(txt){
+    try{ handleMahgouzData(txt); }catch(e){document.getElementById('res').innerHTML='❌ '+e.message;}
+  }).catch(function(e){
+    try{
+      var cached=localStorage.getItem('d32_backup_mahgouz');
+      if(cached){ var uniq=JSON.parse(cached); DATA_MAHGOUZ=uniq; document.getElementById('cntHead').textContent=toAr(uniq.length); document.getElementById('statusHead').textContent='✅ '+toAr(uniq.length)+' (أوفلاين)'; document.getElementById('info').textContent='✅ الأحكام (أوفلاين): '+toAr(uniq.length); document.getElementById('res').innerHTML='<div style="color:green">✅ جاهز أوفلاين - '+toAr(uniq.length)+' ملف</div>'; return; }
+    }catch(err){}
+    document.getElementById('res').innerHTML='❌ فشل: '+e.message;
+  });
+}
+function showAllMonths(){
+  if(!DATA_MAHGOUZ.length){document.getElementById('res').innerHTML='❌';return;}
+  var months={};
+  for(var i=0;i<DATA_MAHGOUZ.length;i++){ var dates=getAllDates(DATA_MAHGOUZ[i]); for(var d=0;d<dates.length;d++){ var c=cleanDate(dates[d]); if(!c) continue; var p=c.split('/'); var key=p[0]+'/'+p[1]; months[key]=(months[key]||0)+1; break; } }
+  var html='<table class="mahgouz"><tr><th>شهر/سنة</th><th>عدد</th><th></th></tr>'; var keys=Object.keys(months).sort();
+  for(var k=0;k<keys.length;k++){ var parts=keys[k].split('/'); html+='<tr><td>'+toAr(parts[1])+'/'+toAr(parts[0])+'</td><td>'+toAr(months[keys[k]])+'</td><td><button onclick="document.getElementById(\'m\').value=\''+parts[1]+'\';document.getElementById(\'y\').value=\''+parts[0]+'\';doSearchMahgouz()">بحث</button></td></tr>'; }
+  html+='</table>'; document.getElementById('res').innerHTML=html;
+}
+function doSearchMahgouz(){
+  var mVal=parseInt(toEnNum(document.getElementById('m').value)), yVal=parseInt(toEnNum(document.getElementById('y').value));
+  if(!mVal||!yVal){document.getElementById('res').innerHTML='⚠ اكتب الشهر والسنة';return;}
+  var filtered=[];
+  for(var i=0;i<DATA_MAHGOUZ.length;i++){ if(matchesMonthYear(DATA_MAHGOUZ[i], mVal, yVal)) filtered.push(DATA_MAHGOUZ[i]); }
+  if(!filtered.length){document.getElementById('res').innerHTML='❌ لا يوجد '+toAr(mVal)+' / '+toAr(yVal);document.getElementById('info').innerHTML='شهر '+toAr(mVal)+' / '+toAr(yVal)+' - لا يوجد';return;}
+  var map={};
+  for(var j=0;j<filtered.length;j++){
+    var it=filtered[j];
+    var k=(it.raqm||'')+'/'+(it.sana||'');
+    var curTar=cleanDate(it.tarikhHokm||it.tarHokm||it.tar||'');
+    if(!map[k]){ map[k]=it; }
+    else{
+      var oldTar=cleanDate(map[k].tarikhHokm||map[k].tarHokm||map[k].tar||'');
+      if(curTar > oldTar) map[k]=it;
+    }
+  }
+  var uniq=Object.values(map);
+  uniq.sort(function(a,b){return (parseInt(a.raqm)||0)-(parseInt(b.raqm)||0);});
+  var codes={}; for(var u=0;u<uniq.length;u++){ var cc=getCodeM(uniq[u]); if(!codes[cc]) codes[cc]=[]; codes[cc].push(uniq[u]); }
+  LAST_CODES=codes;
+  var dCodes=Object.keys(codes).sort();
+  var totalFiles=uniq.length;
+  var totalMonzam=0;
+  for(var t=0;t<uniq.length;t++){ totalMonzam+= getDammList(uniq[t]).length; }
+  var totalAppeals=totalFiles+totalMonzam;
+  document.getElementById('info').innerHTML='شهر '+toAr(mVal)+' / '+toAr(yVal)+' - '+toAr(totalFiles)+' ملف - '+toAr(totalAppeals)+' استئناف';
+  var html='<table class="mahgouz"><thead><tr>';
+  for(var ci=0;ci<dCodes.length;ci++){
+    var arr=codes[dCodes[ci]];
+    var filesCount=arr.length;
+    var monzamCount=0;
+    for(var mm=0;mm<arr.length;mm++){ monzamCount+= getDammList(arr[mm]).length; }
+    var totalForCol=filesCount+monzamCount;
+    html+='<th>عضو '+dCodes[ci]+'<span class="th-sub">'+toAr(filesCount)+' ملف</span><span class="th-sub2">'+toAr(totalForCol)+' استئناف</span></th>';
+  }
+  html+='</tr></thead><tbody><tr>';
+  for(var cj=0;cj<dCodes.length;cj++){ html+='<td>'; for(var r=0;r<codes[dCodes[cj]].length;r++) html+='<div class="raqm-item">'+getRaqmHtml(codes[dCodes[cj]][r])+'</div>'; html+='</td>'; }
+  html+='</tr></tbody></table>';
+  document.getElementById('res').innerHTML=html;
+}
+function sendWhatsApp(){
+  if(!LAST_CODES){alert('ابحث أولا');return;}
+  var mVal=document.getElementById('m').value, yVal=document.getElementById('y').value;
+  var msg="⚖ الأحكام - د32\nشهر "+toAr(mVal)+" / "+toAr(yVal)+"\n"; var keys=Object.keys(LAST_CODES).sort();
+  for(var ki=0;ki<keys.length;ki++){ var k=keys[ki]; var arr=LAST_CODES[k]; msg+="\nعضو "+k+" - "+toAr(arr.length)+"\n"; for(var i=0;i<arr.length;i++){ msg+=toAr(i+1)+"- "+toAr(arr[i].raqm+" / "+arr[i].sana); var dm=getDammList(arr[i]); if(dm.length){ for(var d=0;d<dm.length;d++) msg+=" + "+toAr(dm[d].raqm+" / "+dm[d].sana); } msg+="\n"; } }
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+window.onload=function(){var now=new Date();document.getElementById('m').value=now.getMonth()+1;document.getElementById('y').value=now.getFullYear();loadFromDrive(false);};
+</script></body></html>
