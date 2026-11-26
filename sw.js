@@ -1,5 +1,5 @@
-const CACHE = 'mahkama-v60-auto-update';
-const VERSION = 'v60-2026-05-13';
+const CACHE = 'mahkama-v66-auto-on-open';
+const VERSION = 'v66-2026-05-26-auto';
 const FILES = [
   './',
   './app.html',

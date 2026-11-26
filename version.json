@@ -1,11 +1,5 @@
 {
-  "version": "v60-auto-update",
-  "date": "2026-05-13",
-  "cache": "mahkama-v60-auto-update",
-  "files_changed": [
-    "daira-config.html",
-    "sw.js",
-    "app.html",
-    "index-fixed.html"
-  ]
+  "version": "v66-2026-05-26-auto",
+  "date": "2026-05-26",
+  "note": "auto update on open"
 }
