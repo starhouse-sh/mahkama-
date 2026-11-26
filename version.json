@@ -1,5 +1,11 @@
 {
-  "version": "v75-2026-05-26-auto",
-  "date": "2026-05-26",
-  "note": "auto update on open"
+  "version": "v76-final-exit-backup",
+  "date": "2026-11-27",
+  "cache": "mahkama-v72-final-exit-backup",
+  "files_changed": [
+    "app.html",
+    "daira-config.html",
+    "sw.js",
+    "index-fixed.html"
+  ]
 }
