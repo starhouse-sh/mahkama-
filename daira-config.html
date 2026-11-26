@@ -122,59 +122,74 @@ async function idbGet(k){
 }
 
 function getFormData(){
+  const c = (id)=>{ let v=document.getElementById(id).value||''; v=v.toString().trim(); if(v==='[object Object]'||v.includes('[object Object]')) return ''; return v; };
   return {
     dairaNumber: CURRENT_DAIRA,
     num: CURRENT_DAIRA,
-    dawr: document.getElementById('dawr').value.trim(),
-    fatra: document.getElementById('fatra').value.trim(),
-    raees: document.getElementById('raees').value.trim(),
-    yameen: document.getElementById('odw2').value.trim(),
-    shamal: document.getElementById('odw3').value.trim(),
-    members: [
-      document.getElementById('raees').value.trim(),
-      document.getElementById('odw2').value.trim(),
-      document.getElementById('odw3').value.trim(),
-      document.getElementById('odw4').value.trim(),
-      document.getElementById('odw5').value.trim(),
-      document.getElementById('odw6').value.trim(),
-      document.getElementById('odw7').value.trim()
-    ],
-    odw2: document.getElementById('odw2').value.trim(),
-    odw3: document.getElementById('odw3').value.trim(),
-    odw4: document.getElementById('odw4').value.trim(),
-    odw5: document.getElementById('odw5').value.trim(),
-    odw6: document.getElementById('odw6').value.trim(),
-    odw7: document.getElementById('odw7').value.trim(),
-    raeesNiyaba: document.getElementById('raeesNiyaba').value.trim(),
-    ameenSerr: document.getElementById('ameenSerr').value.trim(),
+    dawr: c('dawr'),
+    fatra: c('fatra'),
+    raees: c('raees'),
+    yameen: (document.getElementById('odw2').value||'').toString().trim().replace('[object Object]',''),
+    shamal: (document.getElementById('odw3').value||'').toString().trim().replace('[object Object]',''),
+    members: [c('raees'),c('odw2'),c('odw3'),c('odw4'),c('odw5'),c('odw6'),c('odw7')],
+    odw2: c('odw2'),
+    odw3: c('odw3'),
+    odw4: c('odw4'),
+    odw5: c('odw5'),
+    odw6: c('odw6'),
+    odw7: c('odw7'),
+    raeesNiyaba: c('raeesNiyaba'),
+    ameenSerr: c('ameenSerr'),
     ameen: document.getElementById('ameenSerr').value.trim(),
     _updatedAt: Date.now(),
     daira: CURRENT_DAIRA
   };
 }
 
+function cleanVal(v){
+  if(v===null||v===undefined) return '';
+  if(typeof v==='string'){
+    if(v==='[object Object]'||v.includes('[object Object]')) return '';
+    return v.trim();
+  }
+  if(typeof v==='object'){
+    // لو اتحفظ كـ object بالغلط، حاول تطلع الاسم منه
+    return (v.name||v.raees||v.text||v.value||'').toString().trim();
+  }
+  return String(v).trim();
+}
 function setFormData(d){
   if(!d) return;
-  if(d.dawr) document.getElementById('dawr').value = d.dawr;
-  if(d.fatra) document.getElementById('fatra').value = d.fatra;
-  document.getElementById('raees').value = d.raees || (Array.isArray(d.members)?d.members[0]:'') || '';
-  if(Array.isArray(d.members) && d.members.length>=7){
-    document.getElementById('odw2').value = d.members[1]||'';
-    document.getElementById('odw3').value = d.members[2]||'';
-    document.getElementById('odw4').value = d.members[3]||'';
-    document.getElementById('odw5').value = d.members[4]||'';
-    document.getElementById('odw6').value = d.members[5]||'';
-    document.getElementById('odw7').value = d.members[6]||'';
+  // نظف أي بيانات فاسدة فيها [object Object]
+  if(d.dawr) document.getElementById('dawr').value = cleanVal(d.dawr);
+  if(d.fatra) document.getElementById('fatra').value = cleanVal(d.fatra);
+  
+  let m = Array.isArray(d.members) ? d.members : [];
+  document.getElementById('raees').value = cleanVal(d.raees) || cleanVal(m[0]) || '';
+  
+  if(m.length>=7){
+    document.getElementById('odw2').value = cleanVal(m[1]);
+    document.getElementById('odw3').value = cleanVal(m[2]);
+    document.getElementById('odw4').value = cleanVal(m[3]);
+    document.getElementById('odw5').value = cleanVal(m[4]);
+    document.getElementById('odw6').value = cleanVal(m[5]);
+    document.getElementById('odw7').value = cleanVal(m[6]);
   } else {
-    document.getElementById('odw2').value = d.odw2 || d.yameen || '';
-    document.getElementById('odw3').value = d.odw3 || d.shamal || '';
-    document.getElementById('odw4').value = d.odw4 || '';
-    document.getElementById('odw5').value = d.odw5 || '';
-    document.getElementById('odw6').value = d.odw6 || '';
-    document.getElementById('odw7').value = d.odw7 || '';
+    document.getElementById('odw2').value = cleanVal(d.odw2) || cleanVal(d.yameen);
+    document.getElementById('odw3').value = cleanVal(d.odw3) || cleanVal(d.shamal);
+    document.getElementById('odw4').value = cleanVal(d.odw4);
+    document.getElementById('odw5').value = cleanVal(d.odw5);
+    document.getElementById('odw6').value = cleanVal(d.odw6);
+    document.getElementById('odw7').value = cleanVal(d.odw7);
   }
-  document.getElementById('raeesNiyaba').value = d.raeesNiyaba || '';
-  document.getElementById('ameenSerr').value = d.ameenSerr || d.ameen || '';
+  document.getElementById('raeesNiyaba').value = cleanVal(d.raeesNiyaba);
+  document.getElementById('ameenSerr').value = cleanVal(d.ameenSerr) || cleanVal(d.ameen);
+  
+  // لو فيه خانات لسه فيها [object Object] بعد التحميل، فضيها فورا
+  ['raees','odw2','odw3','odw4','odw5','odw6','odw7','raeesNiyaba','ameenSerr'].forEach(id=>{
+    let el=document.getElementById(id);
+    if(el && el.value.includes('[object Object]')) el.value='';
+  });
 }
 
 async function saveLocalOnly(data){
