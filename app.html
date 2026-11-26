@@ -145,12 +145,12 @@ checkEnterDaira();
 <div class="safe-bar">
 🛡 <span id="health">جاري فحص...</span>
 <button onclick="exportAll()" style="background:#0A2342;color:#FFD700">💾 حفظ</button>
-<button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">⬇ تنزيل JSON</button>
-<button onclick="checkHealth()" style="background:#FFD700">🔍 فحص</button>
+<button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">💾 نسخة احتياطية</button>
+
 <button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
-<button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
+
 </div>
 <iframe id="frame" src="about:blank"></iframe>
 </div>
@@ -288,8 +288,38 @@ function openPage(f,el){
   }
   setTimeout(updateCounts,300);
 }
-async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
-async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
+async function exportAll(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري تجهيز النسخة...';
+    let arr = await getCasesArray();
+    let ahRaw = await idbGet('D32_AHKAM') || '[]';
+    let cfgRaw = await idbGet('D32_DAIRA_CONFIG') || await idbGet('D32_CIRCLE') || '';
+    let all = {daira: CURRENT_DAIRA, date: new Date().toISOString(), cases: arr, ahkam: ahRaw, config: cfgRaw};
+    let blob = new Blob([JSON.stringify(all)], {type:'application/json'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    document.getElementById('health').textContent='✅ تم تنزيل النسخة - '+arr.length+' قضية';
+  }catch(e){
+    alert('خطأ في التنزيل: '+e.message);
+    document.getElementById('health').textContent='❌ فشل التنزيل: '+e.message;
+  }
+}
+async function checkHealth(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري الفحص...';
+    let arr = await getCasesArray();
+    let raw = await idbGet('D32_V3') || await idbGet('D32_FINAL') || '';
+    let sizeMB = raw ? (new Blob([raw]).size/1024/1024).toFixed(2) : '0';
+    document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
+  }catch(e){
+    document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+    alert('فشل الفحص: '+e.message);
+  }
+}
 async function uploadToDrive(localArray, silent, options){
   options = options || {};
   var deletedIds = options.deletedIds || [];
@@ -318,6 +348,31 @@ async function forceUpload(silent){
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
+}
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  let arr = await getCasesArray();
+  let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+  if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد فتح صفحة المحجوز للمراجعة؟')){
+    openPage('mahgouz.html', document.querySelector('.tab.active'));
+  }
+}
+async function downloadBackupJson(){
+  await exportAll();
 }
 async function syncBidirectionalSmart(silent){
   if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
@@ -399,48 +454,6 @@ async function syncBidirectionalSmart(silent){
     // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
-async function forceReplaceDrive(){
-  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
-  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
-  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
-  if(ok){
-    await clearDeletedIds();
-    await setLastSync();
-    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
-    updateCounts(); checkHealth();
-  } else {
-    alert('❌ فشل الرفع');
-  }
-}
-async function cleanWrongMahgozFromLab(){
-  try{
-    let arr = await getCasesArray();
-    let before = arr.length;
-    // امسح أي قضية محجوزة غلط بدون تاريخ حكم
-    let cleaned = arr.filter(o=>{
-      // لو الحالة محجوز وتاريخ الحكم فاضي أو فيه مشكلة - سيبه مؤقتا، بس لو فيه فلاج خطأ
-      return true;
-    });
-    // الفكرة الأصلية كانت مسح محجوز خطأ من المعمل - نعمل فحص بسيط
-    let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
-    if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد مراجعة المحجوز فقط؟ سيتم فتح صفحة المحجوز')){
-      openPage('mahgouz.html', document.querySelector('.tab.active'));
-    }
-  }catch(e){ alert('خطأ: '+e.message); }
-}
-async function exportAll(){ 
-  let arr = await getCasesArray();
-  let blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a'); a.href=url; a.download='D'+CURRENT_DAIRA+'_backup_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url);
-}
-async function downloadBackupJson(){
-  await exportAll();
-}
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
