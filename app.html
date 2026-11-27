@@ -45,7 +45,9 @@ async function restoreDairaFromAnywhere(){
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+body{display:block;background:#f0f2f5;direction:rtl}
+#appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right}
 .sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
 .section-title{font-size:11px;color:#FFD700;margin:14px 6px 6px;font-weight:bold}
@@ -89,29 +91,13 @@ async function checkEnterDaira(){
     if(saved) document.getElementById('enterDairaNum').value = saved;
   }
 }
-async function enterExistingDaira(){
+function enterExistingDaira(){
   var num = document.getElementById('enterDairaNum').value.trim();
   var pass = document.getElementById('enterDairaPass').value;
   var msg = document.getElementById('enterDairaMsg');
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
   if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
-  // لو دخل بالماستر، اقبله ومتحفظوش كباسورد دائرة - احفظه كماستر
-  const storedMaster = localStorage.getItem('admin_master_password');
-  let cloudMaster=null;
-  try{
-    const CLOUD_TMP='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira=ADMIN_MASTER&t='+Date.now();
-    const r=await fetch(CLOUD_TMP,{cache:'no-store'}); const t=await r.text(); const j=JSON.parse(t);
-    if(j._masterPassword) cloudMaster=j._masterPassword;
-  }catch(e){}
-  const isMaster = pass==='Admin@2026' || pass==='admin123' || (storedMaster && pass===storedMaster) || (cloudMaster && pass===cloudMaster);
-  if(isMaster){
-    try{ localStorage.setItem('admin_master_password', pass); }catch(e){}
-    try{ localStorage.setItem('current_daira', String(num)); localStorage.setItem('DAIRA', String(num)); }catch(e){}
-    try{ sessionStorage.setItem('daira_unlocked','1'); sessionStorage.setItem('is_master_login','1'); }catch(e){}
-    document.getElementById('enterDairaScreen').style.display='none';
-    location.reload();
-    return;
-  }
+  // احفظ في 3 أماكن وادخل على طول - من غير ما تروح لصفحة إنشاء
   saveDairaPersist(num, pass);
   try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
   document.getElementById('enterDairaScreen').style.display='none';
@@ -120,6 +106,8 @@ async function enterExistingDaira(){
 checkEnterDaira();
 </script>
 
+<!-- الواجهة كلها جوه wrapper عشان تصغر على الموبايل من غير ما تكسر الـ Offline -->
+<div id="appWrapper">
 <div class="sidebar">
 <h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
@@ -127,7 +115,6 @@ checkEnterDaira();
 <div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
 <div class="tab" onclick="openPage('galasat.html',this)">🗓 الجلسات</div>
 <div class="tab blue" onclick="openPage('mofradat.html',this)">📁 المفردات</div>
-<div class="tab" onclick="openPage('warradat-mofradat.html',this)">📦 وردت المفردات</div>
 <div class="tab" onclick="openPage('kashf.html',this)">📋 كشف تأجيلات أحوال</div>
 <div class="tab" onclick="openPage('rolat.html',this)">📜 رولات القضاه</div>
 <div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
@@ -311,18 +298,20 @@ function openPage(f,el){
 }
 function exitApp(){
   try{
-    if(!confirm('هل تريد إغلاق التطبيق خالص؟')) return;
-    try{ sessionStorage.removeItem('daira_unlocked'); }catch(e){}
-    try{ location.replace('exit.html'); }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
-  }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
+    if(confirm('هل تريد الخروج من التطبيق؟')){
+      try{ window.close(); }catch(e){}
+      try{ if(history.length>1){ history.go(-history.length); } }catch(e){}
+      setTimeout(()=>{ try{ location.href='about:blank'; }catch(e){} }, 300);
+    }
+  }catch(e){ try{ window.close(); }catch(e2){} }
 }
 (function(){
   try{
     history.pushState({exit:1}, '', location.href);
     window.addEventListener('popstate', function(e){
       if(!e.state || e.state.exit){
-        if(confirm('هل تريد إغلاق التطبيق خالص؟')){
-          try{ location.replace('exit.html'); }catch(e){}
+        if(confirm('هل تريد الخروج من التطبيق؟')){
+          try{ window.close(); }catch(e){}
           history.pushState({exit:1}, '', location.href);
         } else {
           history.pushState({exit:1}, '', location.href);
@@ -528,6 +517,7 @@ migrate().then(()=>{
 </script>
 <script src="pwa-install.js"></script>
 
+</div> <!-- end appWrapper -->
 <!-- قفل بباسورد في كل فتحة - V18 -->
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
@@ -555,29 +545,14 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
-// الماستر: يفتح أي دائرة - بيتقرأ من الدرايف عشان يشتغل على كل الأجهزة
-const DEFAULT_MASTER='Admin@2026';
-async function getCloudMaster(){
-  try{
-    const r=await fetch(CLOUD_URL.replace(/daira=.*/,'daira=ADMIN_MASTER')+'&t='+Date.now(),{cache:'no-store'});
-    const t=await r.text(); const j=JSON.parse(t);
-    if(j._masterPassword) return j._masterPassword;
-    if(j.masterPassword) return j.masterPassword;
-  }catch(e){}
-  return null;
-}
-function isMasterPass(entered, cloudMaster){
-  if(!entered) return false;
-  const stored = localStorage.getItem('admin_master_password');
-  return entered===DEFAULT_MASTER || entered==='admin123' || (stored && entered===stored) || (cloudMaster && entered===cloudMaster);
-}
-async function unlockApp(){
+function unlockApp(){
   const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
   const entered = document.getElementById('lockPass').value;
   const msg = document.getElementById('lockMsg');
   const decision = localStorage.getItem('admin_decision_'+daira);
   if(decision==='approved' && entered && entered.length>=4){
+    // إعادة تعيين باسورد جديد بعد موافقة الأدمن
     localStorage.setItem('daira_pass_'+daira, entered);
     localStorage.setItem('current_daira_pass', entered);
     localStorage.removeItem('admin_decision_'+daira);
@@ -585,21 +560,45 @@ async function unlockApp(){
     document.getElementById('lockScreen').style.display='none';
     return;
   }
-  // جرب الماستر من الدرايف الأول - عشان الماستر الجديد يشتغل على الموبايل واللاب
-  let cloudMaster=null;
-  try{ cloudMaster=await getCloudMaster(); }catch(e){}
-  if(entered && (entered===saved || isMasterPass(entered, cloudMaster))){
+  if(entered && entered===saved){
     sessionStorage.setItem('daira_unlocked','1');
-    // لو دخل بالماستر، احفظه كماستر محلي عشان المرة الجاية من غير نت
-    if(isMasterPass(entered, cloudMaster) && entered!==saved){
-      try{ localStorage.setItem('admin_master_password', entered); }catch(e){}
-      try{ localStorage.setItem('is_master_login','1'); }catch(e){}
-    }
     document.getElementById('lockScreen').style.display='none';
   } else {
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - جرب باسورد الدائرة أو الماستر Admin@2026';
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
   }
 }
 </script>
+
+<script>
+// يصغر واجهة التطبيق كلها على الموبايل - زي الكمبيوتر بالظبط بس مصغرة - من غير ما يكسر الـ Offline أو شاشة الباسورد
+(function(){
+  function fitAppWrapper(){
+    try{
+      const w=document.getElementById('appWrapper');
+      if(!w) return;
+      const base=1100;
+      const vw=window.innerWidth;
+      const vh=window.innerHeight;
+      if(vw < base){
+        const scale=vw/base;
+        w.style.transform='scale('+scale+')';
+        w.style.transformOrigin='top right';
+        w.style.width=base+'px';
+        w.style.height=(vh/scale)+'px';
+      } else {
+        w.style.transform='';
+        w.style.width=base+'px';
+        w.style.height='100vh';
+      }
+    }catch(e){}
+  }
+  window.addEventListener('load', fitAppWrapper);
+  window.addEventListener('resize', fitAppWrapper);
+  window.addEventListener('orientationchange', ()=>setTimeout(fitAppWrapper, 300));
+  setTimeout(fitAppWrapper, 100);
+  setTimeout(fitAppWrapper, 500);
+})();
+</script>
+
 </body>
 </html>
