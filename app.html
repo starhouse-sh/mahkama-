@@ -73,7 +73,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_pass_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -118,7 +118,6 @@ checkEnterDaira();
 <div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
-<div class="tab" onclick="openPage('mahgouz.html',this)">⚖ المحجوز - أحكام فقط</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
 <div class="tab navy" onclick="openPage('tasleem_ahkam.html',this)">📋 تسليم أحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
@@ -295,30 +294,18 @@ function openPage(f,el){
 }
 function exitApp(){
   try{
-    if(confirm('هل تريد الخروج من التطبيق؟')){
-      // حاول تقفل التبويب لو اتفتح كـ PWA
-      try{ window.close(); }catch(e){}
-      // لو على الموبايل، رجع للتاريخ واقفل
-      try{
-        if(history.length>1){
-          history.go(-history.length);
-        }
-      }catch(e){}
-      // محاولة أخيرة: افتح صفحة فاضية
-      setTimeout(()=>{ try{ location.href='about:blank'; }catch(e){} }, 300);
-    }
-  }catch(e){
-    try{ window.close(); }catch(e2){}
-  }
+    if(!confirm('هل تريد إغلاق التطبيق خالص؟')) return;
+    try{ sessionStorage.removeItem('daira_unlocked'); }catch(e){}
+    try{ location.replace('exit.html'); }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
+  }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
 }
-// منع زر الرجوع يرجع صفحة صفحة - خليه يسأل خروج لو في أول صفحة
 (function(){
   try{
     history.pushState({exit:1}, '', location.href);
     window.addEventListener('popstate', function(e){
       if(!e.state || e.state.exit){
-        if(confirm('هل تريد الخروج من التطبيق؟')){
-          try{ window.close(); }catch(e){}
+        if(confirm('هل تريد إغلاق التطبيق خالص؟')){
+          try{ location.replace('exit.html'); }catch(e){}
           history.pushState({exit:1}, '', location.href);
         } else {
           history.pushState({exit:1}, '', location.href);
@@ -357,6 +344,7 @@ async function checkHealth(){
     document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
   }catch(e){
     document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+    alert('فشل الفحص: '+e.message);
   }
 }
 async function uploadToDrive(localArray, silent, options){
@@ -387,6 +375,31 @@ async function forceUpload(silent){
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
+}
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  let arr = await getCasesArray();
+  let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+  if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد فتح صفحة المحجوز للمراجعة؟')){
+    openPage('mahgouz.html', document.querySelector('.tab.active'));
+  }
+}
+async function downloadBackupJson(){
+  await exportAll();
 }
 async function syncBidirectionalSmart(silent){
   if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
@@ -468,48 +481,6 @@ async function syncBidirectionalSmart(silent){
     // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
-async function forceReplaceDrive(){
-  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
-  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
-  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
-  if(ok){
-    await clearDeletedIds();
-    await setLastSync();
-    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
-    updateCounts(); checkHealth();
-  } else {
-    alert('❌ فشل الرفع');
-  }
-}
-async function cleanWrongMahgozFromLab(){
-  try{
-    let arr = await getCasesArray();
-    let before = arr.length;
-    // امسح أي قضية محجوزة غلط بدون تاريخ حكم
-    let cleaned = arr.filter(o=>{
-      // لو الحالة محجوز وتاريخ الحكم فاضي أو فيه مشكلة - سيبه مؤقتا، بس لو فيه فلاج خطأ
-      return true;
-    });
-    // الفكرة الأصلية كانت مسح محجوز خطأ من المعمل - نعمل فحص بسيط
-    let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
-    if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد مراجعة المحجوز فقط؟ سيتم فتح صفحة المحجوز')){
-      openPage('mahgouz.html', document.querySelector('.tab.active'));
-    }
-  }catch(e){ alert('خطأ: '+e.message); }
-}
-async function exportAll(){ 
-  let arr = await getCasesArray();
-  let blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a'); a.href=url; a.download='D'+CURRENT_DAIRA+'_backup_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url);
-}
-async function downloadBackupJson(){
-  await exportAll();
-}
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
@@ -545,7 +516,7 @@ migrate().then(()=>{
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input id="lockPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_lock_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
