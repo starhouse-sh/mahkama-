@@ -1,12 +1,11 @@
 {
-  "version": "v96-fix-black-screen",
+  "version": "v101-offline-wrapper-full",
   "date": "2026-11-27",
-  "cache": "mahkama-v96-fix-black-screen",
+  "cache": "mahkama-v98-offline-wrapper",
+  "note": "رجعنا النسخة الكاملة اللي بتشتغل Offline + تصغير الواجهة كلها على الموبايل من غير تداخل",
   "files_changed": [
     "app.html",
     "sw.js",
-    "manifest.json",
     "version.json"
-  ],
-  "fix": "black screen - enterDairaScreen now shows if no daira, sw.js network-first"
+  ]
 }
