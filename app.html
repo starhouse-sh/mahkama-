@@ -41,7 +41,7 @@ async function restoreDairaFromAnywhere(){
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
-<title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
+<title>سيستم الدائرة</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
 body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
@@ -70,10 +70,13 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <!-- شاشة دخول لدائرة موجودة - تظهر لو مفيش دائرة محفوظة، بدل ما يوديك على الإنشاء -->
 <div id="enterDairaScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:1000000;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
-<h2 style="margin:10px 0">نظام الدائرة</h2>
+<h2 style="margin:10px 0">سيستم الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_pass_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<div style="position:relative;width:100%;max-width:320px;margin:0 0 14px">
+<input id="enterDairaPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_pass_no_autofill_xyz" style="width:100%;padding:14px 46px 14px 14px;border-radius:10px;border:none;text-align:center;font-size:15px">
+<button type="button" onclick="toggleEye('enterDairaPass', this)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#ffffff22;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="إظهار/إخفاء">👁️</button>
+</div>
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -121,7 +124,7 @@ checkEnterDaira();
 </script>
 
 <div class="sidebar">
-<h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
+<h2>⚖ سيستم الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
 <div class="tab" onclick="openPage('estelam.html',this)">🔍 الاستعلام</div>
 <div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
@@ -525,7 +528,10 @@ migrate().then(()=>{
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input id="lockPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_lock_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<div style="position:relative;width:100%;max-width:320px;margin:14px 0">
+<input id="lockPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_lock_no_autofill_xyz" style="width:100%;padding:14px 46px 14px 14px;border-radius:10px;border:none;text-align:center;font-size:15px">
+<button type="button" onclick="toggleEye('lockPass', this)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:#ffffff22;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="إظهار/إخفاء">👁️</button>
+</div>
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -548,6 +554,27 @@ migrate().then(()=>{
   }catch(e){}
 })();
 const DEFAULT_MASTER='Admin@2026';
+
+function toggleEye(inputId, btn){
+  try{
+    const el=document.getElementById(inputId);
+    if(!el) return;
+    const isHidden = el.style.webkitTextSecurity==='disc' || el.getAttribute('data-hidden')==='1';
+    if(isHidden){
+      el.style.webkitTextSecurity='none';
+      el.style.textSecurity='none';
+      el.setAttribute('data-hidden','0');
+      el.type='text';
+      if(btn) btn.textContent='👁️';
+    } else {
+      el.style.webkitTextSecurity='disc';
+      el.style.textSecurity='disc';
+      el.setAttribute('data-hidden','1');
+      if(btn) btn.textContent='🙈';
+    }
+  }catch(e){}
+}
+
 async function getCloudMaster(){
   try{
     const r=await fetch('https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira=ADMIN_MASTER&t='+Date.now(),{cache:'no-store'});
