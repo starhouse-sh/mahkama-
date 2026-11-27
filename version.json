@@ -1,11 +1,12 @@
 {
-  "version": "v102-offline-no-overlap",
+  "version": "v104-offline-all-pages-no-overlap",
   "date": "2026-11-27",
-  "cache": "mahkama-v102-offline-no-overlap",
-  "note": "تصليح التداخل لما تفتح بدون نت: حذف الفولباك اللي كان بيجبر نافذة الباسورد تظهر فوق الواجهة حتى لو كنت داخل، وخلى نافذة الباسورد تاخد الشاشة كلها 100vw",
+  "cache": "mahkama-v103-offline-all-pages",
+  "note": "تصليح التداخل لما تفتح بدون نت: منع نافذة الباسورد تظهر فوق الصفحات لما تكون داخل قبل كده، وتخزين كل الصفحات للـ Offline (rolat, ehsaiat, mahdar...) عشان كل الأزرار تشتغل من غير نت مش صفحتين بس",
   "files_changed": [
     "app.html",
     "sw.js",
-    "version.json"
+    "version.json",
+    "manifest.json"
   ]
 }
