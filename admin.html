@@ -73,7 +73,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_pass_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -88,13 +88,29 @@ async function checkEnterDaira(){
     if(saved) document.getElementById('enterDairaNum').value = saved;
   }
 }
-function enterExistingDaira(){
+async function enterExistingDaira(){
   var num = document.getElementById('enterDairaNum').value.trim();
   var pass = document.getElementById('enterDairaPass').value;
   var msg = document.getElementById('enterDairaMsg');
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
   if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
-  // احفظ في 3 أماكن وادخل على طول - من غير ما تروح لصفحة إنشاء
+  // لو دخل بالماستر، اقبله ومتحفظوش كباسورد دائرة - احفظه كماستر
+  const storedMaster = localStorage.getItem('admin_master_password');
+  let cloudMaster=null;
+  try{
+    const CLOUD_TMP='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira=ADMIN_MASTER&t='+Date.now();
+    const r=await fetch(CLOUD_TMP,{cache:'no-store'}); const t=await r.text(); const j=JSON.parse(t);
+    if(j._masterPassword) cloudMaster=j._masterPassword;
+  }catch(e){}
+  const isMaster = pass==='Admin@2026' || pass==='admin123' || (storedMaster && pass===storedMaster) || (cloudMaster && pass===cloudMaster);
+  if(isMaster){
+    try{ localStorage.setItem('admin_master_password', pass); }catch(e){}
+    try{ localStorage.setItem('current_daira', String(num)); localStorage.setItem('DAIRA', String(num)); }catch(e){}
+    try{ sessionStorage.setItem('daira_unlocked','1'); sessionStorage.setItem('is_master_login','1'); }catch(e){}
+    document.getElementById('enterDairaScreen').style.display='none';
+    location.reload();
+    return;
+  }
   saveDairaPersist(num, pass);
   try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
   document.getElementById('enterDairaScreen').style.display='none';
@@ -118,7 +134,6 @@ checkEnterDaira();
 <div class="tab purple" onclick="openPage('eltemasat.html',this)">⚖ الالتماسات</div>
 <div class="section-title">⚖ الأحكام والتسليم</div>
 <div class="tab" onclick="openPage('ahkam.html',this)">⚖ الأحكام</div>
-<div class="tab" onclick="openPage('mahgouz.html',this)">⚖ المحجوز - أحكام فقط</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #FFD700" onclick="openPage('taalia.html',this)">🏷 تعلية الملف - القطعي</div>
 <div class="tab navy" onclick="openPage('tasleem_ahkam.html',this)">📋 تسليم أحكام</div>
 <div class="tab navy" style="background:linear-gradient(90deg,#0f1f3a,#132f5a);border:2px solid #16a34a" onclick="openPage('hifz.html',this)">📦 الإرسال للحفظ - سركي</div>
@@ -300,7 +315,6 @@ function exitApp(){
     try{ location.replace('exit.html'); }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
   }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
 }
-// منع زر الرجوع
 (function(){
   try{
     history.pushState({exit:1}, '', location.href);
@@ -308,6 +322,7 @@ function exitApp(){
       if(!e.state || e.state.exit){
         if(confirm('هل تريد إغلاق التطبيق خالص؟')){
           try{ location.replace('exit.html'); }catch(e){}
+          history.pushState({exit:1}, '', location.href);
         } else {
           history.pushState({exit:1}, '', location.href);
         }
@@ -345,6 +360,7 @@ async function checkHealth(){
     document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
   }catch(e){
     document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+    alert('فشل الفحص: '+e.message);
   }
 }
 async function uploadToDrive(localArray, silent, options){
@@ -375,6 +391,31 @@ async function forceUpload(silent){
   let deletedIds = await getDeletedIds();
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
+}
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  let arr = await getCasesArray();
+  let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+  if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد فتح صفحة المحجوز للمراجعة؟')){
+    openPage('mahgouz.html', document.querySelector('.tab.active'));
+  }
+}
+async function downloadBackupJson(){
+  await exportAll();
 }
 async function syncBidirectionalSmart(silent){
   if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
@@ -456,48 +497,6 @@ async function syncBidirectionalSmart(silent){
     // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
-
-async function forceReplaceDrive(){
-  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
-  let arr = await getCasesArray();
-  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
-  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
-  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
-  if(ok){
-    await clearDeletedIds();
-    await setLastSync();
-    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
-    updateCounts(); checkHealth();
-  } else {
-    alert('❌ فشل الرفع');
-  }
-}
-async function cleanWrongMahgozFromLab(){
-  try{
-    let arr = await getCasesArray();
-    let before = arr.length;
-    // امسح أي قضية محجوزة غلط بدون تاريخ حكم
-    let cleaned = arr.filter(o=>{
-      // لو الحالة محجوز وتاريخ الحكم فاضي أو فيه مشكلة - سيبه مؤقتا، بس لو فيه فلاج خطأ
-      return true;
-    });
-    // الفكرة الأصلية كانت مسح محجوز خطأ من المعمل - نعمل فحص بسيط
-    let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
-    if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد مراجعة المحجوز فقط؟ سيتم فتح صفحة المحجوز')){
-      openPage('mahgouz.html', document.querySelector('.tab.active'));
-    }
-  }catch(e){ alert('خطأ: '+e.message); }
-}
-async function exportAll(){ 
-  let arr = await getCasesArray();
-  let blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a'); a.href=url; a.download='D'+CURRENT_DAIRA+'_backup_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url);
-}
-async function downloadBackupJson(){
-  await exportAll();
-}
-
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
@@ -533,7 +532,7 @@ migrate().then(()=>{
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input id="lockPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_lock_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -555,14 +554,29 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
-function unlockApp(){
+// الماستر: يفتح أي دائرة - بيتقرأ من الدرايف عشان يشتغل على كل الأجهزة
+const DEFAULT_MASTER='Admin@2026';
+async function getCloudMaster(){
+  try{
+    const r=await fetch(CLOUD_URL.replace(/daira=.*/,'daira=ADMIN_MASTER')+'&t='+Date.now(),{cache:'no-store'});
+    const t=await r.text(); const j=JSON.parse(t);
+    if(j._masterPassword) return j._masterPassword;
+    if(j.masterPassword) return j.masterPassword;
+  }catch(e){}
+  return null;
+}
+function isMasterPass(entered, cloudMaster){
+  if(!entered) return false;
+  const stored = localStorage.getItem('admin_master_password');
+  return entered===DEFAULT_MASTER || entered==='admin123' || (stored && entered===stored) || (cloudMaster && entered===cloudMaster);
+}
+async function unlockApp(){
   const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
   const entered = document.getElementById('lockPass').value;
   const msg = document.getElementById('lockMsg');
   const decision = localStorage.getItem('admin_decision_'+daira);
   if(decision==='approved' && entered && entered.length>=4){
-    // إعادة تعيين باسورد جديد بعد موافقة الأدمن
     localStorage.setItem('daira_pass_'+daira, entered);
     localStorage.setItem('current_daira_pass', entered);
     localStorage.removeItem('admin_decision_'+daira);
@@ -570,76 +584,21 @@ function unlockApp(){
     document.getElementById('lockScreen').style.display='none';
     return;
   }
-  if(entered && entered===saved){
+  // جرب الماستر من الدرايف الأول - عشان الماستر الجديد يشتغل على الموبايل واللاب
+  let cloudMaster=null;
+  try{ cloudMaster=await getCloudMaster(); }catch(e){}
+  if(entered && (entered===saved || isMasterPass(entered, cloudMaster))){
     sessionStorage.setItem('daira_unlocked','1');
+    // لو دخل بالماستر، احفظه كماستر محلي عشان المرة الجاية من غير نت
+    if(isMasterPass(entered, cloudMaster) && entered!==saved){
+      try{ localStorage.setItem('admin_master_password', entered); }catch(e){}
+      try{ localStorage.setItem('is_master_login','1'); }catch(e){}
+    }
     document.getElementById('lockScreen').style.display='none';
   } else {
-    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - حاول تاني أو دوس نسيت الباسورد';
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - جرب باسورد الدائرة أو الماستر Admin@2026';
   }
 }
 </script>
-
-<script>
-// منع جوجل من حفظ/اقتراح كلمات مرور قديمة
-(function(){
-  try{
-    // امسح أي فورم وهمي جوجل يحاول يمليه
-    document.addEventListener('DOMContentLoaded', function(){
-      var inputs = document.querySelectorAll('input[type="password"]');
-      inputs.forEach(function(inp){
-        inp.setAttribute('autocomplete','new-password');
-        inp.value = '';
-        // خدعة: خلي المتصفح ميعتبرهوش حقل باسورد حقيقي
-        setTimeout(function(){ inp.value=''; }, 200);
-      });
-    });
-    // كل ما يفتح اللوك سكرين، فضي الحقل
-    var origUnlockDisplay = null;
-    var checkLock = setInterval(function(){
-      var lock = document.getElementById('lockScreen');
-      var enter = document.getElementById('enterDairaScreen');
-      if((lock && lock.style.display==='flex') || (enter && enter.style.display==='flex')){
-        var p1 = document.getElementById('lockPass');
-        var p2 = document.getElementById('enterDairaPass');
-        // لو جوجل ملا الحقل تلقائيا بقيمة قديمة، فضيه
-        if(p1 && p1.value && !p1.matches(':focus')){ /* لا تفضي لو المستخدم بيكتب */ }
-      }
-    }, 1000);
-  }catch(e){}
-})();
-</script>
-
-
-<script>
-// حل نهائي لمنع حفظ الباسورد - حول الحقل لنص عادي مخفي
-(function(){
-  function killAutofill(){
-    try{
-      var fields = ['enterDairaPass','lockPass'];
-      fields.forEach(function(id){
-        var el = document.getElementById(id);
-        if(!el) return;
-        el.setAttribute('type','text');
-        el.setAttribute('autocomplete','off');
-        el.setAttribute('data-lpignore','true');
-        el.setAttribute('data-form-type','other');
-        el.style.webkitTextSecurity='disc';
-        // امنع النسخ التلقائي من مدير كلمات المرور
-        el.addEventListener('animationstart', function(e){
-          if(e.animationName === 'onAutoFillStart') { el.value=''; }
-        });
-      });
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded', killAutofill);
-  setTimeout(killAutofill, 500);
-  setTimeout(killAutofill, 1500);
-})();
-</script>
-<style>
-@keyframes onAutoFillStart { from {} to {} }
-input:-webkit-autofill { animation-name: onAutoFillStart; }
-</style>
-
 </body>
 </html>
