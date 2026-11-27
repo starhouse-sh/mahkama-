@@ -1,9 +1,10 @@
 {
-  "version": "v88-master-sync-drive",
+  "version": "v89-eye-and-name",
   "date": "2026-11-27",
-  "cache": "mahkama-v85-master-sync",
+  "cache": "mahkama-v87-eye-name",
   "files_changed": [
     "app.html",
+    "manifest.json",
     "admin-dairat.html",
     "version.json"
   ]
