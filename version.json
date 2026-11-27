@@ -1,8 +1,8 @@
 {
-  "version": "v109-fix-password-mobile-complete",
+  "version": "v115-baseline-exact-fix-404",
   "date": "2026-11-27",
-  "cache": "mahkama-v109-fix-password-mobile-complete",
-  "note": "إصلاح نهائي: 1- منع جوجل من حفظ الباسورد (readonly + one-time-code + إخفاء زر الحفظ) 2- إصلاح صفحة المحضر غير مكتملة على الموبايل (إزالة scale transform والاعتماد على responsive width 100% فقط) - مع الالتزام بالأربعة الأكواد الأساسية",
+  "cache": "mahkama-v115-baseline-exact-fix-404",
+  "note": "رجوع للنسخة الأساسية بالظبط - نفس قائمة الملفات في BASELINE_1_sw.js و BASELINE_4_version.json بدون أي إضافة - من غير ketabet-ahkam-daira.html ومن غير ketabet-ahkam-final.html ومن غير أي نسخة مكررة - التعديل الوحيد: تثبيت واحد واحد بدل addAll عشان 404 قبل الدخول، وتحويل الملفات المحذوفة select-daira و exit لـ app.html",
   "files_in_cache": [
     "./",
     "./app.html",
@@ -12,7 +12,6 @@
     "./app.js",
     "./d32_auto_backup.js",
     "./pwa-install.js",
-    "./Ketabet-Ahkam.html",
     "./Mahgouza-Hokm.html",
     "./SANAWAT-QADAIYA.html",
     "./admin-dairat.html",
@@ -50,6 +49,7 @@
     "./tasleem_ahkam.html",
     "./test-daira32.html",
     "./warradat-mofradat.html",
-    "./ehsaia-esbaia.html"
+    "./ehsaia-esbaia.html",
+    "./Ketabet-Ahkam.html"
   ]
 }
