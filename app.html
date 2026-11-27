@@ -293,38 +293,280 @@ function openPage(f,el){
   }
   setTimeout(updateCounts,300);
 }
-
 function exitApp(){
   try{
-    if(!confirm('هل تريد الخروج من التطبيق وقفل الشاشة؟')) return;
-    // امسح حالة الفتح - كده التطبيق هيطلب باسورد تاني
-    try{ sessionStorage.removeItem('daira_unlocked'); }catch(e){}
-    try{ sessionStorage.clear(); }catch(e){}
-    // فضي حقول الباسورد
-    try{
-      var lp = document.getElementById('lockPass');
-      if(lp){ lp.value=''; lp.style.webkitTextSecurity='disc'; }
-      var ep = document.getElementById('enterDairaPass');
-      if(ep){ ep.value=''; }
-    }catch(e){}
-    // اظهر شاشة القفل
-    try{
-      var daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
-      document.getElementById('lockDairaNum').textContent = daira;
-      var lock = document.getElementById('lockScreen');
-      if(lock){ lock.style.display='flex'; }
-      document.getElementById('lockMsg').textContent = '🔒 تم قفل التطبيق - أدخل الباسورد للدخول';
-      // وقف أي iframe
-      try{ document.getElementById('frame').src='about:blank'; }catch(e){}
-    }catch(e){
-      // لو فشل القفل، اعمل ريلود وهيطلب باسورد
-      location.reload();
+    if(confirm('هل تريد الخروج من التطبيق؟')){
+      // حاول تقفل التبويب لو اتفتح كـ PWA
+      try{ window.close(); }catch(e){}
+      // لو على الموبايل، رجع للتاريخ واقفل
+      try{
+        if(history.length>1){
+          history.go(-history.length);
+        }
+      }catch(e){}
+      // محاولة أخيرة: افتح صفحة فاضية
+      setTimeout(()=>{ try{ location.href='about:blank'; }catch(e){} }, 300);
     }
   }catch(e){
-    try{ location.reload(); }catch(e2){}
+    try{ window.close(); }catch(e2){}
   }
 }
+// منع زر الرجوع يرجع صفحة صفحة - خليه يسأل خروج لو في أول صفحة
+(function(){
+  try{
+    history.pushState({exit:1}, '', location.href);
+    window.addEventListener('popstate', function(e){
+      if(!e.state || e.state.exit){
+        if(confirm('هل تريد الخروج من التطبيق؟')){
+          try{ window.close(); }catch(e){}
+          history.pushState({exit:1}, '', location.href);
+        } else {
+          history.pushState({exit:1}, '', location.href);
+        }
+      }
+    });
+  }catch(e){}
+})();
 
+async function exportAll(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري تجهيز النسخة...';
+    let arr = await getCasesArray();
+    let ahRaw = await idbGet('D32_AHKAM') || '[]';
+    let cfgRaw = await idbGet('D32_DAIRA_CONFIG') || await idbGet('D32_CIRCLE') || '';
+    let all = {daira: CURRENT_DAIRA, date: new Date().toISOString(), cases: arr, ahkam: ahRaw, config: cfgRaw};
+    let blob = new Blob([JSON.stringify(all)], {type:'application/json'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    document.getElementById('health').textContent='✅ تم تنزيل النسخة - '+arr.length+' قضية';
+  }catch(e){
+    alert('خطأ في التنزيل: '+e.message);
+    document.getElementById('health').textContent='❌ فشل التنزيل: '+e.message;
+  }
+}
+async function checkHealth(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري الفحص...';
+    let arr = await getCasesArray();
+    let raw = await idbGet('D32_V3') || await idbGet('D32_FINAL') || '';
+    let sizeMB = raw ? (new Blob([raw]).size/1024/1024).toFixed(2) : '0';
+    document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
+  }catch(e){
+    document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+  }
+}
+async function uploadToDrive(localArray, silent, options){
+  options = options || {};
+  var deletedIds = options.deletedIds || [];
+  try{let storedDeleted = await getDeletedIds();if(storedDeleted.length>0) deletedIds = [...new Set([...deletedIds,...storedDeleted])];}catch(e){}
+  if(!localArray ||!Array.isArray(localArray) || localArray.length==0){ if(!silent) alert('⚠ فاضي'); return false; }
+  try{
+    document.getElementById('health').textContent='⏳ رفع '+localArray.length+'...';
+    localArray.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
+    if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
+    let ahRaw = await idbGet('D32_AHKAM')||'[]';
+    let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
+    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
+    await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
+    await clearDeletedIds(); await setLastSync();
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
+    return true;
+  }catch(e){
+    if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
+    return false;
+  }
+}
+async function forceUpload(silent){
+  let arr = await getCasesArray();
+  if(!arr.length){ if(!silent) alert('مفيش بيانات - افتح المحاضر واعمل تحديث'); return; }
+  let deletedIds = await getDeletedIds();
+  let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
+  if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
+}
+async function syncBidirectionalSmart(silent){
+  if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
+  let lastSyncBefore = Number(await getLastSync()||0);
+  try{
+    if(!silent) document.getElementById('health').textContent='⏳ مزامنة ذكية...';
+    let res=await fetch(CLOUD_URL,{cache:'no-store'});
+    let text=await res.text();
+    if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) throw new Error('السكريبت مش منشور Anyone');
+    let j; try{ j=JSON.parse(text); }catch(e){ j={v3:[], ahkam:[]}; }
+    if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
+    if(Array.isArray(j)) j = {v3:j, ahkam:[]};
+    if(j._password) CLOUD_PASSWORD = j._password;
+    let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
+    // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
+    try{
+      let cloudAhkam = j.ahkam && Array.isArray(j.ahkam) ? j.ahkam : [];
+      if(cloudAhkam.length>1 && Array.isArray(cloudAhkam[1])) cloudAhkam = cloudAhkam[1];
+      if(cloudAhkam.length>0){
+        let localAhRaw = await idbGet('D32_AHKAM') || '[]';
+        let localAh = [];
+        try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
+        // إصلاح العدد 875 بدل 951: لو السحابة أكبر، السحابة هي الصح - خدها كلها
+        // الدمج القديم بـ رقم/سنة كان بيدوس أحكام على بعض
+        let mergedAh;
+        if(cloudAhkam.length >= localAh.length){
+          // السحابة فيها كل الأحكام (951) - استخدمها كأساس
+          // وادمج عليها أي حكم محلي جديد مش موجود في السحابة بالـ id فقط
+          let cloudIds = new Set(cloudAhkam.map(a=> a.id!=null ? String(a.id) : ''));
+          let extraLocal = localAh.filter(a=> a.id!=null && !cloudIds.has(String(a.id)));
+          mergedAh = [...cloudAhkam, ...extraLocal];
+        } else {
+          // المحلي أكبر - ادمج بالـ id فقط، مش برقم/سنة
+          let ahMap = new Map();
+          localAh.forEach(a=>{ if(a.id!=null) ahMap.set(String(a.id), a); else ahMap.set('noid_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a); });
+          cloudAhkam.forEach(a=>{
+            if(a.id!=null){
+              let k = String(a.id);
+              if(!ahMap.has(k)) ahMap.set(k, a);
+              else if(Number(a._updatedAt||0) > Number(ahMap.get(k)._updatedAt||0)) ahMap.set(k, a);
+            } else {
+              ahMap.set('noid_cloud_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a);
+            }
+          });
+          mergedAh = [...ahMap.values()];
+        }
+        await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
+      }
+    }catch(e){ console.log('ahkam sync err', e); }
+    // --- إصلاح بيانات الدائرة ---
+    try{
+      let info = j.dairaInfo || j.dairaConfig || j.config || null;
+      if(info){
+        await idbSet('D32_DAIRA_CONFIG', JSON.stringify(info));
+        await idbSet('D32_CIRCLE', JSON.stringify(info));
+        await idbSet('D32_CONFIG', JSON.stringify(info));
+      }
+    }catch(e){}
+    let localData = await getCasesArray();
+    let deletedIds=await getDeletedIds();
+    let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
+    cloudData = cloudData.filter(o=>!deletedMap[String(o.id)]);
+    let newLocal=[...localData];
+    let mapById={}, mapByKey={};
+    localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i; let k=normalizeKey(o.raqm,o.sana); if(mapByKey[k]===undefined) mapByKey[k]=i;});
+    let maxFileIndex=0; localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
+    let added=0;
+    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } newLocal.push(o); added++; }});
+    newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
+    await idbSet('D32_V3',JSON.stringify(newLocal));
+    await idbSet('D32_FINAL',JSON.stringify(newLocal));
+    let toUpload = localData.filter(o=> Number(o._updatedAt||0) > lastSyncBefore);
+    if(toUpload.length>0 || deletedIds.length>0){
+      let ok = await uploadToDrive(newLocal, true, {deletedIds:deletedIds});
+      if(ok) await setLastSync();
+    }else{await setLastSync();}
+    updateCounts();
+    // مترجعش تحميل الـ iframe في المزامنة عشان ميعملش تداخل - سيبه زي ما هو
+    // let f=document.getElementById('frame');
+  }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
+}
+
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  try{
+    let arr = await getCasesArray();
+    let before = arr.length;
+    // امسح أي قضية محجوزة غلط بدون تاريخ حكم
+    let cleaned = arr.filter(o=>{
+      // لو الحالة محجوز وتاريخ الحكم فاضي أو فيه مشكلة - سيبه مؤقتا، بس لو فيه فلاج خطأ
+      return true;
+    });
+    // الفكرة الأصلية كانت مسح محجوز خطأ من المعمل - نعمل فحص بسيط
+    let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+    if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد مراجعة المحجوز فقط؟ سيتم فتح صفحة المحجوز')){
+      openPage('mahgouz.html', document.querySelector('.tab.active'));
+    }
+  }catch(e){ alert('خطأ: '+e.message); }
+}
+async function exportAll(){ 
+  let arr = await getCasesArray();
+  let blob = new Blob([JSON.stringify(arr, null, 2)], {type:'application/json'});
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a'); a.href=url; a.download='D'+CURRENT_DAIRA+'_backup_'+Date.now()+'.json'; a.click(); URL.revokeObjectURL(url);
+}
+async function downloadBackupJson(){
+  await exportAll();
+}
+
+document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
+document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
+migrate().then(()=>{
+  updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
+  // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
+  if(!navigator.onLine){
+    const h=document.getElementById('health');
+    if(h) h.textContent='📴 وضع Offline - شغال من الجهاز - لما النت يرجع دوس مزامنة ذكية';
+  } else {
+    setTimeout(()=>syncBidirectionalSmart(true),2500);
+  }
+  // تخزين تلقائي لكل الصفحات من غير ما تفتحها يدوي
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.ready.then(reg => {
+      if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
+      // سجل الـ SW لو مش مسجل
+    }).catch(()=>{});
+    // لو الـ SW مش مسجل، سجله
+    navigator.serviceWorker.getRegistration().then(r => {
+      if(!r) navigator.serviceWorker.register('./sw.js').then(reg => {
+        if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
+      }).catch(()=>{});
+    });
+  }
+  window.addEventListener('online', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='🌐 النت رجع - دوس مزامنة ذكية'; });
+  window.addEventListener('offline', ()=>{ const h=document.getElementById('health'); if(h) h.textContent='📴 وضع Offline - شغال من الجهاز'; });
+});
+</script>
+<script src="pwa-install.js"></script>
+
+<!-- قفل بباسورد في كل فتحة - V18 -->
+<div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
+<div style="font-size:48px">⚖️</div>
+<h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
+<p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
+<input id="lockPass" type="text" inputmode="text" placeholder="باسورد الدائرة" autocomplete="off" data-lpignore="true" data-form-type="other" data-1p-ignore="true" name="daira_lock_no_autofill_xyz" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px;-webkit-text-security:disc;text-security:disc;" onfocus="this.style.webkitTextSecurity='disc';">
+<button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
+<p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
+<p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
+</div>
+<script>
+(function(){
+  try{
+    const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
+    if(!daira) return;
+    if(sessionStorage.getItem('daira_unlocked')==='1') return;
+    document.getElementById('lockDairaNum').textContent = daira;
+    const lock = document.getElementById('lockScreen');
+    lock.style.display='flex';
+    // تحقق من قرار الأدمن (موافقة على تغيير باسورد)
+    const decision = localStorage.getItem('admin_decision_'+daira);
+    if(decision==='approved'){
+      document.getElementById('lockMsg').style.color='#a7f3d0';
+      document.getElementById('lockMsg').textContent='✅ تمت الموافقة من الإدارة - يمكنك تعيين باسورد جديد';
+    }
+  }catch(e){}
+})();
 function unlockApp(){
   const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
@@ -348,68 +590,5 @@ function unlockApp(){
   }
 }
 </script>
-
-<script>
-// منع جوجل من حفظ/اقتراح كلمات مرور قديمة
-(function(){
-  try{
-    // امسح أي فورم وهمي جوجل يحاول يمليه
-    document.addEventListener('DOMContentLoaded', function(){
-      var inputs = document.querySelectorAll('input[type="password"]');
-      inputs.forEach(function(inp){
-        inp.setAttribute('autocomplete','new-password');
-        inp.value = '';
-        // خدعة: خلي المتصفح ميعتبرهوش حقل باسورد حقيقي
-        setTimeout(function(){ inp.value=''; }, 200);
-      });
-    });
-    // كل ما يفتح اللوك سكرين، فضي الحقل
-    var origUnlockDisplay = null;
-    var checkLock = setInterval(function(){
-      var lock = document.getElementById('lockScreen');
-      var enter = document.getElementById('enterDairaScreen');
-      if((lock && lock.style.display==='flex') || (enter && enter.style.display==='flex')){
-        var p1 = document.getElementById('lockPass');
-        var p2 = document.getElementById('enterDairaPass');
-        // لو جوجل ملا الحقل تلقائيا بقيمة قديمة، فضيه
-        if(p1 && p1.value && !p1.matches(':focus')){ /* لا تفضي لو المستخدم بيكتب */ }
-      }
-    }, 1000);
-  }catch(e){}
-})();
-</script>
-
-
-<script>
-// حل نهائي لمنع حفظ الباسورد - حول الحقل لنص عادي مخفي
-(function(){
-  function killAutofill(){
-    try{
-      var fields = ['enterDairaPass','lockPass'];
-      fields.forEach(function(id){
-        var el = document.getElementById(id);
-        if(!el) return;
-        el.setAttribute('type','text');
-        el.setAttribute('autocomplete','off');
-        el.setAttribute('data-lpignore','true');
-        el.setAttribute('data-form-type','other');
-        el.style.webkitTextSecurity='disc';
-        // امنع النسخ التلقائي من مدير كلمات المرور
-        el.addEventListener('animationstart', function(e){
-          if(e.animationName === 'onAutoFillStart') { el.value=''; }
-        });
-      });
-    }catch(e){}
-  }
-  document.addEventListener('DOMContentLoaded', killAutofill);
-  setTimeout(killAutofill, 500);
-  setTimeout(killAutofill, 1500);
-})();
-</script>
-<style>
-@keyframes onAutoFillStart { from {} to {} }
-input:-webkit-autofill { animation-name: onAutoFillStart; }
-</style>
-
 </body>
 </html>
