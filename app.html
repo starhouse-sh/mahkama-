@@ -41,13 +41,13 @@ async function restoreDairaFromAnywhere(){
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;overflow:hidden}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;touch-action:pan-x pan-y pinch-zoom}
 body{display:block;background:#f0f2f5;direction:rtl}
-#appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right}
+#appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right;touch-action:pan-x pan-y pinch-zoom}
 .sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
 .section-title{font-size:11px;color:#FFD700;margin:14px 6px 6px;font-weight:bold}
@@ -64,12 +64,12 @@ body{display:block;background:#f0f2f5;direction:rtl}
 #info{font-size:11px;background:#e8f5e9;padding:6px 10px;border-radius:20px;border:1px solid #4caf50}
 .safe-bar{background:#fff3cd;border-bottom:2px solid #ffc107;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:11px;flex-wrap:wrap}
 .safe-bar button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px}
-iframe{flex:1;width:100%;border:none;background:#fff}
+iframe{flex:1;width:100%;border:none;background:#fff;touch-action:pan-x pan-y pinch-zoom}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
 /* منع جوجل من حفظ الباسورد - الحقل text لكن يظهر كنقط */
 input.fake-pass-mask{-webkit-text-security:disc !important;text-security:disc !important}
 input::-ms-reveal,input::-ms-clear{display:none}
-html,body{width:100%;overflow:hidden}
+html,body{width:100%;overflow:hidden;touch-action:pan-x pan-y pinch-zoom}
 #appWrapper{width:1100px;min-width:1100px;flex-shrink:0}
 .content{min-width:0;overflow:hidden}
 iframe{min-width:0}
@@ -81,7 +81,7 @@ iframe{min-width:0}
 
 <!-- شاشة دخول لدائرة موجودة - تظهر لو مفيش دائرة محفوظة، بدل ما يوديك على الإنشاء -->
 <div id="enterDairaScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:1000000;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
-<div style="font-size:48px">⚖️</div>
+<div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
@@ -531,7 +531,7 @@ migrate().then(()=>{
 </div> <!-- end appWrapper -->
 <!-- قفل بباسورد في كل فتحة - V18 -->
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
-<div style="font-size:48px">⚖️</div>
+<div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
 <input id="lockPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
