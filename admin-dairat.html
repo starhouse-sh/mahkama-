@@ -268,12 +268,11 @@ async function changeMaster(){
   document.getElementById('masterShow').textContent=newM;
   document.getElementById('masterCard').textContent=newM;
   document.getElementById('masterInfo').textContent=newM;
-  // احفظ الماستر الجديد في الدرايف - عشان يشتغل على كل الأجهزة مش الجهاز ده بس
   try{
     await fetch(CLOUD+'?daira=ADMIN_MASTER',{method:'POST',body:JSON.stringify({v3:[],ahkam:[],_masterPassword:newM,_updatedAt:Date.now()})});
-    alert('✅ تم تغيير الماستر إلى: '+newM+'\n\nاتحفظ في الدرايف - هيشتغل على الموبايل واللاب دلوقتي\nجربه في التطبيق على أي جهاز');
+    alert('✅ تم تغيير الماستر إلى: '+newM+'\n\nاتحفظ في الدرايف - هيشتغل على الموبايل واللاب دلوقتي\nجربه في التطبيق');
   }catch(e){
-    alert('⚠️ اتغير على الجهاز ده بس - النت فشل في الحفظ في الدرايف\nالماستر الجديد: '+newM+'\nجرب تاني والنت شغال');
+    alert('⚠️ اتغير على الجهاز ده بس - النت فشل\nالماستر الجديد: '+newM);
   }
 }
 </script>
