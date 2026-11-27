@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
 <meta name="google" content="notranslate">
 <meta name="format-detection" content="telephone=no">
 <script>
@@ -47,11 +47,13 @@ async function restoreDairaFromAnywhere(){
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none}
-body{display:flex;height:100vh;height:100dvh;width:100vw;background:#f0f2f5;direction:rtl;overflow:hidden}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch}
+body{display:flex;height:100vh;height:100dvh;width:100vw;background:#f0f2f5;direction:rtl;overflow:auto}
 #appWrapper{display:flex;height:100vh;height:100dvh;width:100%;min-width:100%;background:#f0f2f5;transform-origin:top right;flex-shrink:0}
 @media (max-width:1100px){
   #appWrapper{width:1100px;min-width:1100px}
+  body{overflow:auto}
+  html{overflow:auto}
 }
 .sidebar{width:270px;min-width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
@@ -485,20 +487,28 @@ migrate().then(()=>{
       var vw=window.innerWidth;
       var vh=window.innerHeight;
       if(vw < baseW){
+        // موبايل - صغر الواجهة كلها عشان تظهر كاملة بدون قص على الشمال
         var scale=vw/baseW;
-        if(scale < 0.40) scale=0.40;
+        if(scale < 0.30) scale=0.30;
         if(scale > 1) scale=1;
         w.style.transform='scale('+scale+')';
         w.style.transformOrigin='top right';
         w.style.width=baseW+'px';
         w.style.minWidth=baseW+'px';
+        // الارتفاع يتناسب مع التصغير عشان ميقصش
         w.style.height=(vh/scale)+'px';
+        // السماح بالتمرير عشان لو لسه فيه جزء مقصوص
+        document.body.style.overflow='auto';
+        document.documentElement.style.overflow='auto';
       } else {
+        // لاب توب - املى الشاشة كلها
         w.style.transform='';
         w.style.width='100%';
         w.style.minWidth='100%';
         w.style.height='100vh';
         w.style.height='100dvh';
+        document.body.style.overflow='hidden';
+        document.documentElement.style.overflow='hidden';
       }
     }catch(e){}
   }
