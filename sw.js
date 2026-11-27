@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v96-fix-black-screen';
+const CACHE = 'mahkama-v98-offline-wrapper';
 const FILES = [
   './',
   './app.html',
@@ -6,12 +6,17 @@ const FILES = [
   './daira-core.js',
   './mahdar.html',
   './daira-config.html',
-  './admin-dairat.html'
+  './admin-dairat.html',
+  './galasat.html',
+  './rolat.html',
+  './taalia.html',
+  './ketabet-ahkam-final.html',
+  './version.json'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(FILES)).then(()=> self.skipWaiting())
+    caches.open(CACHE).then(cache => cache.addAll(FILES).catch(()=>{})).then(()=> self.skipWaiting())
   );
 });
 
@@ -24,10 +29,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // الدرايف يفضل نت
   if(e.request.url.includes('script.google.com') || e.request.url.includes('googleusercontent')){
     return;
   }
-  // ل app.html و manifest - هات من النت الأول عشان الشاشة السودة متتخزنش
+  // app.html و manifest - نت الأول، ولو مفيش نت هات من الكاش (عشان يشتغل Offline)
   if(e.request.url.includes('app.html') || e.request.url.includes('manifest.json') || e.request.url.includes('version.json')){
     e.respondWith(
       fetch(e.request, {cache:'no-store'}).then(res => {
@@ -36,10 +42,11 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(()=> caches.match(e.request))
+      }).catch(()=> caches.match(e.request).then(c => c || caches.match('./app.html')))
     );
     return;
   }
+  // باقي الملفات - كاش الأول عشان يشتغل Offline، ولو مش موجود هات من النت
   e.respondWith(
     caches.match(e.request).then(cached => {
       if(cached) return cached;
