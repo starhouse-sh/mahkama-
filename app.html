@@ -14,10 +14,6 @@ function saveDairaPersist(num, pass){
     req.onsuccess=function(e){ var db=e.target.result; var tx=db.transaction('s','readwrite'); tx.objectStore('s').put(String(num),'current_daira'); if(pass) tx.objectStore('s').put(pass,'daira_pass_'+num); };
   }catch(e){}
 }
-const DEFAULT_MASTER_PASSWORD='Admin@2026';
-function getMasterPassword(){
-  try{ return localStorage.getItem('admin_master_password') || DEFAULT_MASTER_PASSWORD; }catch(e){ return DEFAULT_MASTER_PASSWORD; }
-}
 function getDairaFromCookie(){
   try{ var m=document.cookie.match(/(?:^|; )current_daira=([^;]*)/); return m?decodeURIComponent(m[1]):null; }catch(e){ return null; }
 }
@@ -45,13 +41,10 @@ async function restoreDairaFromAnywhere(){
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;overflow:hidden}
-body{display:block;background:#f0f2f5;direction:rtl}
-#appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right}
+body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 .sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
 .section-title{font-size:11px;color:#FFD700;margin:14px 6px 6px;font-weight:bold}
@@ -71,79 +64,16 @@ body{display:block;background:#f0f2f5;direction:rtl}
 iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
 </style>
-
-<script>
-// AUTO_UPDATE_V60 - تحديث تلقائي لما النت يرجع
-(function(){
-  const APP_VER='v60-2026-05-13';
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', ()=>{
-      navigator.serviceWorker.register('./sw.js?v='+APP_VER).then(reg=>{
-        // فحص فوري
-        try{ reg.update(); }catch(e){}
-        // كل 2 دقيقة لو أونلاين
-        setInterval(()=>{ if(navigator.onLine){ try{ reg.update(); }catch(e){} } }, 120000);
-        // لما النت يرجع
-        window.addEventListener('online', ()=>{ 
-          setTimeout(()=>{ try{ reg.update(); }catch(e){} }, 1000);
-          // كمان افحص version.json
-          checkVersionFile();
-        });
-        reg.addEventListener('updatefound', ()=>{
-          const nw = reg.installing;
-          if(!nw) return;
-          nw.addEventListener('statechange', ()=>{
-            if(nw.state==='installed' && navigator.serviceWorker.controller){
-              // نسخة جديدة جاهزة - حدث تلقائي
-              console.log('New version found, auto updating...');
-              nw.postMessage({type:'SKIP_WAITING'});
-            }
-          });
-        });
-      }).catch(()=>{});
-      let reloading=false;
-      navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-        if(reloading) return;
-        reloading=true;
-        window.location.reload();
-      });
-    });
-    
-    async function checkVersionFile(){
-      try{
-        let r=await fetch('./version.json?v='+Date.now(), {cache:'no-store'});
-        let j=await r.json();
-        let lastVer=localStorage.getItem('app_last_version');
-        if(lastVer && lastVer!==j.version){
-          console.log('Version file changed', lastVer, '->', j.version);
-          let reg=await navigator.serviceWorker.getRegistration();
-          if(reg) await reg.update();
-        }
-        localStorage.setItem('app_last_version', j.version);
-      }catch(e){}
-    }
-    // فحص version.json كل 5 دقائق
-    setInterval(()=>{ if(navigator.onLine) checkVersionFile(); }, 300000);
-    // أول مرة
-    if(navigator.onLine) setTimeout(checkVersionFile, 3000);
-  }
-})();
-</script>
-
 </head>
 <body>
 
-<!-- شاشة دخول - تجيب رقم الدائرة اللي أنشأتها افتراضي -->
+<!-- شاشة دخول لدائرة موجودة - تظهر لو مفيش دائرة محفوظة، بدل ما يوديك على الإنشاء -->
 <div id="enterDairaScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:1000000;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
-<div style="display:flex;gap:8px;align-items:center;margin:14px 0 8px">
-<span style="color:#FFD700;font-weight:bold">رقم الدائرة:</span>
-<input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة" style="width:100px;padding:12px;border-radius:10px;border:none;text-align:center;font-size:16px;font-weight:bold">
-<span style="font-size:12px;color:#cbd5e1">(من إنشائك)</span>
-</div>
-<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" autocomplete="new-password" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
+<input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
+<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -151,177 +81,44 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 </div>
 <script>
 async function checkEnterDaira(){
-  try{
-    var d = await restoreDairaFromAnywhere();
-    var numInput = document.getElementById('enterDairaNum');
-    if(d){
-      if(numInput) numInput.value = d;
-      return;
-    } else {
-      var lastDaira = null;
-      try{
-        for(var i=1;i<=39;i++){
-          if(localStorage.getItem('daira_pass_'+i)){
-            lastDaira = String(i);
-            break;
-          }
-        }
-        if(!lastDaira) lastDaira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || getDairaFromCookie();
-      }catch(e){}
-      document.getElementById('enterDairaScreen').style.display='flex';
-      if(lastDaira && numInput){
-        numInput.value = lastDaira;
-        setTimeout(()=>{ var p=document.getElementById('enterDairaPass'); if(p) p.focus(); }, 300);
-      } else {
-        if(numInput && !numInput.value) numInput.value = '32';
-      }
-    }
-  }catch(e){
-    console.log('checkEnterDaira error', e);
-    try{
-      document.getElementById('enterDairaScreen').style.display='flex';
-      var ni = document.getElementById('enterDairaNum');
-      if(ni && !ni.value) ni.value = localStorage.getItem('current_daira') || '32';
-    }catch(e2){}
+  var d = await restoreDairaFromAnywhere();
+  if(!d){
+    document.getElementById('enterDairaScreen').style.display='flex';
+    var saved = getDairaFromCookie();
+    if(saved) document.getElementById('enterDairaNum').value = saved;
   }
 }
-window.addEventListener('load', ()=>{ setTimeout(()=>{ try{checkEnterDaira();}catch(e){} }, 200); });
-setTimeout(()=>{ try{ const lock=document.getElementById('lockScreen'); const enter=document.getElementById('enterDairaScreen'); if(lock && enter && lock.style.display!=='flex' && enter.style.display!=='flex'){ enter.style.display='flex'; const n=document.getElementById('enterDairaNum'); if(n && !n.value) n.value='32'; } }catch(e){} }, 1000);
 async function enterExistingDaira(){
-  var numEl = document.getElementById('enterDairaNum');
-  var num = numEl ? numEl.value.trim() : '32';
-  var passEl = document.getElementById('enterDairaPass');
-  var pass = passEl ? passEl.value.trim() : '';
+  var num = document.getElementById('enterDairaNum').value.trim();
+  var pass = document.getElementById('enterDairaPass').value;
   var msg = document.getElementById('enterDairaMsg');
-  var btn = document.querySelector('#enterDairaScreen button');
-  const MASTER = getMasterPassword();
-  
   if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
-  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة (4 حروف على الأقل)'; return; }
-  
-  // الماستر يفتح أي دائرة
-  if(pass === MASTER){
-    saveDairaPersist(num, pass);
-    try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
-    hideAllLocksAndEnter(num);
+  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
+  // لو دخل بالماستر، اقبله ومتحفظوش كباسورد دائرة - احفظه كماستر
+  const storedMaster = localStorage.getItem('admin_master_password');
+  let cloudMaster=null;
+  try{
+    const CLOUD_TMP='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira=ADMIN_MASTER&t='+Date.now();
+    const r=await fetch(CLOUD_TMP,{cache:'no-store'}); const t=await r.text(); const j=JSON.parse(t);
+    if(j._masterPassword) cloudMaster=j._masterPassword;
+  }catch(e){}
+  const isMaster = pass==='Admin@2026' || pass==='admin123' || (storedMaster && pass===storedMaster) || (cloudMaster && pass===cloudMaster);
+  if(isMaster){
+    try{ localStorage.setItem('admin_master_password', pass); }catch(e){}
+    try{ localStorage.setItem('current_daira', String(num)); localStorage.setItem('DAIRA', String(num)); }catch(e){}
+    try{ sessionStorage.setItem('daira_unlocked','1'); sessionStorage.setItem('is_master_login','1'); }catch(e){}
+    document.getElementById('enterDairaScreen').style.display='none';
+    location.reload();
     return;
   }
-  
-  if(!navigator.onLine){
-    var savedLocal = localStorage.getItem('daira_pass_'+num);
-    if(savedLocal && savedLocal === pass){
-      saveDairaPersist(num, pass);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      hideAllLocksAndEnter(num);
-      return;
-    } else if(!savedLocal){
-      // لو مفيش لوكال ومفيش نت، احفظه وادخل (أول مرة)
-      saveDairaPersist(num, pass);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      hideAllLocksAndEnter(num);
-      return;
-    } else {
-      msg.textContent='📴 مفيش نت - والباسورد المحلي غير متطابق';
-      return;
-    }
-  }
-  try{
-    if(btn) { btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
-    msg.style.color='#ffeb3b';
-    msg.textContent='⏳ بيتأكد من باسورد الدائرة...';
-    const CLOUD_CHECK='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+num;
-    let r=await fetch(CLOUD_CHECK,{cache:'no-store'});
-    let t=await r.text();
-    let j={}; try{ j=JSON.parse(t); }catch(e){}
-    if(!j || j.error === 'not_found' || (!j.v3 && !j.dairaInfo && !j._password && !j.exists)){
-      msg.style.color='#ffcccc';
-      msg.textContent='الدائرة '+num+' مش موجودة - أنشئها من صفحة الإدارة';
-      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
-      return;
-    }
-    let cloudPass = (j._password || j.password || '').trim();
-    let cloudMaster = (j._masterPassword || '').trim();
-    let effectiveMaster = cloudMaster || MASTER;
-    
-    if(pass === effectiveMaster){
-      saveDairaPersist(num, pass);
-      try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
-      msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر';
-      setTimeout(()=>hideAllLocksAndEnter(num), 300);
-      return;
-    }
-    
-    if(!cloudPass){
-      // الدائرة ملهاش باسورد موظف - أول موظف يعمل باسورد
-      try{
-        let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:pass,_masterPassword:effectiveMaster,_updatedAt:Date.now()};
-        await fetch('https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+num,{method:'POST',body:JSON.stringify(payload)});
-      }catch(e){}
-      saveDairaPersist(num, pass);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      msg.style.color='#a7f3d0'; msg.textContent='✅ تم إنشاء باسورد للدائرة - جاري الدخول...';
-      setTimeout(()=>hideAllLocksAndEnter(num), 400);
-      return;
-    }
-    
-    if(cloudPass && cloudPass !== pass){
-      msg.style.color='#ffcccc';
-      msg.innerHTML='❌ الباسورد غلط للدائرة '+num+'<br><small>جرب باسورد الموظف أو الماستر</small>';
-      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
-      return;
-    }
-    saveDairaPersist(num, pass);
-    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-    try{ localStorage.setItem('daira_pass_'+num, pass); }catch(e){}
-    try{ localStorage.setItem('current_daira_pass', pass); }catch(e){}
-    msg.style.color='#a7f3d0';
-    msg.textContent='✅ تم التحقق - جاري الدخول...';
-    setTimeout(()=>hideAllLocksAndEnter(num), 300);
-  }catch(e){
-    console.log('Cloud check failed', e);
-    var savedLocal2 = localStorage.getItem('daira_pass_'+num);
-    if(savedLocal2 && savedLocal2 === pass){
-      saveDairaPersist(num, pass);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
-      hideAllLocksAndEnter(num);
-    } else {
-      msg.style.color='#ffcccc';
-      msg.textContent='❌ فشل الاتصال: '+e.message;
-      if(btn) { btn.disabled=false; btn.textContent='دخول لدائرتي ➜'; }
-    }
-  }
-}
-
-function hideAllLocksAndEnter(num){
-  try{
-    var enterScreen = document.getElementById('enterDairaScreen');
-    var lockScreen = document.getElementById('lockScreen');
-    if(enterScreen) enterScreen.style.display='none';
-    if(lockScreen) lockScreen.style.display='none';
-    try{ localStorage.setItem('current_daira', String(num)); localStorage.setItem('DAIRA', String(num)); }catch(e){}
-    var dNumEl = document.getElementById('dairaNum');
-    if(dNumEl) dNumEl.textContent = String(num);
-    try{ window.CURRENT_DAIRA = String(num); }catch(e){}
-    try{ document.title = 'نظام د' + num; }catch(e){}
-    if(typeof updateCounts === 'function'){ try{ updateCounts(); }catch(e){} }
-    if(typeof checkHealth === 'function'){ try{ checkHealth(); }catch(e){} }
-    if(typeof openPage === 'function'){
-      try{
-        var firstTab = document.querySelector('.tab.active') || document.querySelector('.tab');
-        openPage('mahdar.html', firstTab);
-      }catch(e){}
-    }
-    console.log('Entered daira', num, 'without reload');
-  }catch(e){
-    console.log('hideAllLocks err', e);
-    location.reload();
-  }
+  saveDairaPersist(num, pass);
+  try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+  document.getElementById('enterDairaScreen').style.display='none';
+  location.reload();
 }
 checkEnterDaira();
 </script>
 
-
-<div id="appWrapper">
 <div class="sidebar">
 <h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
@@ -329,6 +126,7 @@ checkEnterDaira();
 <div class="tab active" onclick="openPage('mahdar.html',this)">📋 المحاضر</div>
 <div class="tab" onclick="openPage('galasat.html',this)">🗓 الجلسات</div>
 <div class="tab blue" onclick="openPage('mofradat.html',this)">📁 المفردات</div>
+<div class="tab" onclick="openPage('warradat-mofradat.html',this)">📦 وردت المفردات</div>
 <div class="tab" onclick="openPage('kashf.html',this)">📋 كشف تأجيلات أحوال</div>
 <div class="tab" onclick="openPage('rolat.html',this)">📜 رولات القضاه</div>
 <div class="tab" onclick="openPage('tajdid_taagel.html',this)">🔄 التجديد من الشطب</div>
@@ -350,7 +148,10 @@ checkEnterDaira();
 <div class="tab" onclick="openPage('SANAWAT-QADAIYA.html',this)">📚 السنوات القضائية</div>
 <div class="tab elan" onclick="openPage('ealan.html',this)">📢 الإعلان الإداري</div>
 <div class="tab purple" style="background:linear-gradient(90deg,#0f1f3a,#1e3a6b);border:2px solid #FFD700" onclick="openPage('daira-config.html',this)">⚙ بيانات الدائرة</div>
-<div style="margin-top:auto;padding-top:10px;border-top:1px solid #ffffff22;font-size:10px;text-align:center;line-height:1.6">
+<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+<button onclick="exitApp()" style="width:100%;padding:12px;background:linear-gradient(90deg,#b00020,#7a0000);color:#fff;border:2px solid #ffcccc;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">🚪 خروج من التطبيق</button>
+</div>
+<div style="margin-top:10px;padding-top:10px;border-top:1px solid #ffffff22;font-size:10px;text-align:center;line-height:1.6">
 <span id="countSide">0</span> قضية<br>
 <span id="sizeInfo" style="color:#4caf50"></span><br>
 <span style="color:#FFD700">🛡 متوافق - FIXED V3</span>
@@ -364,12 +165,12 @@ checkEnterDaira();
 <div class="safe-bar">
 🛡 <span id="health">جاري فحص...</span>
 <button onclick="exportAll()" style="background:#0A2342;color:#FFD700">💾 حفظ</button>
-<button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">⬇ تنزيل JSON</button>
-<button onclick="checkHealth()" style="background:#FFD700">🔍 فحص</button>
+<button onclick="downloadBackupJson()" style="background:#1976D2;color:#fff">💾 نسخة احتياطية</button>
+
 <button onclick="syncBidirectionalSmart(false)" style="background:#16a34a;color:#fff">🔄 مزامنة ذكية</button>
 <button onclick="forceUpload(false)" style="background:#0f1f3a;color:#FFD700;border:1px solid #FFD700">⬆ رفع التعديلات فقط</button>
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
-<button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
+
 </div>
 <iframe id="frame" src="about:blank"></iframe>
 </div>
@@ -440,39 +241,6 @@ async function migrate(){
 }
 window.addEventListener('message',async(e)=>{
   if(!e.data) return;
-
-  if(e.data.type==='D32_DAIRA_INFO_UPDATED' || e.data.type==='D32_CIRCLE_UPDATED' || e.data.type==='DAIRA_INFO_UPDATED'){
-    try{
-      let data = e.data.data || e.data.info || e.data.val;
-      if(typeof data==='string') data=JSON.parse(data);
-      let str=JSON.stringify(data);
-      let d=data.daira||data.dairaNumber||CURRENT_DAIRA;
-      // احفظ في كل الأماكن
-      localStorage.setItem('D'+d+'_DAIRA_INFO', str);
-      localStorage.setItem('DAIRA_INFO_'+d, str);
-      localStorage.setItem('daira_info', str);
-      await idbSet('D'+d+'_DAIRA_INFO', str);
-      await idbSet('D'+d+'_DAIRA_CONFIG', str);
-      await idbSet('D32_DAIRA_INFO', str);
-      await idbSet('D32_CIRCLE', str);
-      // بلغ الـ iframe الحالي (المحاضر) لو مفتوح
-      let f=document.getElementById('frame');
-      if(f && f.contentWindow){
-        try{ f.contentWindow.postMessage({type:'DAIRA_INFO_REFRESH', data:data}, '*'); }catch(e){}
-      }
-    }catch(err){ console.log('Daira info update error', err); }
-    return;
-  }
-  if(e.data.type==='DAIRA_INFO_REFRESH'){
-    // لو جت من الـ parent، حدث الـ frame بردو
-    try{
-      let f=document.getElementById('frame');
-      if(f && f.contentWindow && f.contentWindow!==e.source){
-        f.contentWindow.postMessage(e.data, '*');
-      }
-    }catch(err){}
-  }
-
   if(e.data.type==='D32_SET'){
     try{
       let arr=JSON.parse(e.data.val);
@@ -540,8 +308,61 @@ function openPage(f,el){
   }
   setTimeout(updateCounts,300);
 }
-async function exportAll(){let db=await openDB();let all={};let stores=['cases','ahkam','d32store'];let done=0;stores.forEach(s=>{try{let tx=db.transaction(s,'readonly');tx.objectStore(s).openCursor().onsuccess=e=>{let cur=e.target.result;if(cur){all[cur.key]=cur.value;cur.continue();}else{done++;if(done==stores.length){let blob=new Blob([JSON.stringify(all)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';a.click();}}};}catch(err){done++;}});}
-async function checkHealth(){try{let db=await openDB();let tx=db.transaction('ahkam','readonly');let rq=tx.objectStore('ahkam').get('D32_AHKAM');rq.onsuccess=()=>{let idbSize=rq.result?(rq.result.length/1024/1024).toFixed(2):'0';document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+idbSize+'MB ✅ متوافق V3 FIXED';};}catch(e){document.getElementById('health').textContent='✅ يعمل';}}
+function exitApp(){
+  try{
+    if(!confirm('هل تريد إغلاق التطبيق خالص؟')) return;
+    try{ sessionStorage.removeItem('daira_unlocked'); }catch(e){}
+    try{ location.replace('exit.html'); }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
+  }catch(e){ try{ location.href='exit.html'; }catch(e2){} }
+}
+(function(){
+  try{
+    history.pushState({exit:1}, '', location.href);
+    window.addEventListener('popstate', function(e){
+      if(!e.state || e.state.exit){
+        if(confirm('هل تريد إغلاق التطبيق خالص؟')){
+          try{ location.replace('exit.html'); }catch(e){}
+          history.pushState({exit:1}, '', location.href);
+        } else {
+          history.pushState({exit:1}, '', location.href);
+        }
+      }
+    });
+  }catch(e){}
+})();
+
+async function exportAll(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري تجهيز النسخة...';
+    let arr = await getCasesArray();
+    let ahRaw = await idbGet('D32_AHKAM') || '[]';
+    let cfgRaw = await idbGet('D32_DAIRA_CONFIG') || await idbGet('D32_CIRCLE') || '';
+    let all = {daira: CURRENT_DAIRA, date: new Date().toISOString(), cases: arr, ahkam: ahRaw, config: cfgRaw};
+    let blob = new Blob([JSON.stringify(all)], {type:'application/json'});
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'D'+CURRENT_DAIRA+'_DB_BACKUP_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    document.getElementById('health').textContent='✅ تم تنزيل النسخة - '+arr.length+' قضية';
+  }catch(e){
+    alert('خطأ في التنزيل: '+e.message);
+    document.getElementById('health').textContent='❌ فشل التنزيل: '+e.message;
+  }
+}
+async function checkHealth(){
+  try{
+    document.getElementById('health').textContent='⏳ جاري الفحص...';
+    let arr = await getCasesArray();
+    let raw = await idbGet('D32_V3') || await idbGet('D32_FINAL') || '';
+    let sizeMB = raw ? (new Blob([raw]).size/1024/1024).toFixed(2) : '0';
+    document.getElementById('health').textContent='D'+CURRENT_DAIRA+'_DB: '+sizeMB+'MB | '+arr.length+' قضية ✅ متوافق V3 FIXED';
+  }catch(e){
+    document.getElementById('health').textContent='❌ فشل الفحص: '+e.message;
+    alert('فشل الفحص: '+e.message);
+  }
+}
 async function uploadToDrive(localArray, silent, options){
   options = options || {};
   var deletedIds = options.deletedIds || [];
@@ -553,19 +374,8 @@ async function uploadToDrive(localArray, silent, options){
     if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    let _dairaInfo = null;
-    try{
-      _dairaInfo = JSON.parse(localStorage.getItem('D32_DAIRA_INFO')||localStorage.getItem('DAIRA_INFO_32')||localStorage.getItem('daira_info')||'null');
-    }catch(e){}
-    if(!_dairaInfo){
-      try{ let _raw = await idbGet('D32_DAIRA_CONFIG')||await idbGet('D32_DAIRA_INFO')||await idbGet('D32_CIRCLE')||await idbGet('D32_CONFIG'); if(_raw) _dairaInfo=JSON.parse(_raw); }catch(e){}
-    }
-    const payload = {v3:localArray, ahkam:ahArr, dairaInfo:_dairaInfo||{}, dairaConfig:_dairaInfo||{}, _updatedAt: Date.now()};
-    // أهم إصلاح: خد الباسورد من اللوكال الأول، لو مش موجود خد من الكلاود - عشان الموبايل واللاب يبقوا نفس الباسورد
-    let localPass = null;
-    try{ localPass = localStorage.getItem('daira_pass_'+CURRENT_DAIRA) || localStorage.getItem('current_daira_pass'); }catch(e){}
-    if(localPass) payload._password = localPass;
-    else if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
+    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
     if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
@@ -582,6 +392,31 @@ async function forceUpload(silent){
   let ok = await uploadToDrive(arr, silent, {deletedIds:deletedIds});
   if(ok && !silent) alert('✅ تم رفع '+arr.length+' قضية لدايرة '+CURRENT_DAIRA);
 }
+async function forceReplaceDrive(){
+  if(!confirm('⚠ هل أنت متأكد؟ سيتم استبدال كل بيانات السحابة ببيانات هذا الجهاز فقط!')) return;
+  let arr = await getCasesArray();
+  if(!arr.length){ alert('مفيش بيانات في الجهاز'); return; }
+  if(!confirm('تأكيد نهائي: رفع '+arr.length+' قضية واستبدال السحابة بالكامل؟')) return;
+  let ok = await uploadToDrive(arr, false, {deletedIds:[]});
+  if(ok){
+    await clearDeletedIds();
+    await setLastSync();
+    alert('✅ تم استبدال السحابة بالكامل بـ '+arr.length+' قضية');
+    updateCounts(); checkHealth();
+  } else {
+    alert('❌ فشل الرفع');
+  }
+}
+async function cleanWrongMahgozFromLab(){
+  let arr = await getCasesArray();
+  let countMahgoz = arr.filter(o=> (o.halat||o.hala||'').includes('محجوز')).length;
+  if(confirm('يوجد '+countMahgoz+' قضية محجوز - هل تريد فتح صفحة المحجوز للمراجعة؟')){
+    openPage('mahgouz.html', document.querySelector('.tab.active'));
+  }
+}
+async function downloadBackupJson(){
+  await exportAll();
+}
 async function syncBidirectionalSmart(silent){
   if(!navigator.onLine){ document.getElementById('health').textContent='📴 مفيش نت - شغال من الجهاز'; return; }
   let lastSyncBefore = Number(await getLastSync()||0);
@@ -594,19 +429,6 @@ async function syncBidirectionalSmart(silent){
     if(j && j.error === 'update_needed'){document.getElementById('health').textContent='⛔ موقوفة من الأدمن';return;}
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
-    // === حفظ بيانات الدائرة (أسماء القضاة) من الدرايف لكل المفاتيح ===
-    try{
-      let _info = j.dairaInfo || j.dairaConfig || j.config || j._dairaInfo || null;
-      if(_info && typeof _info === 'object' && Object.keys(_info).length>0){
-        let _infoStr = JSON.stringify(_info);
-        await idbSet('D32_DAIRA_CONFIG', _infoStr);
-        await idbSet('D32_DAIRA_INFO', _infoStr);
-        await idbSet('D32_CIRCLE', _infoStr);
-        await idbSet('D32_CONFIG', _infoStr);
-        try{ localStorage.setItem('D32_DAIRA_INFO', _infoStr); localStorage.setItem('DAIRA_INFO_'+CURRENT_DAIRA, _infoStr); localStorage.setItem('daira_info', _infoStr); }catch(e){}
-        try{ window.dispatchEvent(new CustomEvent('DAIRA_INFO_UPDATED',{detail:_info})); }catch(e){}
-      }
-    }catch(e){ console.log('dairaInfo sync err',e); }
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
     // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
     try{
@@ -705,14 +527,12 @@ migrate().then(()=>{
 </script>
 <script src="pwa-install.js"></script>
 
-</div>
 <!-- قفل بباسورد في كل فتحة - V18 -->
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input type="text" style="display:none" autocomplete="username" tabindex="-1"><input type="password" style="display:none" autocomplete="new-password" tabindex="-1" id="fake_pass_trap">
-<input id="lockPass" type="password" placeholder="باسورد الدائرة" autocomplete="new-password" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
+<input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -720,17 +540,12 @@ migrate().then(()=>{
 <script>
 (function(){
   try{
-    const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
-    // لو session مفتوح قبل كده - لا تظهر القفل
+    const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
+    if(!daira) return;
     if(sessionStorage.getItem('daira_unlocked')==='1') return;
-    // لو مفيش دائرة محفوظة خالص - سيب enterDairaScreen هي اللي تظهر
-    if(!localStorage.getItem('current_daira') && !localStorage.getItem('DAIRA')){
-      // هنسيب checkEnterDaira يقرر
-      return;
-    }
     document.getElementById('lockDairaNum').textContent = daira;
     const lock = document.getElementById('lockScreen');
-    if(lock) lock.style.display='flex';
+    lock.style.display='flex';
     // تحقق من قرار الأدمن (موافقة على تغيير باسورد)
     const decision = localStorage.getItem('admin_decision_'+daira);
     if(decision==='approved'){
@@ -739,142 +554,51 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
+// الماستر: يفتح أي دائرة - بيتقرأ من الدرايف عشان يشتغل على كل الأجهزة
+const DEFAULT_MASTER='Admin@2026';
+async function getCloudMaster(){
+  try{
+    const r=await fetch(CLOUD_URL.replace(/daira=.*/,'daira=ADMIN_MASTER')+'&t='+Date.now(),{cache:'no-store'});
+    const t=await r.text(); const j=JSON.parse(t);
+    if(j._masterPassword) return j._masterPassword;
+    if(j.masterPassword) return j.masterPassword;
+  }catch(e){}
+  return null;
+}
+function isMasterPass(entered, cloudMaster){
+  if(!entered) return false;
+  const stored = localStorage.getItem('admin_master_password');
+  return entered===DEFAULT_MASTER || entered==='admin123' || (stored && entered===stored) || (cloudMaster && entered===cloudMaster);
+}
 async function unlockApp(){
-  const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
+  const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
-  const entered = document.getElementById('lockPass').value.trim();
+  const entered = document.getElementById('lockPass').value;
   const msg = document.getElementById('lockMsg');
-  const btn = document.querySelector('#lockScreen button');
   const decision = localStorage.getItem('admin_decision_'+daira);
-  const MASTER = getMasterPassword();
-  
-  if(!entered || entered.length<3){
-    msg.style.color='#ffcccc'; msg.textContent='اكتب الباسورد';
-    return;
-  }
-  
-  // الماستر يفتح أي دائرة حتى لو لها باسورد موظف
-  if(entered === MASTER){
-    try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
-    try{ localStorage.setItem('daira_pass_'+daira, entered); }catch(e){}
-    msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر - جهة الإدارة';
-    setTimeout(()=>hideAllLocksAndEnter(daira), 400);
-    return;
-  }
-  
   if(decision==='approved' && entered && entered.length>=4){
     localStorage.setItem('daira_pass_'+daira, entered);
     localStorage.setItem('current_daira_pass', entered);
     localStorage.removeItem('admin_decision_'+daira);
-    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-    hideAllLocksAndEnter(daira);
+    sessionStorage.setItem('daira_unlocked','1');
+    document.getElementById('lockScreen').style.display='none';
     return;
   }
-  
-  // لو الباسورد متسجل لوكال و مطابق - ادخل
-  if(entered && saved && entered===saved){
-    try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-    hideAllLocksAndEnter(daira);
-    return;
-  }
-  
-  // تأكد من الدرايف - مهم للموبايل الجديد
-  try{
-    if(btn){ btn.disabled=true; btn.textContent='⏳ جاري التحقق...'; }
-    msg.style.color='#ffeb3b';
-    msg.textContent='⏳ بيتأكد من باسورد الدائرة...';
-    
-    const CLOUD_URL='https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?action=get&daira='+daira;
-    let r=await fetch(CLOUD_URL,{cache:'no-store'});
-    let t=await r.text();
-    let j={}; try{ j=JSON.parse(t); }catch(e){}
-    
-    let cloudPass = (j._password || j.password || j.pass || '').trim();
-    let cloudMaster = (j._masterPassword || '').trim();
-    let effectiveMaster = cloudMaster || MASTER;
-    
-    // الماستر من الدرايف برضو يفتح
-    if(entered === effectiveMaster){
-      localStorage.setItem('daira_pass_'+daira, entered);
-      localStorage.setItem('current_daira_pass', entered);
-      try{ sessionStorage.setItem('daira_unlocked','1'); localStorage.setItem('is_master_login','1'); }catch(e){}
-      msg.style.color='#a7f3d0'; msg.textContent='🔑 دخول بالماستر';
-      setTimeout(()=>hideAllLocksAndEnter(daira), 300);
-      return;
+  // جرب الماستر من الدرايف الأول - عشان الماستر الجديد يشتغل على الموبايل واللاب
+  let cloudMaster=null;
+  try{ cloudMaster=await getCloudMaster(); }catch(e){}
+  if(entered && (entered===saved || isMasterPass(entered, cloudMaster))){
+    sessionStorage.setItem('daira_unlocked','1');
+    // لو دخل بالماستر، احفظه كماستر محلي عشان المرة الجاية من غير نت
+    if(isMasterPass(entered, cloudMaster) && entered!==saved){
+      try{ localStorage.setItem('admin_master_password', entered); }catch(e){}
+      try{ localStorage.setItem('is_master_login','1'); }catch(e){}
     }
-    
-    // لو الدائرة ملهاش باسورد موظف - أول مرة، الموظف يعمل باسورد
-    if(!cloudPass){
-      // لو الدائرة جديدة، احفظ الباسورد اللي كتبه كـ باسورد الموظف
-      try{
-        let payload={v3:j.v3||[],ahkam:j.ahkam||[],dairaInfo:j.dairaInfo||{},_password:entered,_masterPassword:effectiveMaster,_updatedAt:Date.now()};
-        await fetch('https://script.google.com/macros/s/AKfycbwOTKlstkN7iqYr9IX_CM43EKs6ViBDpMcNJH7s3tU-52LCRIQAFjbI7sx_AD240A/exec?daira='+daira,{method:'POST',body:JSON.stringify(payload)});
-      }catch(e){ console.log('save first pass failed',e); }
-      
-      localStorage.setItem('daira_pass_'+daira, entered);
-      localStorage.setItem('current_daira_pass', entered);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      msg.style.color='#a7f3d0'; msg.textContent='✅ تم إنشاء باسورد للدائرة - جاري الدخول...';
-      setTimeout(()=>hideAllLocksAndEnter(daira), 400);
-      return;
-    }
-    
-    // الدائرة لها باسورد موظف - لازم يدخله أو الماستر
-    if(entered === cloudPass){
-      localStorage.setItem('daira_pass_'+daira, entered);
-      localStorage.setItem('current_daira_pass', entered);
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-      msg.style.color='#a7f3d0';
-      msg.textContent='✅ تم التحقق - جاري الدخول...';
-      setTimeout(()=>hideAllLocksAndEnter(daira), 300);
-    } else {
-      msg.style.color='#ffcccc';
-      msg.innerHTML='❌ الباسورد غلط<br><small>جرب باسورد الموظف أو الماستر: '+effectiveMaster+'</small>';
-      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
-    }
-  }catch(e){
-    console.log('unlock cloud check failed', e);
-    if(entered && saved && entered===saved){
-      try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e2){}
-      hideAllLocksAndEnter(daira);
-    } else {
-      msg.style.color='#ffcccc';
-      msg.textContent='❌ فشل الاتصال: '+e.message+' - تأكد من النت';
-      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
-    }
+    document.getElementById('lockScreen').style.display='none';
+  } else {
+    msg.style.color='#ffcccc'; msg.textContent='الباسورد غلط - جرب باسورد الدائرة أو الماستر Admin@2026';
   }
 }
 </script>
-
-<script>
-(function(){
-  function fitAppWrapper(){
-    try{
-      const w=document.getElementById('appWrapper');
-      if(!w) return;
-      const base=1100;
-      const vw=window.innerWidth;
-      const vh=window.innerHeight;
-      if(vw < base){
-        const scale=vw/base;
-        w.style.transform='scale('+scale+')';
-        w.style.transformOrigin='top right';
-        w.style.width=base+'px';
-        w.style.height=(vh/scale)+'px';
-      } else {
-        w.style.transform='';
-        w.style.width=base+'px';
-        w.style.height='100vh';
-      }
-    }catch(e){}
-  }
-  window.addEventListener('load', fitAppWrapper);
-  window.addEventListener('resize', fitAppWrapper);
-  window.addEventListener('orientationchange', ()=>setTimeout(fitAppWrapper, 300));
-  setTimeout(fitAppWrapper, 100);
-  setTimeout(fitAppWrapper, 500);
-})();
-</script>
-
 </body>
 </html>
