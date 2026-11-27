@@ -73,6 +73,9 @@ html,body{width:100%;overflow:hidden;touch-action:pan-x pan-y pinch-zoom}
 #appWrapper{width:1100px;min-width:1100px;flex-shrink:0}
 .content{min-width:0;overflow:hidden}
 iframe{min-width:0}
+.pass-wrapper{position:relative;width:100%;max-width:320px;display:flex;align-items:center}
+.pass-wrapper input{padding-inline-start:40px !important}
+.eye-btn{position:absolute;left:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:4px 6px;z-index:2}
 </style>
 </head>
 <body>
@@ -85,7 +88,7 @@ iframe{min-width:0}
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_entry_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
+<div class="pass-wrapper" style="margin:0 0 14px;"><input id="enterDairaPass" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_entry_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px 14px 14px 44px;border-radius:10px;border:none;text-align:center;font-size:15px"><button type="button" class="eye-btn" onclick="togglePass('enterDairaPass', this)" title="إظهار/إخفاء">👁️</button></div>
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -520,7 +523,7 @@ migrate().then(()=>{
 <div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input id="lockPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
+<div class="pass-wrapper" style="margin:14px 0;"><input id="lockPass" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px 14px 14px 44px;border-radius:10px;border:none;text-align:center;font-size:15px"><button type="button" class="eye-btn" onclick="togglePass('lockPass', this)" title="إظهار/إخفاء">👁️</button></div>
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -541,6 +544,22 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
+function togglePass(inputId, btn){
+  try{
+    var inp = document.getElementById(inputId);
+    if(!inp) return;
+    if(inp.type === 'password' || inp.classList.contains('hidden-pass')){
+      inp.type = 'text';
+      inp.classList.remove('hidden-pass');
+      inp.style.removeProperty('-webkit-text-security');
+      if(btn) btn.textContent = '👁️';
+    } else {
+      inp.type = 'password';
+      if(btn) btn.textContent = '🙈';
+    }
+    inp.focus();
+  }catch(e){}
+}
 function unlockApp(){
   const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
