@@ -17,7 +17,9 @@ const FILES = [
   './kashf.html',
   './tadeil.html',
   './edkhal.html',
-  './version.json'
+  './version.json',
+  './ehsaiat.html',
+  './ehsaiat-2.html'
 ];
 
 self.addEventListener('install', e => {
