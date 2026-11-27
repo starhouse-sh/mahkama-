@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="google" content="notranslate">
-<meta name="format-detection" content="telephone=no">
 <script>
 // لا تحويل لإنشاء دائرة من هنا - الدخول جوه التطبيق نفسه
 function saveDairaPersist(num, pass){
@@ -44,16 +40,12 @@ async function restoreDairaFromAnywhere(){
 </script>
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none}
-body{display:flex;height:100vh;height:100dvh;width:100vw;background:#f0f2f5;direction:rtl;overflow:hidden}
-#appWrapper{display:flex;height:100vh;height:100dvh;width:100%;min-width:100%;background:#f0f2f5;transform-origin:top right;flex-shrink:0}
-@media (max-width:1100px){
-  #appWrapper{width:1100px;min-width:1100px}
-}
-.sidebar{width:270px;min-width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
+body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
+.sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
 .section-title{font-size:11px;color:#FFD700;margin:14px 6px 6px;font-weight:bold}
 .tab{padding:11px 12px;margin:4px 0;background:#132f5a;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;border:1px solid #1e3a6b;color:#fff}
@@ -64,45 +56,53 @@ body{display:flex;height:100vh;height:100dvh;width:100vw;background:#f0f2f5;dire
 .tab.red{background:#c0392b;border-color:#ff7961}
 .tab.brown{background:#7a2e00;border-color:#a0522d}
 .tab.navy{background:#0f1f3a;border-color:#FFD700}
-.content{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.content{flex:1;display:flex;flex-direction:column}
 .topbar{background:#fff;padding:10px 16px;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
 #info{font-size:11px;background:#e8f5e9;padding:6px 10px;border-radius:20px;border:1px solid #4caf50}
 .safe-bar{background:#fff3cd;border-bottom:2px solid #ffc107;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:11px;flex-wrap:wrap}
 .safe-bar button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px}
-iframe{flex:1;width:100%;border:none;background:#fff;min-width:0}
+iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
-/* منع جوجل من حفظ الباسورد */
-input.fake-pass-mask{
-  -webkit-text-security: disc !important;
-  text-security: disc !important;
-}
-input::-ms-reveal, input::-ms-clear{display:none}
 </style>
 </head>
 <body>
-
-<!-- حقول وهمية لخداع مدير كلمات المرور بتاع جوجل - لازم قبل أي حقل حقيقي -->
-<div style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden;opacity:0" aria-hidden="true">
-  <input type="text" name="prevent_autofill_username" autocomplete="off" tabindex="-1">
-  <input type="password" name="prevent_autofill_password" autocomplete="new-password" tabindex="-1">
-</div>
 
 <!-- شاشة دخول لدائرة موجودة - تظهر لو مفيش دائرة محفوظة، بدل ما يوديك على الإنشاء -->
 <div id="enterDairaScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:1000000;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
-<form autocomplete="off" onsubmit="return false" style="width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center">
-<input id="enterDairaNum" type="text" inputmode="numeric" autocomplete="off" data-lpignore="true" data-form-type="other" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_entry_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
-<button type="button" onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
-</form>
+<input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
+<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
+<button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
 <p style="font-size:12px;margin-top:6px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟</a></p>
 </div>
+<script>
+async function checkEnterDaira(){
+  var d = await restoreDairaFromAnywhere();
+  if(!d){
+    document.getElementById('enterDairaScreen').style.display='flex';
+    var saved = getDairaFromCookie();
+    if(saved) document.getElementById('enterDairaNum').value = saved;
+  }
+}
+function enterExistingDaira(){
+  var num = document.getElementById('enterDairaNum').value.trim();
+  var pass = document.getElementById('enterDairaPass').value;
+  var msg = document.getElementById('enterDairaMsg');
+  if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
+  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
+  // احفظ في 3 أماكن وادخل على طول - من غير ما تروح لصفحة إنشاء
+  saveDairaPersist(num, pass);
+  try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
+  document.getElementById('enterDairaScreen').style.display='none';
+  location.reload();
+}
+checkEnterDaira();
+</script>
 
-<div id="appWrapper">
 <div class="sidebar">
 <h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
@@ -152,63 +152,8 @@ input::-ms-reveal, input::-ms-clear{display:none}
 <button onclick="forceReplaceDrive()" style="background:#b00020;color:#fff;border:1px solid #fff">🔥 استبدال كامل</button>
 <button onclick="cleanWrongMahgozFromLab()" style="background:#4A1A8C;color:#fff">🧹 مسح محجوز خطأ</button>
 </div>
-<iframe id="frame" src="about:blank" allow="clipboard-read; clipboard-write"></iframe>
+<iframe id="frame" src="about:blank"></iframe>
 </div>
-</div> <!-- end appWrapper -->
-
-<!-- قفل بباسورد في كل فتحة - V18 -->
-<div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
-<div style="font-size:48px">⚖️</div>
-<h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
-<p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<form autocomplete="off" onsubmit="return false" style="width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center">
-<!-- خداع جوجل -->
-<div style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden;opacity:0" aria-hidden="true">
-  <input type="text" name="fake_user" autocomplete="off" tabindex="-1">
-  <input type="password" name="fake_pass" autocomplete="new-password" tabindex="-1">
-</div>
-<input id="lockPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
-<button type="button" onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
-</form>
-<p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
-<p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
-</div>
-
-<script>
-async function checkEnterDaira(){
-  try{
-    if(sessionStorage.getItem('daira_unlocked')==='1'){
-      var ee=document.getElementById('enterDairaScreen'); if(ee) ee.style.display='none';
-      var ll=document.getElementById('lockScreen'); if(ll) ll.style.display='none';
-      return;
-    }
-  }catch(e){}
-  var d = await restoreDairaFromAnywhere();
-  if(d){
-    var ee2=document.getElementById('enterDairaScreen'); if(ee2) ee2.style.display='none';
-    return;
-  }
-  if(!d){
-    try{ if(sessionStorage.getItem('daira_unlocked')==='1') return; }catch(e){}
-    document.getElementById('enterDairaScreen').style.display='flex';
-    var saved = getDairaFromCookie();
-    if(saved) document.getElementById('enterDairaNum').value = saved;
-  }
-}
-function enterExistingDaira(){
-  var num = document.getElementById('enterDairaNum').value.trim();
-  var pass = document.getElementById('enterDairaPass').value;
-  var msg = document.getElementById('enterDairaMsg');
-  if(!num || Number(num)<1 || Number(num)>39){ msg.textContent='اكتب رقم دائرة من 1 لـ 39'; return; }
-  if(!pass || pass.length<4){ msg.textContent='اكتب باسورد الدائرة'; return; }
-  saveDairaPersist(num, pass);
-  try{ sessionStorage.setItem('daira_unlocked','1'); }catch(e){}
-  document.getElementById('enterDairaScreen').style.display='none';
-  location.reload();
-}
-checkEnterDaira();
-</script>
-
 <script>
 const CURRENT_DAIRA = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA') || '32';
 const DB_NAME='D'+CURRENT_DAIRA+'_DB';
@@ -326,6 +271,7 @@ window.addEventListener('message',async(e)=>{
 });
 async function updateCounts(){try{let arr=await getCasesArray();document.getElementById('count').textContent=arr.length;document.getElementById('countSide').textContent=arr.length;let raw=await idbGet('D32_V3')||await idbGet('D32_FINAL');if(raw)document.getElementById('sizeInfo').textContent=(new Blob([raw]).size/1024/1024).toFixed(2)+' MB';let ahRaw=await idbGet('D32_AHKAM')||'[]';let ahkam;try{ahkam=JSON.parse(ahRaw);if(Array.isArray(ahkam)&&ahkam.length>1&&Array.isArray(ahkam[1]))ahkam=ahkam[1];}catch(e){ahkam=[];}document.getElementById('countAhkamTop').textContent=ahkam.length;document.getElementById('countTaalia').textContent=ahkam.filter(a=>a.mostanadatList&&a.mostanadatList.length>0).length;}catch(e){}}
 function openPage(f,el){
+  // حماية ضد التداخل: لو حد طلب index.html جوه الـ iframe، امنعه
   if(f.includes('index.html')){
     console.warn('Blocked nesting index inside iframe:', f);
     return;
@@ -334,6 +280,7 @@ function openPage(f,el){
   if(el) el.classList.add('active');
   document.getElementById('pageTitle').textContent=f;
   const frame = document.getElementById('frame');
+  // لو فيه نت، خلي كسر الكاش، لو مفيش نت، متكسرش الكاش عشان يلاقيها
   if(navigator.onLine){
     frame.src=f+'?safe=1&v='+Date.now();
   } else {
@@ -385,6 +332,7 @@ async function syncBidirectionalSmart(silent){
     if(Array.isArray(j)) j = {v3:j, ahkam:[]};
     if(j._password) CLOUD_PASSWORD = j._password;
     let cloudData=j.v3&&Array.isArray(j.v3)?j.v3:[];
+    // --- إصلاح الأحكام: نزل الأحكام من الدرايف وادمجها ---
     try{
       let cloudAhkam = j.ahkam && Array.isArray(j.ahkam) ? j.ahkam : [];
       if(cloudAhkam.length>1 && Array.isArray(cloudAhkam[1])) cloudAhkam = cloudAhkam[1];
@@ -392,12 +340,17 @@ async function syncBidirectionalSmart(silent){
         let localAhRaw = await idbGet('D32_AHKAM') || '[]';
         let localAh = [];
         try{ localAh = JSON.parse(localAhRaw); if(Array.isArray(localAh)&&localAh.length>1&&Array.isArray(localAh[1])) localAh=localAh[1]; }catch(e){ localAh=[]; }
+        // إصلاح العدد 875 بدل 951: لو السحابة أكبر، السحابة هي الصح - خدها كلها
+        // الدمج القديم بـ رقم/سنة كان بيدوس أحكام على بعض
         let mergedAh;
         if(cloudAhkam.length >= localAh.length){
+          // السحابة فيها كل الأحكام (951) - استخدمها كأساس
+          // وادمج عليها أي حكم محلي جديد مش موجود في السحابة بالـ id فقط
           let cloudIds = new Set(cloudAhkam.map(a=> a.id!=null ? String(a.id) : ''));
           let extraLocal = localAh.filter(a=> a.id!=null && !cloudIds.has(String(a.id)));
           mergedAh = [...cloudAhkam, ...extraLocal];
         } else {
+          // المحلي أكبر - ادمج بالـ id فقط، مش برقم/سنة
           let ahMap = new Map();
           localAh.forEach(a=>{ if(a.id!=null) ahMap.set(String(a.id), a); else ahMap.set('noid_'+Math.random().toString(36).slice(2)+'_'+ahMap.size, a); });
           cloudAhkam.forEach(a=>{
@@ -414,6 +367,7 @@ async function syncBidirectionalSmart(silent){
         await idbSet('D32_AHKAM', JSON.stringify(mergedAh));
       }
     }catch(e){ console.log('ahkam sync err', e); }
+    // --- إصلاح بيانات الدائرة ---
     try{
       let info = j.dairaInfo || j.dairaConfig || j.config || null;
       if(info){
@@ -441,22 +395,28 @@ async function syncBidirectionalSmart(silent){
       if(ok) await setLastSync();
     }else{await setLastSync();}
     updateCounts();
+    // مترجعش تحميل الـ iframe في المزامنة عشان ميعملش تداخل - سيبه زي ما هو
+    // let f=document.getElementById('frame');
   }catch(e){document.getElementById('health').textContent='❌ فشل: '+e.message;}
 }
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
 document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
   updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
+  // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
   if(!navigator.onLine){
     const h=document.getElementById('health');
     if(h) h.textContent='📴 وضع Offline - شغال من الجهاز - لما النت يرجع دوس مزامنة ذكية';
   } else {
     setTimeout(()=>syncBidirectionalSmart(true),2500);
   }
+  // تخزين تلقائي لكل الصفحات من غير ما تفتحها يدوي
   if('serviceWorker' in navigator){
     navigator.serviceWorker.ready.then(reg => {
       if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
+      // سجل الـ SW لو مش مسجل
     }).catch(()=>{});
+    // لو الـ SW مش مسجل، سجله
     navigator.serviceWorker.getRegistration().then(r => {
       if(!r) navigator.serviceWorker.register('./sw.js').then(reg => {
         if(reg.active) reg.active.postMessage({type:'CACHE_ALL'});
@@ -469,44 +429,17 @@ migrate().then(()=>{
 </script>
 <script src="pwa-install.js"></script>
 
+<!-- قفل بباسورد في كل فتحة - V18 -->
+<div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
+<div style="font-size:48px">⚖️</div>
+<h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
+<p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
+<input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
+<button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
+<p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
+<p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
+</div>
 <script>
-(function(){
-  function fitAppWrapper(){
-    try{
-      var w=document.getElementById('appWrapper');
-      if(!w) return;
-      var baseW=1100;
-      var vw=window.innerWidth;
-      var vh=window.innerHeight;
-      if(vw < baseW){
-        var scale=vw/baseW;
-        if(scale < 0.40) scale=0.40;
-        if(scale > 1) scale=1;
-        w.style.transform='scale('+scale+')';
-        w.style.transformOrigin='top right';
-        w.style.width=baseW+'px';
-        w.style.minWidth=baseW+'px';
-        w.style.height=(vh/scale)+'px';
-      } else {
-        w.style.transform='';
-        w.style.width='100%';
-        w.style.minWidth='100%';
-        w.style.height='100vh';
-        w.style.height='100dvh';
-      }
-    }catch(e){}
-  }
-  window.addEventListener('load', fitAppWrapper);
-  window.addEventListener('resize', fitAppWrapper);
-  window.addEventListener('orientationchange', ()=>setTimeout(fitAppWrapper, 350));
-  setTimeout(fitAppWrapper, 80);
-  setTimeout(fitAppWrapper, 400);
-  setTimeout(fitAppWrapper, 1200);
-})();
-</script>
-
-<script>
-// قفل بباسورد في كل فتحة - V18
 (function(){
   try{
     const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
@@ -515,6 +448,7 @@ migrate().then(()=>{
     document.getElementById('lockDairaNum').textContent = daira;
     const lock = document.getElementById('lockScreen');
     lock.style.display='flex';
+    // تحقق من قرار الأدمن (موافقة على تغيير باسورد)
     const decision = localStorage.getItem('admin_decision_'+daira);
     if(decision==='approved'){
       document.getElementById('lockMsg').style.color='#a7f3d0';
@@ -529,6 +463,7 @@ function unlockApp(){
   const msg = document.getElementById('lockMsg');
   const decision = localStorage.getItem('admin_decision_'+daira);
   if(decision==='approved' && entered && entered.length>=4){
+    // إعادة تعيين باسورد جديد بعد موافقة الأدمن
     localStorage.setItem('daira_pass_'+daira, entered);
     localStorage.setItem('current_daira_pass', entered);
     localStorage.removeItem('admin_decision_'+daira);
@@ -544,6 +479,5 @@ function unlockApp(){
   }
 }
 </script>
-
 </body>
 </html>
