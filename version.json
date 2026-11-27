@@ -1,8 +1,8 @@
 {
-  "version": "v116-baseline-exact-fix-404",
+  "version": "v116-fix-pass-visible-pinch",
   "date": "2026-11-27",
-  "cache": "mahkama-v115-baseline-exact-fix-404",
-  "note": "رجوع للنسخة الأساسية بالظبط - نفس قائمة الملفات في BASELINE_1_sw.js و BASELINE_4_version.json بدون أي إضافة - من غير ketabet-ahkam-daira.html ومن غير ketabet-ahkam-final.html ومن غير أي نسخة مكررة - التعديل الوحيد: تثبيت واحد واحد بدل addAll عشان 404 قبل الدخول، وتحويل الملفات المحذوفة select-daira و exit لـ app.html",
+  "cache": "mahkama-v116-fix-pass-visible-pinch",
+  "note": "إصلاح الباسورد ظاهر على اللاب والموبايل + تكبير بالصوابع أقوى - تم زيادة maximum-scale لـ10 وإصلاح overflow hidden اللي كان بيمنع التكبير على الموبايل - مع الحفاظ على كل حرف في الكود",
   "files_in_cache": [
     "./",
     "./app.html",
