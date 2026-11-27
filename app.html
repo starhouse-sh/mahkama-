@@ -494,7 +494,7 @@ async function downloadBackupJson(){
 }
 
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
-document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
+document.title = 'سيستم الدائرة';
 migrate().then(()=>{
   updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
   // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
