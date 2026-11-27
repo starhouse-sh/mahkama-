@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تم إغلاق التطبيق</title>
+<style>*{box-sizing:border-box;font-family:Tahoma}body{margin:0;background:#0A2342;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}h1{font-size:22px;color:#FFD700} p{color:#cbd5e1;line-height:1.8} .btn{margin-top:20px;padding:14px 22px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer} .hint{margin-top:14px;font-size:13px;background:#ffffff22;padding:10px;border-radius:10px}</style></head>
+<body>
+<div style="font-size:60px">⚖️</div>
+<h1>✅ تم إغلاق التطبيق</h1>
+<p>خلصت شغلك - تقدر تفتح يوتيوب أو فيس أو واتس عادي<br>التطبيق اتقفل ومش هيرجع لوحده</p>
+<button class="btn" onclick="tryClose()">❌ إغلاق التبويب</button>
+<div class="hint">لو التبويب ماتقفلش لوحده:<br>دوس زر <b>مربع التطبيقات</b> في موبايلك واسحب التطبيق لفوق<br>أو دوس زر <b>الرجوع ◀</b> - هتخرج من التطبيق ومش هيرجع</div>
+<script>
+function tryClose(){
+  try{ window.close(); }catch(e){}
+  try{ window.open('','_self').close(); }catch(e){}
+  setTimeout(function(){ document.body.innerHTML='<div style="font-size:50px">✅</div><h1>تم الإغلاق</h1><p>اقفل التبويب من فوق أو اسحب التطبيق</p>'; }, 400);
+}
+// امنع الرجوع للتطبيق بالباك
+try{ history.pushState(null,'',location.href); window.addEventListener('popstate', function(){ history.pushState(null,'',location.href); }); }catch(e){}
+</script>
+</body></html>
