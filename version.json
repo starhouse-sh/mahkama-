@@ -1,11 +1,9 @@
 {
-  "version": "v79-warradat-mofradat",
+  "version": "v80-no-password-autofill",
   "date": "2026-11-27",
-  "cache": "mahkama-v75-warradat-mofradat",
+  "cache": "mahkama-v78-no-password-autofill",
   "files_changed": [
     "app.html",
-    "warradat-mofradat.html",
-    "mofradat.html",
     "version.json"
   ]
 }
