@@ -1,7 +1,7 @@
 {
   "name": "سيستم الدائرة",
   "short_name": "سيستم الدائرة",
-  "start_url": "select-daira.html",
+  "start_url": "app.html",
   "display": "standalone",
   "background_color": "#0b1e3a",
   "theme_color": "#0b1e3a",
@@ -16,5 +16,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "scope": "."
 }
