@@ -41,6 +41,7 @@ async function restoreDairaFromAnywhere(){
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>سيستم الدائرة</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
@@ -63,6 +64,25 @@ body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 .safe-bar button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:11px}
 iframe{flex:1;width:100%;border:none;background:#fff}
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
+
+/* ===== موبايل: متجاوب 100% ===== */
+#mobileMenuBtn{display:none;position:fixed;top:10px;right:10px;z-index:10000;background:#0A2342;color:#FFD700;border:2px solid #FFD700;border-radius:8px;padding:10px 14px;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+@media(max-width:900px){
+  body{flex-direction:column;height:auto;min-height:100vh;overflow:auto}
+  .sidebar{width:100%;max-height:none;overflow:visible;position:relative;padding-bottom:80px}
+  .sidebar.mobile-hidden{display:none}
+  .content{flex:none;width:100%;height:auto;min-height:80vh}
+  .topbar{padding:8px 10px;flex-wrap:wrap;gap:6px}
+  .safe-bar{font-size:10px;padding:6px 8px}
+  iframe{width:100%;min-height:75vh;height:75vh;border:none}
+  #mobileMenuBtn{display:block}
+  .tab{padding:10px;font-size:12px}
+}
+@media(max-width:600px){
+  iframe{min-height:70vh;height:70vh}
+  .sidebar{padding:8px}
+}
+
 </style>
 </head>
 <body>
@@ -494,7 +514,7 @@ async function downloadBackupJson(){
 }
 
 document.getElementById('dairaNum').textContent = CURRENT_DAIRA;
-document.title = 'سيستم الدائرة';
+document.title = 'نظام د' + CURRENT_DAIRA + ' - متوافق 1289 - FIXED V3 FINAL';
 migrate().then(()=>{
   updateCounts(); checkHealth(); openPage('mahdar.html',document.querySelector('.tab.active'));
   // Offline-first: لو مفيش نت متعملش مزامنة - اشتغل من الجهاز
@@ -650,34 +670,46 @@ async function unlockApp(){
 
 
 <script>
-// حل نهائي لمنع حفظ الباسورد - حول الحقل لنص عادي مخفي
+// منع حفظ الباسورد بدون إخفاء افتراضي - الافتراضي ظاهر مع زرار العين
 (function(){
-  function killAutofill(){
+  function killAutofillSoft(){
     try{
       var fields = ['enterDairaPass','lockPass'];
       fields.forEach(function(id){
         var el = document.getElementById(id);
         if(!el) return;
-        el.setAttribute('type','text');
         el.setAttribute('autocomplete','off');
         el.setAttribute('data-lpignore','true');
         el.setAttribute('data-form-type','other');
-        el.style.webkitTextSecurity='disc';
-        // امنع النسخ التلقائي من مدير كلمات المرور
-        el.addEventListener('animationstart', function(e){
-          if(e.animationName === 'onAutoFillStart') { el.value=''; }
-        });
+        // لا نفرض webkitTextSecurity هنا - نسيبه ظاهر افتراضي والزرار يتحكم
       });
     }catch(e){}
   }
-  document.addEventListener('DOMContentLoaded', killAutofill);
-  setTimeout(killAutofill, 500);
-  setTimeout(killAutofill, 1500);
+  document.addEventListener('DOMContentLoaded', killAutofillSoft);
 })();
 </script>
 <style>
 @keyframes onAutoFillStart { from {} to {} }
 input:-webkit-autofill { animation-name: onAutoFillStart; }
+
+/* ===== موبايل: متجاوب 100% ===== */
+#mobileMenuBtn{display:none;position:fixed;top:10px;right:10px;z-index:10000;background:#0A2342;color:#FFD700;border:2px solid #FFD700;border-radius:8px;padding:10px 14px;font-size:20px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+@media(max-width:900px){
+  body{flex-direction:column;height:auto;min-height:100vh;overflow:auto}
+  .sidebar{width:100%;max-height:none;overflow:visible;position:relative;padding-bottom:80px}
+  .sidebar.mobile-hidden{display:none}
+  .content{flex:none;width:100%;height:auto;min-height:80vh}
+  .topbar{padding:8px 10px;flex-wrap:wrap;gap:6px}
+  .safe-bar{font-size:10px;padding:6px 8px}
+  iframe{width:100%;min-height:75vh;height:75vh;border:none}
+  #mobileMenuBtn{display:block}
+  .tab{padding:10px;font-size:12px}
+}
+@media(max-width:600px){
+  iframe{min-height:70vh;height:70vh}
+  .sidebar{padding:8px}
+}
+
 </style>
 
 </body>
