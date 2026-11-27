@@ -1,33 +1,40 @@
-const CACHE = 'mahkama-v101-no-password-save';
+const CACHE = 'mahkama-v103-offline-all-pages';
 const FILES = [
   './',
   './app.html',
   './manifest.json',
   './daira-core.js',
+  './version.json',
   './mahdar.html',
-  './daira-config.html',
-  './admin-dairat.html',
-  './galasat.html',
   './rolat.html',
-  './taalia.html',
+  './galasat.html',
+  './ehsaiat.html',
   './ketabet-ahkam-final.html',
+  './ketabet-ahkam-daira.html',
   './ahkam.html',
   './estelam.html',
   './mofradat.html',
   './kashf.html',
   './tadeil.html',
   './edkhal.html',
-  './version.json',
-  './ehsaiat.html',
-  './ehsaiat-2.html'
+  './daira-config.html',
+  './admin-dairat.html',
+  './admin.html',
+  './taalia.html',
+  './kitaba.html',
+  './mahgouz.html',
+  './warradat-mofradat.html',
+  './hifz.html',
+  './exit.html',
+  './create-daira.html',
+  './forgot.html'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(cache => {
       return cache.addAll(FILES).catch(err => {
-        console.log('Cache addAll failed for some files', err);
-        // حاول تخزن اللي تقدر عليه واحد واحد
+        console.log('Some files failed to cache', err);
         return Promise.all(FILES.map(f => cache.add(f).catch(()=>{})));
       });
     }).then(()=> self.skipWaiting())
@@ -44,12 +51,10 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
-  // للدرايف سيب النت يشتغل عادي
   if(url.includes('script.google.com') || url.includes('googleusercontent')){
     return;
   }
-
-  // app.html و manifest - هات من النت الأول، ولو مفيش نت هات من الكاش
+  // app.html - نت أولا، كاش لو مفيش نت
   if(url.includes('app.html') || url.includes('manifest.json') || url.includes('version.json')){
     e.respondWith(
       fetch(e.request, {cache:'no-store'}).then(res => {
@@ -58,15 +63,11 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(()=> {
-        return caches.match(e.request).then(c => c || caches.match('./app.html'));
-      })
+      }).catch(()=> caches.match(e.request).then(c => c || caches.match('./app.html')))
     );
     return;
   }
-
-  // باقي الملفات - كاش أولا عشان يشتغل من غير نت
-  // المهم: لو فشل، مترجعش app.html جوه الـ iframe - ده اللي كان بيعمل التكرار اللي في الصورة
+  // باقي الصفحات - كاش أولا عشان Offline
   e.respondWith(
     caches.match(e.request).then(cached => {
       if(cached) return cached;
@@ -77,23 +78,14 @@ self.addEventListener('fetch', e => {
         }
         return res;
       }).catch(()=> {
-        // لو مفيش نت والملف مش في الكاش
-        // لو الطلب لصفحة (navigate) - رجع app.html
-        // لو الطلب لملف جوه iframe - مترجعش app.html - رجع الكاش بتاع نفس الملف أو صفحة فاضية
-        if(e.request.mode === 'navigate' || e.request.destination === 'document'){
-          // شوف هل ده طلب للـ iframe ولا للنافذة الرئيسية
-          // لو الـ iframe بيطلب app.html نفسه - امنعه عشان ميعملش تكرار
-          if(url.includes('app.html')){
-            return caches.match('./app.html');
-          }
-          // لو طلب عادي لصفحة مش موجودة - رجع الكاش بتاعها لو موجود
-          return caches.match(e.request).then(c => c || caches.match('./app.html'));
-        }
-        // للـ iframe والملفات التانية - حاول تجيب نفس الملف من الكاش، لو مفيش رجع response فاضي مش app.html
+        // لو مفيش نت والصفحة مش في الكاش - مترجعش app.html جوه الـ iframe عشان ميعملش تداخل
         return caches.match(e.request).then(c => {
           if(c) return c;
-          // لو مفيش خالص - رجع صفحة فاضية فيها رسالة Offline بدل ما ترجع app.html وتعمل تكرار
-          return new Response('<html><body style="font-family:Tahoma;text-align:center;padding:20px"><h3>📴 Offline</h3><p>الملف مش متخزن للعمل بدون نت<br>افتح التطبيق مرة بالنت عشان يتخزن</p></body></html>', {headers:{'Content-Type':'text/html'}});
+          // لو صفحة مهمة مش متخزنة - رجع رسالة صغيرة جوه الـ iframe بس، مش التطبيق كله
+          if(e.request.destination === 'iframe' || url.includes('.html')){
+            return new Response('<html><body style="font-family:Tahoma;text-align:center;padding:20px;background:#fff"><h3>📴 Offline - الصفحة مش متخزنة</h3><p>افتح الصفحة دي مرة واحدة بالنت عشان تتخزن وتشتغل من غير نت بعد كده</p><p style="font-size:12px;color:#666">'+url.split('/').pop()+'</p></body></html>', {headers:{'Content-Type':'text/html'}});
+          }
+          return caches.match('./app.html');
         });
       });
     })
