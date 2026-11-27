@@ -44,9 +44,6 @@ async function restoreDairaFromAnywhere(){
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;overflow:hidden}
-body{display:block;background:#f0f2f5;direction:rtl}
-#appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right}
 body{display:flex;height:100vh;background:#f0f2f5;direction:rtl}
 .sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
 .sidebar h2{text-align:center;color:#FFD700;padding:14px 0;border-bottom:2px solid #C9A227;margin-bottom:14px;font-size:15px;line-height:1.5}
@@ -76,7 +73,7 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<input id="enterDairaPass" type="password" autocomplete="new-password" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
+<input id="enterDairaPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -84,22 +81,8 @@ iframe{flex:1;width:100%;border:none;background:#fff}
 </div>
 <script>
 async function checkEnterDaira(){
-  try{
-    if(sessionStorage.getItem('daira_unlocked')==='1'){
-      var ee=document.getElementById('enterDairaScreen'); if(ee) ee.style.display='none';
-      var ll=document.getElementById('lockScreen'); if(ll) ll.style.display='none';
-      return;
-    }
-  }catch(e){}
   var d = await restoreDairaFromAnywhere();
-  if(d){
-    // فيه دائرة محفوظة - متظهرش نافذة الدخول فوق الواجهة
-    var ee2=document.getElementById('enterDairaScreen'); if(ee2) ee2.style.display='none';
-    return;
-  }
   if(!d){
-    // مفيش دائرة - اظهر نافذة الدخول بس لو مش مفتوح قبل كده
-    try{ if(sessionStorage.getItem('daira_unlocked')==='1') return; }catch(e){}
     document.getElementById('enterDairaScreen').style.display='flex';
     var saved = getDairaFromCookie();
     if(saved) document.getElementById('enterDairaNum').value = saved;
@@ -120,7 +103,6 @@ function enterExistingDaira(){
 checkEnterDaira();
 </script>
 
-<div id="appWrapper">
 <div class="sidebar">
 <h2>⚖ نظام الدائرة <span id="dairaNum">32</span><br><small style="font-size:11px;color:#0f0">● متوافق 1289 - FIXED V3</small></h2>
 <div class="section-title">📂 الأعمال اليومية</div>
@@ -448,12 +430,11 @@ migrate().then(()=>{
 <script src="pwa-install.js"></script>
 
 <!-- قفل بباسورد في كل فتحة - V18 -->
-</div> <!-- end appWrapper -->
 <div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0A2342;z-index:999999;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:20px">
 <div style="font-size:48px">⚖️</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<input id="lockPass" type="password" autocomplete="new-password" data-lpignore="true" readonly onfocus="this.removeAttribute('readonly')" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
+<input id="lockPass" type="password" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -498,36 +479,5 @@ function unlockApp(){
   }
 }
 </script>
-
-<script>
-(function(){
-  function fitAppWrapper(){
-    try{
-      var w=document.getElementById('appWrapper');
-      if(!w) return;
-      var base=1100;
-      var vw=window.innerWidth;
-      var vh=window.innerHeight;
-      if(vw < base){
-        var scale=vw/base;
-        w.style.transform='scale('+scale+')';
-        w.style.transformOrigin='top right';
-        w.style.width=base+'px';
-        w.style.height=(vh/scale)+'px';
-      } else {
-        w.style.transform='';
-        w.style.width=base+'px';
-        w.style.height='100vh';
-      }
-    }catch(e){}
-  }
-  window.addEventListener('load', fitAppWrapper);
-  window.addEventListener('resize', fitAppWrapper);
-  window.addEventListener('orientationchange', ()=>setTimeout(fitAppWrapper, 300));
-  setTimeout(fitAppWrapper, 100);
-  setTimeout(fitAppWrapper, 500);
-})();
-</script>
-
 </body>
 </html>
