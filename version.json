@@ -1,14 +1,12 @@
 {
-  "version": "v100-delete-select-daira-forever",
+  "version": "v96-fix-black-screen",
   "date": "2026-11-27",
-  "cache": "mahkama-v92-no-select",
+  "cache": "mahkama-v96-fix-black-screen",
   "files_changed": [
-    "manifest.json",
-    "sw.js",
     "app.html",
+    "sw.js",
+    "manifest.json",
     "version.json"
   ],
-  "deleted_permanently": [
-    "select-daira.html"
-  ]
+  "fix": "black screen - enterDairaScreen now shows if no daira, sw.js network-first"
 }
