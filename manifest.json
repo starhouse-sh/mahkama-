@@ -1,23 +1,11 @@
 {
-  "name": "نظام الدائرة - 39 دائرة + ماستر - يشتغل بدون نت",
-  "short_name": "د32",
-  "id": "daira-v50-offline",
-  "start_url": "app.html",
+  "name": "سيستم الدائرة",
+  "short_name": "سيستم الدائرة",
+  "start_url": "select-daira.html",
   "display": "standalone",
-  "background_color": "#0A2342",
-  "theme_color": "#0A2342",
-  "scope": "./",
+  "background_color": "#0b1e3a",
+  "theme_color": "#0b1e3a",
   "icons": [
-    {
-      "src": "scales-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "scales-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
