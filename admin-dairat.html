@@ -259,16 +259,22 @@ function loginAs(num){
   }
 }
 
-function changeMaster(){
+async function changeMaster(){
   let newM=document.getElementById('newMasterInput').value.trim();
   if(!newM || newM.length<4){ alert('الماستر لازم 4 حروف على الأقل'); return; }
-  if(!confirm('هتغير الماستر من '+MASTER_PASSWORD+' إلى '+newM+'\n\nالماستر الجديد هيفتح أي دائرة\nمتأكد؟')) return;
+  if(!confirm('هتغير الماستر من '+MASTER_PASSWORD+' إلى '+newM+'\n\nالماستر الجديد هيفتح أي دائرة على الموبايل واللاب\nمتأكد؟')) return;
   MASTER_PASSWORD=newM;
   localStorage.setItem('admin_master_password',newM);
   document.getElementById('masterShow').textContent=newM;
   document.getElementById('masterCard').textContent=newM;
   document.getElementById('masterInfo').textContent=newM;
-  alert('✅ تم تغيير الماستر إلى: '+newM+'\n\nاحفظه كويس - ده اللي هيفتح أي دائرة لو نسيوا الباسورد');
+  // احفظ الماستر الجديد في الدرايف - عشان يشتغل على كل الأجهزة مش الجهاز ده بس
+  try{
+    await fetch(CLOUD+'?daira=ADMIN_MASTER',{method:'POST',body:JSON.stringify({v3:[],ahkam:[],_masterPassword:newM,_updatedAt:Date.now()})});
+    alert('✅ تم تغيير الماستر إلى: '+newM+'\n\nاتحفظ في الدرايف - هيشتغل على الموبايل واللاب دلوقتي\nجربه في التطبيق على أي جهاز');
+  }catch(e){
+    alert('⚠️ اتغير على الجهاز ده بس - النت فشل في الحفظ في الدرايف\nالماستر الجديد: '+newM+'\nجرب تاني والنت شغال');
+  }
 }
 </script>
 </body>
