@@ -1,12 +1,11 @@
 {
-  "version": "v103-no-password-save-full",
+  "version": "v102-offline-no-overlap",
   "date": "2026-11-27",
-  "cache": "mahkama-v101-no-password-save",
-  "note": "منع نافذة كلمة المرور المحفوظة + النسخة الكاملة بدون اختصار + Offline بدون تكرار",
+  "cache": "mahkama-v102-offline-no-overlap",
+  "note": "تصليح التداخل لما تفتح بدون نت: حذف الفولباك اللي كان بيجبر نافذة الباسورد تظهر فوق الواجهة حتى لو كنت داخل، وخلى نافذة الباسورد تاخد الشاشة كلها 100vw",
   "files_changed": [
     "app.html",
     "sw.js",
-    "manifest.json",
     "version.json"
   ]
 }
