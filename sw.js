@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v115-baseline-exact-fix-404';
+const CACHE = 'mahkama-v116-fix-pass-visible-pinch';
 const FILES = [
   "./",
   "./app.html",
