@@ -1,10 +1,10 @@
 {
-  "name": "سيستم إدارة القضايا",
-  "short_name": "سيستم إدارة القضايا",
+  "name": "سيستم الدائرة",
+  "short_name": "سيستم الدائرة",
   "start_url": "app.html",
   "display": "standalone",
-  "background_color": "#0b1e3a",
-  "theme_color": "#0b1e3a",
+  "background_color": "#0A2342",
+  "theme_color": "#0A2342",
   "icons": [
     {
       "src": "icon-192.png",
@@ -16,5 +16,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "scope": "."
 }
