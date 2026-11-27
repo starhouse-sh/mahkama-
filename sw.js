@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v106-fix-password-mobile-fit';
+const CACHE = 'mahkama-v108-fix-ehsaia-s';
 const FILES = [
   "./",
   "./app.html",
