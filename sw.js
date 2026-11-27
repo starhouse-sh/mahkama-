@@ -1,22 +1,12 @@
-const CACHE='mahkama-v87-eye-name';
+const CACHE = 'mahkama-v96-fix-black-screen';
 const FILES = [
   './',
-  './index.html',
   './app.html',
-  './daira-config.html',
-  './taalia.html',
-  './galasat.html',
-  './mahdar.html',
-  './ahkam.html',
-  './estelam.html',
-  './mofradat.html',
-  './kashf.html',
-  './rolat.html',
-  './tadeil.html',
-  './edkhal.html',
   './manifest.json',
   './daira-core.js',
-  './pwa-install.js'
+  './mahdar.html',
+  './daira-config.html',
+  './admin-dairat.html'
 ];
 
 self.addEventListener('install', e => {
@@ -34,21 +24,32 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // للدرايف سيب النت يشتغل عادي، متخزنهوش
   if(e.request.url.includes('script.google.com') || e.request.url.includes('googleusercontent')){
+    return;
+  }
+  // ل app.html و manifest - هات من النت الأول عشان الشاشة السودة متتخزنش
+  if(e.request.url.includes('app.html') || e.request.url.includes('manifest.json') || e.request.url.includes('version.json')){
+    e.respondWith(
+      fetch(e.request, {cache:'no-store'}).then(res => {
+        if(res.ok && e.request.method === 'GET'){
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(()=> caches.match(e.request))
+    );
     return;
   }
   e.respondWith(
     caches.match(e.request).then(cached => {
       if(cached) return cached;
       return fetch(e.request).then(res => {
-        // خزن النسخة الجديدة
         if(res.ok && e.request.method === 'GET' && e.request.url.startsWith(self.location.origin)){
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(()=> caches.match('./index.html'));
+      }).catch(()=> caches.match('./app.html'));
     })
   );
 });
