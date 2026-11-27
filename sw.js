@@ -1,4 +1,4 @@
-const CACHE = 'mahkama-v105-exact-files-no-duplicates';
+const CACHE = 'mahkama-v106-fix-password-mobile-fit';
 const FILES = [
   "./",
   "./app.html",
@@ -45,7 +45,8 @@ const FILES = [
   "./tasleem_ahkam.html",
   "./test-daira32.html",
   "./warradat-mofradat.html",
-  "./ehsaia-esbaia.html"
+  "./ehsaia-esbaia.html",
+  "./Ketabet-Ahkam.html"
 ];
 
 self.addEventListener('install', e => {
