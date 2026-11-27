@@ -1,9 +1,10 @@
 {
-  "version": "v84-no-password-autofill",
+  "version": "v85-master-sync-drive",
   "date": "2026-11-27",
-  "cache": "mahkama-v78-no-password-autofill",
+  "cache": "mahkama-v85-master-sync",
   "files_changed": [
     "app.html",
+    "admin-dairat.html",
     "version.json"
   ]
 }
