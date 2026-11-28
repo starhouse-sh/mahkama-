@@ -1,10 +1,12 @@
-const CACHE = 'mahkama-v117-fix-f5-404-pass';
+const CACHE = 'mahkama-v120-full-sync-tadeil';
 const FILES = [
   "./",
   "./app.html",
   "./manifest.json",
   "./version.json",
   "./daira-core.js",
+  "./app.js",
+  "./d32_auto_backup.js",
   "./pwa-install.js",
   "./Mahgouza-Hokm.html",
   "./SANAWAT-QADAIYA.html",
@@ -72,24 +74,18 @@ self.addEventListener('fetch', e => {
   if (url.includes('script.google.com') || url.includes('googleusercontent')) { return; }
   for (const d of DELETED) {
     if (url.toLowerCase().includes(d.toLowerCase())) {
-      e.respondWith(
-        caches.match('./app.html').then(c => c || fetch('./app.html').then(r => r.ok ? r : caches.match('./app.html')).catch(() => caches.match('./app.html')))
-      );
+      e.respondWith(caches.match('./app.html').then(c => c || fetch('./app.html')));
       return;
     }
   }
   if (url.includes('app.html') || url.includes('manifest.json') || url.includes('version.json')) {
     e.respondWith(
       fetch(e.request, {cache:'no-store'}).then(res => {
-        if (res.ok) {
-          if (e.request.method === 'GET') {
-            const clone = res.clone();
-            caches.open(CACHE).then(c => c.put(e.request, clone));
-          }
-          return res;
-        } else {
-          return caches.match(e.request, {ignoreSearch:true}).then(c => c || caches.match('./app.html'));
+        if (res.ok && e.request.method === 'GET') {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
         }
+        return res;
       }).catch(() => caches.match(e.request, {ignoreSearch:true}).then(c => c || caches.match('./app.html')))
     );
     return;
@@ -130,11 +126,7 @@ self.addEventListener('fetch', e => {
             }
           } catch(err) {}
         }
-        if (res.status === 404 && (e.request.mode === 'navigate' || url.includes('.html'))) {
-          const fb = await caches.match('./app.html');
-          if (fb) return fb;
-        }
-        if (!res.ok && res.status === 404) {
+        if (res.status === 404 && e.request.mode === 'navigate') {
           const fb = await caches.match('./app.html');
           if (fb) return fb;
         }
@@ -163,7 +155,7 @@ self.addEventListener('fetch', e => {
           } catch(err3) {}
           let fileName = 'الصفحة';
           try { fileName = new URL(url).pathname.split('/').pop().split('?')[0]; } catch(e) {}
-          return new Response('<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:Tahoma;text-align:center;padding:20px;background:#fff;direction:rtl"><h3 style="color:#b00020">Offline - الصفحة مش متخزنة</h3><p>افتح الصفحة دي مرة واحدة بالنت عشان تتخزن وتشتغل من غير نت بعد كده</p><p style="font-size:12px;color:#666">'+fileName+'</p><button onclick="location.reload()" style="margin-top:15px;padding:10px 20px;background:#0A2342;color:#fff;border:none;border-radius:8px;cursor:pointer">حاول تاني</button></body></html>', {headers:{'Content-Type':'text/html; charset=UTF-8'}});
+          return new Response('<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:Tahoma;text-align:center;padding:20px;background:#fff;direction:rtl"><h3 style="color:#b00020">📴 Offline - الصفحة مش متخزنة</h3><p>افتح الصفحة دي مرة واحدة بالنت عشان تتخزن وتشتغل من غير نت بعد كده</p><p style="font-size:12px;color:#666">'+fileName+'</p><button onclick="location.reload()" style="margin-top:15px;padding:10px 20px;background:#0A2342;color:#fff;border:none;border-radius:8px;cursor:pointer">🔄 حاول تاني</button></body></html>', {headers:{'Content-Type':'text/html; charset=UTF-8'}});
         }
         return caches.match('./app.html');
       }
