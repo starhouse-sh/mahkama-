@@ -41,11 +41,11 @@ async function restoreDairaFromAnywhere(){
 <script src="daira-core.js"></script>
 <link rel="manifest" href="manifest.json">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
 <title>نظام الدائرة - متوافق 1289 - FIXED V3 FINAL</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Tahoma}
-html,body{margin:0;padding:0;height:100%;overflow:auto;touch-action:pan-x pan-y pinch-zoom}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;touch-action:pan-x pan-y pinch-zoom}
 body{display:block;background:#f0f2f5;direction:rtl}
 #appWrapper{display:flex;height:100vh;width:1100px;background:#f0f2f5;transform-origin:top right;touch-action:pan-x pan-y pinch-zoom}
 .sidebar{width:270px;background:linear-gradient(180deg,#0A2342,#0f1f3a);color:#fff;display:flex;flex-direction:column;padding:12px;overflow:auto}
@@ -68,20 +68,11 @@ iframe{flex:1;width:100%;border:none;background:#fff;touch-action:pan-x pan-y pi
 .tab.purple{background:linear-gradient(90deg,#6a1b9a,#9c27b0);border:2px solid #FFD700;color:#fff;font-weight:bold}
 /* منع جوجل من حفظ الباسورد - الحقل text لكن يظهر كنقط */
 input.fake-pass-mask{-webkit-text-security:disc !important;text-security:disc !important}
-#lockPass,#enterDairaPass{-webkit-text-security:none !important;text-security:none !important}
 input::-ms-reveal,input::-ms-clear{display:none}
 html,body{width:100%;overflow:hidden;touch-action:pan-x pan-y pinch-zoom}
 #appWrapper{width:1100px;min-width:1100px;flex-shrink:0}
-@media (max-width:1100px){
-  html,body{overflow:auto !important;overscroll-behavior:auto;-webkit-overflow-scrolling:touch}
-  body{overflow:auto !important}
-  #appWrapper{width:1100px;min-width:1100px}
-}
 .content{min-width:0;overflow:hidden}
 iframe{min-width:0}
-.pass-wrapper{position:relative;width:100%;max-width:320px;display:flex;align-items:center}
-.pass-wrapper input{padding-inline-start:40px !important}
-.eye-btn{position:absolute;left:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:20px;line-height:1;padding:4px 6px;z-index:2}
 </style>
 </head>
 <body>
@@ -94,7 +85,7 @@ iframe{min-width:0}
 <h2 style="margin:10px 0">نظام الدائرة</h2>
 <p style="color:#cbd5e1;font-size:13px">دخول لدائرة موجودة</p>
 <input id="enterDairaNum" type="number" min="1" max="39" placeholder="رقم الدائرة - مثال: 32" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0 8px;text-align:center;font-size:15px">
-<div class="pass-wrapper" style="margin:0 0 14px;"><input id="enterDairaPass" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_entry_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px 14px 14px 44px;border-radius:10px;border:none;text-align:center;font-size:15px"><button type="button" class="eye-btn" onclick="togglePass('enterDairaPass', this)" title="إظهار/إخفاء">👁️</button></div>
+<input id="enterDairaPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_entry_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:0 0 14px;text-align:center;font-size:15px">
 <button onclick="enterExistingDaira()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول لدائرتي ➜</button>
 <p id="enterDairaMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:10px;color:#cbd5e1">مفيش دائرة؟ <a href="create-daira.html" style="color:#E8B93C;font-weight:bold">إنشاء دائرة جديدة</a></p>
@@ -242,6 +233,7 @@ async function setDeletedIds(arr){try{await idbSet('D32_DELETED_IDS', JSON.strin
 async function clearDeletedIds(){try{await idbSet('D32_DELETED_IDS','[]');}catch(e){}}
 async function getLastSync(){try{return await idbGet('D32_LAST_SYNC_TS')||'0';}catch(e){return'0';}}
 async function setLastSync(){try{await idbSet('D32_LAST_SYNC_TS', String(Date.now()));}catch(e){}}
+async function getAllD32StoreData(){let out={};try{let db=await openDB();let keys=await new Promise((rs,rj)=>{try{let tx=db.transaction('d32store','readonly');let rq=tx.objectStore('d32store').getAllKeys();rq.onsuccess=()=>rs(rq.result||[]);rq.onerror=()=>rs([]);}catch(e){rs([]);}});for(let k of keys){try{let v=await idbGet(k);if(v!==undefined&&v!==null) out[String(k)]=v;}catch(e){}}}catch(e){}return out;}
 async function migrate(){
   try{let d=await idbGet('MIGRATED_D32_DB');if(d){document.getElementById('health').textContent='✅ متوافق - V3 FIXED';return;}}catch(e){}
   document.getElementById('health').textContent='✅ متوافق - جاري...';
@@ -273,6 +265,7 @@ window.addEventListener('message',async(e)=>{
             if((newObj.ded||'')!=(old.ded||'')) changed=true;
             if((newObj.noa||'')!=(old.noa||'')) changed=true;
             if(JSON.stringify(newObj.jalsat||[])!=JSON.stringify(old.jalsat||[])) changed=true;
+            if(JSON.stringify(newObj)!==JSON.stringify(old)) changed=true;
             if(changed) newObj._updatedAt = Date.now();
             else newObj._updatedAt = old._updatedAt || Date.now();
           } else {
@@ -382,11 +375,12 @@ async function uploadToDrive(localArray, silent, options){
     if(deletedIds.length>0){let delMap={}; deletedIds.forEach(id=>{delMap[String(id)]=true;});localArray = localArray.filter(o=>!delMap[String(o.id)]);}
     let ahRaw = await idbGet('D32_AHKAM')||'[]';
     let ahArr=[]; try{ahArr=JSON.parse(ahRaw); if(Array.isArray(ahArr)&&Array.isArray(ahArr[1])) ahArr=ahArr[1];}catch(e){}
-    const payload = {v3:localArray, ahkam:ahArr, _updatedAt: Date.now()};
+    let extraData={};try{let allStore=await getAllD32StoreData();let skipKeys=['D32_V3','D32_FINAL','D32_AHKAM','D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_LAST_SYNC_TS','D32_DELETED_IDS','MIGRATED_D32_DB','D32_DB'];for(let k in allStore){if(!skipKeys.includes(k)&&!k.includes('DELETED')&&!k.includes('LAST_SYNC')) extraData[k]=allStore[k];}}catch(e){}
+    const payload = {v3:localArray, ahkam:ahArr, extra: extraData, _updatedAt: Date.now()};
     if(CLOUD_PASSWORD) payload._password = CLOUD_PASSWORD;
     await fetchWithRetry(CLOUD_POST_URL, {method:'POST', body: JSON.stringify(payload)});
     await clearDeletedIds(); await setLastSync();
-    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length;
+    if(!silent) document.getElementById('health').textContent='✅ تم الرفع - '+localArray.length+' + '+Object.keys(extraData).length+' ملف إضافي';
     return true;
   }catch(e){
     if(!silent) document.getElementById('health').textContent='❌ فشل الرفع: '+e.message;
@@ -475,6 +469,7 @@ async function syncBidirectionalSmart(silent){
         await idbSet('D32_CONFIG', JSON.stringify(info));
       }
     }catch(e){}
+    try{let extra=j.extra||{};for(let k in j){if(k.startsWith('D32_')&&!['D32_V3','D32_FINAL','D32_AHKAM','D32_DAIRA_CONFIG','D32_CIRCLE','D32_CONFIG','D32_LAST_SYNC_TS','D32_DELETED_IDS'].includes(k)) extra[k]=j[k];}for(let k in extra){try{await idbSet(k,extra[k]);}catch(e){}}}catch(e){}
     let localData = await getCasesArray();
     let deletedIds=await getDeletedIds();
     let deletedMap={}; deletedIds.forEach(id=>{ deletedMap[String(id)]=true; });
@@ -483,8 +478,8 @@ async function syncBidirectionalSmart(silent){
     let mapById={}, mapByKey={};
     localData.forEach((o,i)=>{if(o.id!=null) mapById[String(o.id)]=i; let k=normalizeKey(o.raqm,o.sana); if(mapByKey[k]===undefined) mapByKey[k]=i;});
     let maxFileIndex=0; localData.forEach(o=>{ if(o._fileIndex!=null && o._fileIndex>maxFileIndex) maxFileIndex=o._fileIndex; });
-    let added=0;
-    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } newLocal.push(o); added++; }});
+    let added=0;let updated=0;
+    cloudData.forEach(o=>{if(!o.raqm) return; let k=normalizeKey(o.raqm,o.sana); let idx = o.id!=null && mapById[String(o.id)]!==undefined? mapById[String(o.id)] : mapByKey[k]; if(idx===undefined){ if(o._fileIndex==null){ maxFileIndex++; o._fileIndex=maxFileIndex; } if(!o._updatedAt) o._updatedAt=Date.now(); newLocal.push(o); added++; } else { let localObj=newLocal[idx]; let cloudTime=Number(o._updatedAt||0); let localTime=Number(localObj._updatedAt||0); if(cloudTime>localTime||(cloudTime>0&&localTime===0)){ if(localObj._fileIndex!=null) o._fileIndex=localObj._fileIndex; newLocal[idx]=o; updated++; } }});
     newLocal.sort((a,b)=>(a._fileIndex||0)-(b._fileIndex||0));
     await idbSet('D32_V3',JSON.stringify(newLocal));
     await idbSet('D32_FINAL',JSON.stringify(newLocal));
@@ -529,7 +524,7 @@ migrate().then(()=>{
 <div style="font-size:48px">⚖</div>
 <h2 style="margin:10px 0">دائرة <span id="lockDairaNum"></span></h2>
 <p style="color:#cbd5e1;font-size:13px">أدخل باسورد الدائرة للدخول</p>
-<div class="pass-wrapper" style="margin:14px 0;"><input id="lockPass" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px 14px 14px 44px;border-radius:10px;border:none;text-align:center;font-size:15px"><button type="button" class="eye-btn" onclick="togglePass('lockPass', this)" title="إظهار/إخفاء">👁️</button></div>
+<input id="lockPass" class="fake-pass-mask" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocorrect="off" autocapitalize="off" name="daira_lock_code" placeholder="باسورد الدائرة" style="width:100%;max-width:320px;padding:14px;border-radius:10px;border:none;margin:14px 0;text-align:center;font-size:15px">
 <button onclick="unlockApp()" style="width:100%;max-width:320px;padding:14px;background:#E8B93C;color:#0A2342;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer">دخول</button>
 <p id="lockMsg" style="color:#ffcccc;font-weight:bold;margin-top:10px;min-height:20px"></p>
 <p style="font-size:12px;margin-top:8px"><a href="forgot.html" style="color:#E8B93C">نسيت الباسورد؟ تواصل مع جهة الإدارة</a></p>
@@ -550,22 +545,6 @@ migrate().then(()=>{
     }
   }catch(e){}
 })();
-function togglePass(inputId, btn){
-  try{
-    var inp = document.getElementById(inputId);
-    if(!inp) return;
-    if(inp.type === 'password' || inp.classList.contains('hidden-pass')){
-      inp.type = 'text';
-      inp.classList.remove('hidden-pass');
-      inp.style.removeProperty('-webkit-text-security'); inp.style.webkitTextSecurity='none';
-      if(btn) btn.textContent = '👁️';
-    } else {
-      inp.type = 'password';
-      if(btn) btn.textContent = '🙈';
-    }
-    inp.focus();
-  }catch(e){}
-}
 function unlockApp(){
   const daira = localStorage.getItem('current_daira') || localStorage.getItem('DAIRA');
   const saved = localStorage.getItem('daira_pass_'+daira) || localStorage.getItem('current_daira_pass');
